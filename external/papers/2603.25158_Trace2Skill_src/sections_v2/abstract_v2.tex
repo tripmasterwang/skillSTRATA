@@ -1,0 +1,7 @@
+% abstract_v2.tex — Trajectory-Grounded Distillation framing
+% Research question leads; framework and generalization results are the main story.
+
+
+
+Large Language Model (LLM) agents increasingly rely on domain-specific skills, yet manually authoring such skills does not scale, and skills generated purely from parametric knowledge often miss critical operational pitfalls. We introduce \systemname{}, a framework that consolidates broad execution trajectories in parallel into a unified skill directory through inductive reasoning over agent experience. \systemname{} supports both deepening existing human-written skills and creating useful skills from weak LLM-generated drafts. Experiments demonstrate the effectiveness of \systemname{} across diverse domains, including office workflows, math reasoning, and vision QA. Importantly, the evolved skills are not merely memorized artifacts of the trajectories used to create them: they often transfer across model scales, across model families, and to out-of-distribution settings. For example, skills evolved from Qwen3.5-35B trajectories improve a Qwen3.5-122B agent by up to $57.65$ percentage points on WikiTableQuestions. Further analyses show that \systemname{} outperforms sequential skill editing and ReasoningBank-style retrieval memories, compresses recurring failures and workarounds into standard operating procedures (SoPs), and yields portable skills that can be reused without parameter updates or test-time retrieval.\footnote{Code: \url{https://github.com/Qwen-Applications/Trace2Skill}}
+

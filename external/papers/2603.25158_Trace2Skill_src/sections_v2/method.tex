@@ -1,0 +1,65 @@
+\section{\systemname}
+\label{sec:method}
+
+\cref{fig:pipeline} shows the three-stage \systemname{} pipeline: collect trajectories, propose trajectory-level patches in parallel, and consolidate them into one portable skill.
+We first define the skill-evolution objective, then describe each stage.
+
+\subsection{Skill and Problem Formalization}
+\label{sec:method:skill}
+
+A skill is a human-readable directory $\mathcal{S}=(M,\mathcal{R})$, where $M$ is the root \texttt{SKILL.md} and $\mathcal{R}$ contains auxiliary references, scripts, or assets.
+The root document stores broadly applicable procedural knowledge, while auxiliary files provide deterministic tools or lower-frequency details.
+Let $\pi_\theta$ be a fixed LLM agent using skill $\mathcal{S}$ at inference time, and let $\mathcal{P}(\mathcal{S};\pi_\theta,\mathcal{D})$ denote the pass rate of that agent on task set $\mathcal{D}$.
+Given an evolving set $\mathcal{D}_\text{evolve}$ and a disjoint test set $\mathcal{D}_\text{test}$, skill evolution constructs a new skill from evolving-set trajectories without updating $\theta$:
+\begin{equation}
+    \mathcal{S}^* = \mathcal{E}(\mathcal{S}_0,\mathcal{D}_\text{evolve};\pi_\theta),
+    \qquad
+    \mathcal{P}(\mathcal{S}^*;\pi_\theta,\mathcal{D}_\text{test})
+    > \mathcal{P}(\mathcal{S}_0;\pi_\theta,\mathcal{D}_\text{test}).
+\end{equation}
+We evaluate two initializations for $\mathcal{S}_0$: a human-expert skill and an LLM-generated draft from parametric knowledge alone.
+
+\subsection{Stage 1: Trajectory Generation}
+\label{sec:method:trajectories}
+
+We use a ReAct-style harness \citep{yao2023reactsynergizingreasoningacting}.
+For each evolving-set task, the fixed agent runs with $\mathcal{S}_0$ and produces a trajectory $\tau_i$ containing the query, reasoning/tool-use history, final output, and a binary correctness outcome.
+The resulting corpus $\mathcal{T}$ is split into failures $\mathcal{T}^-$ and successes $\mathcal{T}^+$.
+Trajectory generation is parallel across evolving-set problems, so the trace corpus can be collected independently before patch proposal.
+See prompt templates in \cref{app:stage1_prompt}.
+
+\subsection{Stage 2: Parallel Patch Proposal}
+\label{sec:method:swarm}
+
+A group of analyst sub-agents independently proposes skill patches from individual trajectories.
+Failures are sent to an error analyst $\mathcal{A}^-$, successes to a success analyst $\mathcal{A}^+$, and the analysts read $\mathcal{S}_0$ and propose a patch for it, leading to a patch pool $\mathcal{P}=\mathcal{P}^-\cup\mathcal{P}^+$.
+
+The analyst roles are intentionally asymmetric.
+$\mathcal{A}^+$ uses a single-pass workflow to identify reusable behavior patterns from successful trajectories.
+$\mathcal{A}^-$ uses a ReAct-style loop that can inspect traces and artifacts, compare outputs against ground truth, and validate candidate fixes before proposing a patch.
+Failures that cannot be causally explained are excluded, ensuring $\mathcal{P}^-$ is grounded in verified failure mechanisms rather than log-only guesses \citep{ouyang2026reasoningbankscalingagentselfevolving}.
+Both roles are prompted to write concise, actionable patches following skill-writing guidance \citep{anthropic2026skillcreatorconversation}.
+Analyst prompt templates and representative example patches are provided in \cref{app:stage2_prompts}.
+
+\subsection{Stage 3: Patch Consolidation}
+\label{sec:method:consolidation}
+
+Stage~3 consolidates the patch pool into one coherent update $p^*$ and applies it to $\mathcal{S}_0$.
+Patches are merged hierarchically for $L=\lceil \log_{B_\text{merge}}|\mathcal{P}| \rceil$ levels; at each level $\ell$, up to $B_\text{merge}$ patches are synthesized into one patch:
+\begin{equation}
+    p^{(\ell+1)}
+    = \mathcal{M}\!\left(\pi_\theta,\; \mathcal{S}_0,\; \{p_1^{(\ell)}, \ldots, p_{B_\text{merge}}^{(\ell)}\}\right),
+    \qquad \ell=0,\ldots,L-1,
+\end{equation}
+where $\mathcal{M}$ deduplicates, resolves conflicts, and preserves non-overlapping insights.
+$\pi_\theta$ itself serves as trajectory generator, analyst, and merge operator, so no external evolution/teacher model is required.
+The final $p^*$ is translated into diff-style edits and applied with deterministic guardrails: reject edits to missing files, withhold line-range conflicts, and validate the updated skill format.
+
+The merge also performs inductive generalization.
+Because each patch comes from one trajectory, recurring edits across independent patches are evidence of systematic task properties rather than one-off fixes.
+$\mathcal{M}$ is therefore instructed to prefer prevalent patterns and discard idiosyncratic edits, producing a compact skill that replaces $\mathcal{S}_0$ and is used directly at inference without retrieval. The merge operator prompt template and an example consolidated patch $p^*$ are given in \cref{app:stage3_prompts}.
+
+% \subsection{Two Evolution Modes}
+% \label{sec:method:modes}
+
+\systemname{} supports two modes that cover scenarios with and without expert-written skills: \emph{Skill deepening} starts with a human-written skill, and \emph{Skill creation} starts from a skill generated from LLM parametric knowledge. Both improve the target skill using patches induced from trace analysis.

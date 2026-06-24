@@ -1,0 +1,22 @@
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{\systemname{} outperforms ReasoningBank-style retrieval on SpreadsheetBench (same trajectory pool). \cref{tab:math_retrieval} and \cref{tab:vqa_retrieval} show similar trend in math/VQA.}
+\label{tab:reasoning_bank}
+\begin{tabular}{@{}l l ccc@{}}
+\toprule
+\textbf{Setting}
+    & \textbf{User}
+    & \textbf{Vrf}$\uparrow$
+    & \textbf{Soft}$\uparrow$
+    & \textbf{Hard}$\uparrow$ \\
+\midrule
+\multirow{2}{*}{\makecell[l]{ReasoningBank\\\citep{ouyang2026reasoningbankscalingagentselfevolving}}}
+    & 122B & 56.00 & 40.10 & 21.30 \\
+    & 35B & 20.50 & 17.30 & 4.97 \\
+\midrule
+\multirow{2}{*}{\makecell[l]{Human-Written\\+Combined (ours)}}
+    & 122B & \textbf{69.83} & \textbf{47.17} & \textbf{29.53} \\
+    & 35B & \textbf{29.67} & \textbf{18.80} & \textbf{5.73} \\
+\bottomrule
+\end{tabular}

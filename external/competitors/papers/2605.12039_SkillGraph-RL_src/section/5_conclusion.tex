@@ -1,0 +1,7 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+We presented \textsc{SkillGraph}, a framework that organizes agent skills into a structured dependency graph with typed relational edges and co-evolves the graph with the agent's policy through RL. By unifying graph construction, graph-aware retrieval, and graph evolution into a closed training loop, \textsc{SkillGraph} addresses three key limitations of flat skill libraries: weak compositional planning, poor granularity control, and the inability to accumulate inter-skill relational signals. Experiments on ALFWorld, WebShop, and seven search-augmented QA benchmarks demonstrate state-of-the-art performance, with the largest gains on complex multi-step tasks that require ordered skill composition.
+
+\paragraph{Limitations and future work.}
+Our current framework relies on a strong teacher model for skill distillation and graph-adaptive operations, which introduces additional inference cost during graph evolution. Exploring lightweight alternatives such as self-distillation or critic-based skill generation could reduce this dependency. Additionally, the skill graph is currently constructed and evolved within a single environment; investigating cross-environment skill transfer---where a graph trained on one domain bootstraps learning in another---is a promising direction. Finally, scaling \textsc{SkillGraph} to larger base models and more diverse task distributions remains an open question worth exploring.

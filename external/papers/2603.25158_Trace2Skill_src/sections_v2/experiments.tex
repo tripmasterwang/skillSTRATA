@@ -1,0 +1,84 @@
+\input{tables_v2/table_main_v1}
+
+\section{Experiments}
+\label{sec:experiments}
+
+\subsection{Experimental Setup}
+\label{sec:experiments:setup}
+
+\myparagraph{Spreadsheet setup.}
+Our main experiments use SpreadsheetBench-Verified \citep{ma2024spreadsheetbenchchallengingrealworld}, where agents manipulate \texttt{xlsx} files through tool use.
+We split its 400 samples into 200 evolution problems and 200 held-out test problems, and also report Soft/Hard scores on full SpreadsheetBench (excluding all evolving-set problems) plus OOD transfer to WikiTableQuestions \citep{pasupat2015compositionalsemanticparsingsemistructured} and HiTab \citep{cheng-etal-2022-hitab} converted into spreadsheet format.
+All spreadsheet results are averaged over three random seeds using each benchmark's official evaluation criteria.
+
+\myparagraph{Skill settings.}
+We compare \textbf{No Skill}, the Anthropic \texttt{xlsx} skill (\textbf{Human-Written}), LLM-generated skills using \textbf{Parametric} knowledge, and three \systemname{} variants: \textbf{+Error}, \textbf{+Success}, and \textbf{+Combined}, which consolidate patches from failed trajectories only, from successful trajectories only, and from all trajectories, respectively.
+% \textbf{+Error} consolidates patches from failed trajectories, \textbf{+Success} consolidates reusable behaviors from successful trajectories, and \textbf{+Combined} merges both evidence sources.
+\textit{Skill Deepening} starts from Human-Written, while \textit{Skill Creation} starts from Parametric.
+We evaluate Qwen3.5-122B-A10B and Qwen3.5-35B-A3B as both skill authors and skill users. We do 100\% self-evolution: the same model generates trajectories, proposes patches, and edits skills.
+Details of dataset construction, scoring, and model serving are in \cref{app:experimental_details}; the external \texttt{skill-creator} baseline is in \cref{app:skill_creator_baseline}.
+
+\subsection{Main Results}
+\label{sec:experiments:main}
+
+\cref{tab:main_v1} reports all spreadsheet results across skill conditions, author models, user models, and transfer tasks.
+Baseline rows give absolute scores; evolved rows give signed deltas from the relevant baseline, with Deepening compared to Human-Written and Creation compared to Parametric.
+We use \textbf{Avg} as the primary summary metric because it equally weights ID and OOD performance across both user models, rewarding skills that generalize across models and tasks.
+
+\myparagraph{Baselines reveal why both settings matter.}
+Human-Written is a useful handcrafted prior, but it is not reliably portable across model scales; Parametric remains close to No Skill, confirming that parametric knowledge alone does not yield actionable spreadsheet skills \citep{han2026sweskillsbenchagentskillsactually}.
+These baselines motivate the two evaluation regimes: Deepening tests whether a strong manual skill can be made more transferable, while Creation tests whether trajectory-grounded distillation can build a useful skill from a weak seed.
+
+\myparagraph{Both Deepening and Creation produce generalizable skills.}
+Starting from Human-Written, evolved skills consistently strengthen in-distribution spreadsheet performance and often transfer to other model scales and OOD table tasks; starting from Parametric, Creation can match or exceed Human-Written quality in favorable settings.
+The gains are broad: they appear across author models, user models, and task families, not only on the model that produced the traces.
+Notably, 35B Deepening +Combined attains the best absolute Avg, showing that skills authored by a small LLM can also generalize.
+Across analysts, both +Error and +Success help spreadsheet tasks, and +Combined usually gives the largest Avg improvement.
+
+\subsection{Model-Family Generalization}
+\label{sec:experiments:model_family}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.96\linewidth]{figures/fig_model_family_generalization.pdf}
+    \caption{Cross-family generalization on SpreadsheetBench. Gemma-4-31B-it and GPT-5.5-high each (i)~evolve a skill from their own traces and (ii)~run Qwen3.5-authored skills.}
+    \label{fig:model_family_generalization}
+\end{figure}
+
+We test generalization across model families with Gemma-4-31B-it and GPT-5.5-high in two settings: each model (i)~deepens the human-written \texttt{xlsx} skill from its own traces via \systemname{}, and (ii)~runs the Qwen3.5-122B/35B +Combined deepened skills. \cref{fig:model_family_generalization} shows that both models self-improve from their own traces and also benefit from Qwen3.5-authored skills, so \systemname{} generalizes across families. \cref{app:model_family_cross_trace} reports additional results and implementation details.
+
+
+\begin{table}[!t]
+\centering
+\begin{minipage}[t]{0.48\linewidth}
+\input{tables_v2/table_math}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\linewidth}
+\input{tables_v2/table_vqa}
+\end{minipage}
+\end{table}
+
+\subsection{Math Reasoning}
+\label{sec:experiments:math}
+We apply \systemname{} to math domain to test its domain-agnosticism.
+As in the spreadsheet setting (\cref{sec:experiments:setup}), the math agent runs in a ReAct loop with a command-line Python interpreter to write and execute code for each question.
+We create skills from scratch on 400 DAPO questions \citep{yu2025dapo} and evaluate on 100 disjoint held-out DAPO questions (ID) and AIME~2026 (OOD competition mathematics; avg@8 over 30 problems), following the cross-model protocol of \cref{sec:experiments:main}.
+\cref{tab:math} reports deltas from No Skill.
+\textbf{\systemname{} works for math domain:} the distilled skills improve both held-out DAPO and OOD AIME rather than overfitting the source distribution.
+\textbf{+Error is the most stable signal}, transferring cleanly between the 122B and 35B users.
+
+\subsection{Visual Question Answering}
+\label{sec:experiments:vqa}
+
+To test multimodal generalization, we apply \systemname{} to DocVQA~\citep{mathew2020docvqa}, where agents answer questions over document images such as forms, tables, invoices, letters, and reports.
+Again, each agent runs in a ReAct loop with a command-line + Python environment.
+We use 50 DocVQA examples only for skill evolution and remove them from evaluation; the remaining 5{,}299 examples form the held-out test set.
+We report the official ANLS and Accuracy (ANLS~$\geq 0.5$, \%) for both same-model use and cross-model transfer between 122B- and 35B-authored skills. Results in \cref{tab:vqa} show that \textbf{all
+evolved DocVQA skills improve performance over No Skill. +Combined is the strongest setting}, giving the clearest same-model gains and positive cross-model transfer.
+
+% Each VQA agent operates in a ReAct loop (up to 20 turns) with a code-execution tool and a benchmark-specific system prompt.
+% We compare two skill conditions:
+% \textbf{No Skill} (system prompt only) and
+% \textbf{+Evolved} (a skill automatically produced by the closed-loop pipeline: error analysis on the evolving set $\to$ parallel MapReduce skill evolution $\to$ programmatic application).
+
+\FloatBarrier

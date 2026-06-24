@@ -1,0 +1,167 @@
+\documentclass[11pt]{article}
+
+% Change "review" to "final" to generate the final (sometimes called camera-ready) version.
+% Change to "preprint" to generate a non-anonymous version with page numbers.
+\usepackage[preprint]{acl}
+
+% Standard package includes
+\usepackage{times}
+\usepackage{latexsym}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{microtype}
+\usepackage{inconsolata}
+\usepackage{graphicx}
+\usepackage{fontawesome5}
+
+% Colors used in the author block (links / icons)
+\definecolor{darkblue}{HTML}{0E4D92}
+
+% Additional packages used by sections / appendix (carried over from the ACM template)
+\usepackage{xurl}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{array}
+\usepackage{colortbl}
+\usepackage{tabularx}
+\usepackage{makecell}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, calc, backgrounds, fit, shadows}
+\usepackage[most]{tcolorbox}
+
+% Monospace identifiers that may exceed column width (breaks at `-`, `_`, etc.; no hyperlink).
+\newcommand{\skillcode}[1]{\begingroup\urlstyle{tt}\nolinkurl{#1}\endgroup}
+\newcommand{\skillfile}{\texttt{skill specification }}
+\newcommand{\skillpackage}{skill package}
+\newcommand{\skillpackages}{skill packages}
+
+% Appendix / supplementary styling (olive header, cream body; matches prompt-table aesthetic)
+\definecolor{appendixolive}{HTML}{8B8B5E}
+\definecolor{appendixcream}{HTML}{FDFCF0}
+\newcommand{\apdxhdr}[1]{\textcolor{white}{\textbf{#1}}}
+
+\newtcolorbox{ApdxTabFrame}[1][]{%
+  enhanced,
+  sharp corners,
+  arc=0pt,
+  boxrule=0.55pt,
+  colframe=appendixolive,
+  colback=appendixcream,
+  left=5pt,
+  right=5pt,
+  top=5pt,
+  bottom=5pt,
+  width=\linewidth,
+  #1,
+}
+
+\newtcblisting{GosPromptBox}[1]{%
+  enhanced,
+  sharp corners,
+  arc=0pt,
+  boxrule=0.55pt,
+  colframe=appendixolive,
+  colback=appendixcream,
+  colbacktitle=appendixolive,
+  coltitle=white,
+  fonttitle=\bfseries\sffamily\footnotesize,
+  titlerule=0mm,
+  boxsep=3pt,
+  left=8pt,
+  right=8pt,
+  top=2pt,
+  bottom=6pt,
+  title={#1},
+  listing only,
+  listing engine=listings,
+  listing options={%
+    basicstyle=\ttfamily\footnotesize,
+    breaklines=true,
+    columns=fullflexible,
+    keepspaces=true,
+    aboveskip=0pt,
+    belowskip=0pt,
+    xleftmargin=0pt,
+  },
+}
+
+\newtcolorbox{ApdxCallout}[1][]{%
+  enhanced,
+  sharp corners,
+  arc=0pt,
+  boxrule=0.55pt,
+  colframe=appendixolive,
+  colback=appendixcream,
+  fontupper=\small,
+  left=8pt,
+  right=8pt,
+  top=6pt,
+  bottom=6pt,
+  #1,
+}
+
+% Algorithm float + box used by the appendix pseudocode
+\floatstyle{plain}
+\newfloat{algorithm}{t}{loa}
+\floatname{algorithm}{Algorithm}
+\captionsetup[algorithm]{font=small,labelfont=bf}
+
+\newenvironment{algobox}{%
+  \begin{tcolorbox}[
+    enhanced,
+    sharp corners,
+    arc=0pt,
+    boxrule=0.55pt,
+    colframe=appendixolive,
+    colback=appendixcream,
+    fontupper=\small,
+    left=8pt,
+    right=8pt,
+    top=8pt,
+    bottom=8pt,
+  ]
+}{%
+  \end{tcolorbox}
+}
+
+\newcommand{\alginput}[1]{\textbf{Input:} #1\\}
+\newcommand{\algoutput}[1]{\textbf{Output:} #1\\}
+\newcommand{\algstep}[1]{#1\\}
+\newcommand{\algindent}[1]{\hspace*{1.5em}#1\\}
+
+\title{Graph-of-Skills: Dependency-Aware Structural Retrieval for Massive Agent Skills}
+
+% Non-anonymous author block for arXiv preprint.
+\author{Dawei Liu\textsuperscript{1}\thanks{Core Contribution.} \quad Zongxia Li\textsuperscript{2}\footnotemark[1] \quad Hongyang Du\textsuperscript{3} \quad Xiyang Wu\textsuperscript{2} \quad Shihang Gui\textsuperscript{3}\\ \textbf{Yongbei Kuang}\textsuperscript{4} \quad \textbf{Lichao Sun}\textsuperscript{5}\\[0.5ex] \textsuperscript{1}University of Pennsylvania \quad \textsuperscript{2}University of Maryland  \quad \textsuperscript{3}Brown University \quad \\\textsuperscript{4}Carnegie Mellon University  \quad \textsuperscript{5}Lehigh University \\ {\tt\small liudawei@seas.upenn.edu \quad zli12321@umd.edu \quad lis221@lehigh.edu} \\[0.4ex] \makebox[\textwidth][c]{\small
+  \href{https://github.com/davidliuk/graph-of-skills}{\textcolor{darkblue}{\faIcon{github}}}\kern0.35em
+  \textbf{Code:}\kern0.35em
+  \url{https://github.com/davidliuk/graph-of-skills}} }
+
+\begin{document}
+\maketitle
+
+\input{sections/abstract}
+
+\input{sections/introduction}
+
+\input{sections/related_work}
+
+\input{sections/methodology}
+
+\input{sections/experiments}
+
+\input{sections/conclusion}
+
+% \input{sections/reproducibility_statement}
+
+% Custom bibliography entries only
+\bibliography{custom}
+
+\clearpage
+\input{sections/appendix}
+
+\end{document}

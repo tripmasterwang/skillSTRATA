@@ -1,0 +1,326 @@
+\appendix
+\section{Supplementary Details for \textsc{SkillGraph}}
+\label{app:entire_pipeline}
+
+This appendix provides formal definitions, derivations, and implementation specifics that supplement the method description in Section~\ref{sec:method}.
+
+\subsection{Level Computation}
+\label{app:level_computation}
+
+Each node $v \in \mathcal{V}$ is assigned a topological level $\ell(v)$ used for progressive unlocking and dependency-respecting retrieval ordering. Levels are computed via BFS over the directional dependency edges:
+\begin{equation}
+    \ell(v) = \begin{cases} 0 & \text{if } v \text{ has no prerequisite/enhancement parents}, \\ \max_{u: (u,v) \in \mathcal{E}_{\text{dep}}} \ell(u) + 1 & \text{otherwise}, \end{cases}
+    \label{eq:level}
+\end{equation}
+where $\mathcal{E}_{\text{dep}} = \{e \in \mathcal{E} : \text{type}(e) \in \{\texttt{prereq}, \texttt{enhance}\}\}$. We exclude $\texttt{co\_occur}$ edges from this computation because co-occurrence captures symmetric association rather than directional dependency; including them would introduce cycles and blur the prerequisite hierarchy. Levels are recomputed after every graph evolution step to reflect topology changes.
+
+\subsection{Edge Initialization}
+\label{app:edge_init}
+
+Before training begins, edges are initialized with structural priors rather than learned from data: $\texttt{co\_occur}$ edges ($w=0.3$) connect task-specific skills within the same category, and $\texttt{enhance}$ edges ($w=0.2$) connect each general skill to all task-specific skills. No $\texttt{prereq}$ edges are created at initialization; they emerge through graph evolution as the agent discovers ordering dependencies.
+
+\subsection{Statistics Update}
+\label{app:stats_update}
+
+At each validation checkpoint, node statistics are updated incrementally before evolution decisions are made:
+\begin{equation}
+    \hat{p}(v) \leftarrow \frac{n_{\text{succ}}(v) + n_{\text{succ}}^{\text{new}}(v)}{n_{\text{use}}(v) + n_{\text{use}}^{\text{new}}(v)},
+    \label{eq:stats_update}
+\end{equation}
+where $n_{\text{succ}}^{\text{new}}(v)$ and $n_{\text{use}}^{\text{new}}(v)$ are the success and usage counts observed in the latest trajectory batch. A skill receives one usage count when it is retrieved into the prompt and one success count when the corresponding rollout succeeds.
+
+\subsection{Node Evolution: Additional Details}
+\label{app:node_evolution}
+
+\paragraph{Insertion and edge bootstrapping.} Newly inserted skills start as isolated nodes with no edges. Connections are established in subsequent checkpoints via the co-occurrence discovery mechanism: if a new skill and an existing skill co-appear in at least $c_{\min}=2$ successful episodes, a $\texttt{co\_occur}$ edge is added automatically.
+
+\paragraph{Merge: edge inheritance.} When two skills $v_i$ and $v_j$ are merged into $v_{\text{merged}}$, the merged node inherits the union of edges from both originals. Duplicate edges to the same neighbor are resolved by keeping the higher weight.
+
+\paragraph{Split: edge reconnection.} When a skill $v$ is split into sub-skills $\{v_1', v_2', \ldots\}$, the sub-skills are connected by $\texttt{prereq}$ edges in the order produced by the teacher model. Existing edges of $v$ are redistributed to the sub-skill whose description is most relevant.
+
+\subsection{Progressive Unlocking: Additional Details}
+\label{app:unlocking_details}
+
+During the initial warmup phase (the first 5 training steps), only non-deprecated level-0 skills are active:
+$\mathcal{V}_{\text{active}}^{(0)} = \{v : \ell(v) = 0\}$.
+After warmup, unlocking is checked at each validation checkpoint. Success rates are smoothed with a Beta$(1,1)$ prior to avoid premature unlocking from small sample sizes. If the newly unlocked level already satisfies the threshold, multiple levels can be unlocked within a single checkpoint, enabling rapid progression when the policy has strong foundational competence.
+
+\section{Additional Implementation Details}
+\label{app:implementation}
+
+\paragraph{Skill schema.}
+Each natural-language skill is stored as a compact record containing a unique skill identifier, a short title, a principle, an applicability condition, and a category (\texttt{general} or an environment-specific task type). The same record format is used by flat skill-library baselines; \textsc{SkillGraph} augments it with graph metadata including level, exposure count, successful-exposure count, success rate, creation step, and deprecation status.
+
+\paragraph{Co-occurrence edge threshold.}
+New $\texttt{co\_occur}$ edges require at least $c_{\min}=2$ co-appearances in successful validation episodes before being added, preventing spurious edges from single lucky episodes. Deprecated nodes are retained in the saved graph for auditability but excluded from $\mathcal{V}_{\text{active}}$.
+
+\section{Experimental Details}
+\label{app:experimental_details}
+
+\paragraph{Metric definitions.}
+For ALFWorld, we report success rate. For WebShop, Table~\ref{tab:main} reports both normalized task score and binary success rate, while Table~\ref{tab:ablation} reports task score to match the training-curve analysis. For QA benchmarks, we report exact-match accuracy under the search-augmented QA evaluation protocol. The search experiments use a tool-augmented QA environment where the retriever returns top-$3$ passages from a Wikipedia index built with an E5 retriever. \textsc{SkillGraph} is trained on NQ and HotpotQA and evaluated on the seven datasets reported in Table~\ref{tab:qa}.
+
+\paragraph{Hyperparameters.}
+Table~\ref{tab:hyperparams_training} lists the training hyperparameters for each environment. Table~\ref{tab:hyperparams_graph} lists the \textsc{SkillGraph}-specific hyperparameters, which are shared across all three environments.
+
+\begin{table}[h]
+    \caption{Training hyperparameters per environment.}
+    \label{tab:hyperparams_training}
+    \centering
+    \footnotesize
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{lccc}
+    \toprule
+    Hyperparameter & ALFWorld & WebShop & Search QA \\
+    \midrule
+    \multicolumn{4}{l}{\textit{Optimization}} \\
+    Learning rate & $1\!\times\!10^{-6}$ & $1\!\times\!10^{-6}$ & $1\!\times\!10^{-6}$ \\
+    LR warmup ratio & -- & -- & 0.1 \\
+    KL coefficient $\beta$ & 0.01 & 0.01 & 0.001 \\
+    Entropy coefficient & -- & -- & 0 \\
+    Invalid-action penalty & 0.1 & 0.1 & 0.01 \\
+    \midrule
+    \multicolumn{4}{l}{\textit{Batch sizes}} \\
+    Train batch size & 16 & 16 & 256 \\
+    Validation batch size & 64 & 64 & 512 \\
+    Group size $G$ & 8 & 8 & 4 \\
+    PPO mini-batch size & 128 & 64 & 256 \\
+    PPO micro-batch / GPU & 4 & 4 & 8 \\
+    \midrule
+    \multicolumn{4}{l}{\textit{Sequence lengths}} \\
+    Max prompt length & 4096 & 6000 & 5000 \\
+    Max response length & 512 & 768 & 700 \\
+    Max episode steps & 50 & 15 & 4 \\
+    \midrule
+    \multicolumn{4}{l}{\textit{Infrastructure}} \\
+    Tensor-parallel size & 4 & 4 & 1 \\
+    GPU memory utilization & 0.5 & 0.7 & 0.5 \\
+    Param offload & \checkmark & \checkmark & -- \\
+    Optimizer offload & \checkmark & \checkmark & -- \\
+    \midrule
+    \multicolumn{4}{l}{\textit{Schedule}} \\
+    Total epochs & 200 & 200 & 200 \\
+    Save frequency & 10 & 10 & 5 \\
+    Validation frequency & 5 & 5 & 5 \\
+    \bottomrule
+    \end{tabular}
+\end{table}
+
+\begin{table}[h]
+    \caption{\textsc{SkillGraph} hyperparameters (shared across all environments).}
+    \label{tab:hyperparams_graph}
+    \centering
+    \footnotesize
+    \begin{tabular}{lll}
+    \toprule
+    Hyperparameter & Symbol & Value \\
+    \midrule
+    \multicolumn{3}{l}{\textit{Graph-aware retrieval}} \\
+    Retrieved skill cap & $K_{\max}$ & 8 \\
+    Backward BFS depth & $D$ & 2 \\
+    Forward beam width & $B$ & 3 \\
+    \midrule
+    \multicolumn{3}{l}{\textit{Node-level evolution}} \\
+    Max new skills per update & $m$ & 3 \\
+    Merge threshold (Jaccard) & $\tau_{\text{merge}}$ & 0.85 \\
+    Deprecation threshold & -- & 0.15 \\
+    Min usage for deprecation & -- & 20 \\
+    \midrule
+    \multicolumn{3}{l}{\textit{Edge-level evolution}} \\
+    Path reinforcement step & $\alpha$ & 0.05 \\
+    Edge decay factor & $\gamma$ & 0.99 \\
+    Edge pruning threshold & $w_{\min}$ & 0.05 \\
+    \midrule
+    \multicolumn{3}{l}{\textit{Progressive unlocking}} \\
+    Curriculum warmup epochs & -- & 5 \\
+    Level unlock threshold & $\theta_{\text{unlock}}$ & 0.6 \\
+    \bottomrule
+    \end{tabular}
+\end{table}
+
+\section{Confidence Intervals}
+\label{app:bootstrap_ci}
+
+We compute $95\%$ confidence intervals for \textsc{SkillGraph} to quantify evaluation uncertainty. Table~\ref{tab:ci} reports the results.
+
+\begin{table}[h]
+    \caption{$95\%$ confidence intervals for \textsc{SkillGraph} across all benchmarks.}
+    \label{tab:ci}
+    \centering
+    \small
+    \begin{tabular}{llc}
+    \toprule
+    Benchmark & Metric & \textsc{SkillGraph} \\
+    \midrule
+    \multicolumn{3}{l}{\textit{ALFWorld \& WebShop}} \\
+    ALFWorld & Overall Succ.\ (\%) & $90.6 \pm 7.1$ \\
+    WebShop & Task Score & $91.5 \pm 6.8$ \\
+    WebShop & Success Rate (\%) & $84.4 \pm 8.9$ \\
+    \midrule
+    \multicolumn{3}{l}{\textit{Search-Augmented QA (EM)}} \\
+    NQ & EM & $48.0 \pm 4.4$ \\
+    TriviaQA & EM & $63.8 \pm 4.2$ \\
+    PopQA & EM & $48.5 \pm 4.4$ \\
+    HotpotQA & EM & $44.7 \pm 4.4$ \\
+    2Wiki & EM & $43.4 \pm 4.3$ \\
+    MuSiQue & EM & $19.5 \pm 3.5$ \\
+    Bamboogle & EM & $72.6 \pm 3.9$ \\
+    \midrule
+    Average (QA) & EM & $48.9 \pm 4.4$ \\
+    \bottomrule
+    \end{tabular}
+\end{table}
+
+\section{Prompt Templates}
+\label{app:prompts}
+
+This section gives representative prompt templates used by \textsc{SkillGraph}. Environment-specific prompts differ mainly in the action space and observation format, while the retrieved skill block is shared across ALFWorld, WebShop, and search-augmented QA.
+
+\paragraph{Agent prompt with retrieved skills.}
+The following template shows the common structure used when skill memory is enabled. The ALFWorld and WebShop variants replace the action-space description with admissible environment actions, while the search variant replaces it with the choice between issuing a \texttt{<search>} query and returning a \texttt{<answer>}.
+
+\begin{tcolorbox}[colback=gray!5, colframe=gray!60, title={\small\textbf{Agent Prompt Template}}, fontupper=\small\ttfamily, breakable, left=4pt, right=4pt, top=2pt, bottom=2pt]
+You are an expert agent operating in the target environment.\\
+Your task is to: \{task\_description\}\\[4pt]
+\#\# Retrieved Relevant Experience\\[2pt]
+\{retrieved\_skills\}\\[4pt]
+\#\# Current Progress\\[2pt]
+Prior to this step, you have already taken \{step\_count\} step(s).\\
+Below are the most recent observations and actions:\\
+\{action\_history\}\\[4pt]
+Current observation:\\
+\{current\_observation\}\\[4pt]
+Admissible actions:\\
+{[}\{admissible\_actions\}{]}\\[4pt]
+Now it is your turn to take an action.\\
+First reason step-by-step within <think> </think> tags.\\
+Then choose one admissible action within <action> </action> tags.
+\end{tcolorbox}
+
+\paragraph{Graph-ordered skill injection.}
+In graph retrieval mode, retrieved skills are rendered in dependency order before being inserted into the agent prompt. This makes the graph structure visible to the policy without requiring special model architecture changes.
+
+\begin{tcolorbox}[colback=blue!3, colframe=blue!40, title={\small\textbf{Graph-Ordered Skill Block}}, fontupper=\small\ttfamily, breakable, left=4pt, right=4pt, top=2pt, bottom=2pt]
+\#\#\# Skills (ordered by dependency)\\
+- **[category] Skill Title** [skill\_id]: Skill principle.\\
+\quad\_Apply when: Applicability condition.\_\\
+- **Next Skill Title** [skill\_id]: Skill principle.\\
+\quad\_Apply when: Applicability condition.\_\\[4pt]
+\#\#\# Mistakes to Avoid\\
+- **Don't**: Failure pattern or bad action.\\
+\quad**Instead**: Corrective strategy.
+\end{tcolorbox}
+
+\paragraph{Failure-driven skill insertion prompt.}
+During dynamic updates, failed validation trajectories are summarized and passed to the teacher model. The teacher is asked to produce a small number of new skills and to avoid duplicating existing skill titles. Returned identifiers are reassigned by the implementation to prevent collisions.
+
+\begin{tcolorbox}[colback=orange!3, colframe=orange!50, title={\small\textbf{Failure-Driven Skill Insertion Prompt}}, fontupper=\small\ttfamily, breakable, left=4pt, right=4pt, top=2pt, bottom=2pt]
+Analyze these failed agent trajectories and suggest NEW skills\\
+to add to the skill bank.\\[4pt]
+FAILED TRAJECTORIES:\\
+Example 1:\\
+\quad Task: \{task\}\\
+\quad Task Type: \{task\_type\}\\
+\quad Trajectory (last 5 steps):\\
+\quad\quad Action: \{action\}\\
+\quad\quad Observation: \{observation\}\\
+\quad ...\\[4pt]
+EXISTING SKILL TITLES (avoid duplicating these):\\
+\{existing\_titles\}\\[4pt]
+Generate 1-\{max\_new\_skills\} NEW actionable skills that would\\
+help avoid these failures.\\
+Each skill must have: skill\_id, title (3-5 words), principle\\
+(1-2 sentences), when\_to\_apply.\\[4pt]
+Use skill\_ids: \{dyn\_id\_list\}\\[4pt]
+Return ONLY a JSON array of skills, no other text.
+\end{tcolorbox}
+
+\paragraph{Skill merge and split prompts.}
+For graph evolution, the teacher is also used as a skill-bank curator. Merge prompts ask it to combine two semantically overlapping skills into one concise skill. Split prompts ask it to decompose a high-usage but low-success skill into two or three simpler sub-skills, optionally conditioned on failure contexts where the original skill did not help. Both prompts require the same JSON schema as insertion: \texttt{skill\_id}, \texttt{title}, \texttt{principle}, and \texttt{when\_to\_apply}.
+
+\section{Additional Search Training Results}
+\label{app:search_curve}
+
+Table~\ref{tab:search_curve} reports intermediate validation checkpoints for the search-augmented QA \textsc{SkillGraph} run. The final checkpoint at step $200$ gives the best average score, while NQ and HotpotQA peak slightly earlier at step $180$. We report the unified step-$200$ checkpoint in Table~\ref{tab:qa} for a single consistent model selection rule across datasets.
+
+\begin{table}[h]
+    \caption{Search-augmented QA validation accuracy (\%) for \textsc{SkillGraph} over training. NQ and HotpotQA are in-domain training datasets; the remaining datasets are held-out transfer evaluations.}
+    \label{tab:search_curve}
+    \centering
+    \footnotesize
+    \setlength{\tabcolsep}{3pt}
+    \begin{tabular}{rrrrrrrrr}
+    \toprule
+    Step & NQ & TriviaQA & PopQA & HotpotQA & 2Wiki & MuSiQue & Bamboogle & Avg. \\
+    \midrule
+     30 & 39.2 & 58.9 & 40.6 & 39.7 & 35.4 & 16.3 & 69.0 & 42.4 \\
+     60 & 44.9 & 61.8 & 44.1 & 42.4 & 39.1 & 17.6 & 69.8 & 45.3 \\
+     90 & 46.0 & 62.1 & 45.6 & 42.8 & 40.0 & 18.1 & 68.1 & 46.4 \\
+    120 & 46.2 & 62.5 & 45.1 & 43.6 & 41.9 & 18.4 & 70.6 & 46.9 \\
+    150 & 46.4 & 63.6 & 45.6 & 44.3 & 43.3 & 19.4 & 70.6 & 47.9 \\
+    180 & \textbf{48.3} & 63.4 & 47.0 & \textbf{44.8} & 41.9 & 19.4 & 72.2 & 48.1 \\
+    200 & 48.0 & \textbf{63.8} & \textbf{48.5} & 44.7 & \textbf{43.4} & \textbf{19.5} & \textbf{72.6} & \textbf{48.9} \\
+    \bottomrule
+    \end{tabular}
+\end{table}
+
+
+\begin{table}[htbp]
+  \caption{Licenses of datasets, environments, and models used in this work.}
+  \label{tab:licenses}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{llll}
+  \toprule
+  Asset & Type & License & Reference \\
+  \midrule
+  \multicolumn{4}{l}{\textit{Environments}} \\
+  ALFWorld & Environment & MIT & \citet{shridhar2020alfworld} \\
+  WebShop & Environment & MIT & \citet{yao2022webshop} \\
+  \midrule
+  \multicolumn{4}{l}{\textit{Datasets --- Single-hop QA}} \\
+  Natural Questions (NQ) & Dataset & Apache 2.0 & \citet{kwiatkowski2019nq} \\
+  TriviaQA & Dataset & Apache 2.0 & \citet{joshi2017triviaqa} \\
+  PopQA & Dataset & MIT & \citet{mallen2023popqa} \\
+  \midrule
+  \multicolumn{4}{l}{\textit{Datasets --- Multi-hop QA}} \\
+  HotpotQA & Dataset & CC BY-SA 4.0 & \citet{yang2018hotpotqa} \\
+  2WikiMultiHopQA & Dataset & Apache 2.0 & \citet{ho2020twowiki} \\
+  MuSiQue & Dataset & CC BY 4.0 & \citet{trivedi2022musique} \\
+  Bamboogle & Dataset & MIT & \citet{press2023bamboogle} \\
+  \midrule
+  \multicolumn{4}{l}{\textit{Models}} \\
+  Qwen2.5-7B-Instruct & Model & Apache 2.0 & \citet{bai2023qwen} \\
+  OpenAI o3 & API Service & Proprietary & \citet{openai2025o3} \\
+  \bottomrule
+  \end{tabular}
+\end{table}
+
+\section{Compute Resources}
+\label{app:compute}
+
+All training experiments are conducted on a single node equipped with 8$\times$ NVIDIA A100 80GB GPUs, 224 CPU cores, and 2048 GB of system memory. The total compute budget across all training runs amounts to approximately 280 GPU-hours. 
+
+
+\section{Broader Impact}
+\label{app:broader_impact}
+
+This work proposes a general framework for organizing and evolving reusable skills in LLM-based agents. We discuss potential broader impacts below.
+
+\paragraph{Positive impacts.}
+By enabling agents to accumulate structured knowledge from experience and reuse it across tasks, \textsc{SkillGraph} can improve the sample efficiency and reliability of autonomous agents in domains such as household assistance, web navigation, and information retrieval. The graph-structured skill memory also enhances interpretability: users can inspect which skills were retrieved, how they are related, and why certain decisions were made, facilitating human oversight of agent behavior. Furthermore, the progressive unlocking mechanism provides a built-in safety property---agents are restricted to well-mastered foundational skills before being exposed to more complex behaviors, reducing the risk of premature deployment of unreliable capabilities.
+
+\paragraph{Potential risks and limitations.}
+As with other LLM agent systems, \textsc{SkillGraph} inherits the biases and failure modes of the underlying language model. Skills distilled from trajectories may encode undesirable patterns if the training data contains biased behaviors. The teacher model used for graph evolution (e.g., skill insertion, merge, split) may introduce errors or hallucinated skills, which could propagate through the graph. We mitigate this through the deprecation mechanism that removes consistently failing skills, but additional safeguards (e.g., human-in-the-loop skill review) may be necessary for safety-critical applications. Our current evaluation focuses on simulated environments; deployment in real-world settings would require careful validation of skill quality and additional safety constraints.
+
+\section{LLM Usage Statement}
+\label{app:llm_usage}
+
+Large language models were used in this work in two capacities. \textbf{(1)~As part of the research methodology:} LLMs serve as the teacher model for skill distillation, SFT data generation, and graph evolution operations (insertion, merge, split), and as the base policy fine-tuned via RL, as described in Section~\ref{sec:method}. \textbf{(2)~For writing assistance:} LLMs were used to polish the language and improve the presentation of this manuscript. All LLM-assisted content has been manually reviewed, verified, and edited by the authors. The authors take full responsibility for the accuracy and integrity of all claims, results, and statements presented in this paper.
+
+\section{Asset Licenses}
+\label{app:licenses}
+
+Table~\ref{tab:licenses} summarizes the licenses of all datasets, environments, and models used in this work. All assets are publicly available and permit academic research use.
+

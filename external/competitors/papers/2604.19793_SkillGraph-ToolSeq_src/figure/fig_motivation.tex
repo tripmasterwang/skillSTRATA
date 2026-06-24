@@ -1,0 +1,17 @@
+\begin{figure}[!t]
+\centering
+\includegraphics[
+  width=\columnwidth,
+  trim=117.98bp 1061.36bp 648.92bp 98.99bp,
+  clip
+]{figure/fig_motivation_ppt.pdf}
+\caption{The \emph{selection--ordering gap}. For query ``I want to convert dollars
+to euros'', semantic similarity ranks \texttt{Convert} first
+(sim\,=\,0.048\,$>$\,0.018), inverting the required execution order:
+one must first call \texttt{SuppCurrencies} (short for
+\texttt{supported\_currencies\_for\_currency\_converter\_v2}) to obtain
+the valid currency list before invoking \texttt{Convert}.
+SkillGraph, mined from LLM agent trajectories, encodes the dependency
+\texttt{SC}$\!\to\!$\texttt{Conv} ($P=0.78$) and restores the correct sequence.}
+\label{fig:motivation}
+\end{figure}

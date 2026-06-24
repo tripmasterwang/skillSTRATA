@@ -1,0 +1,36 @@
+\begin{algorithm}[t]
+    \caption{\textsc{SkillGraph}: Skill-Augmented RL for Agents via Evolving Skill Graphs}
+    \label{alg:skillgraph}
+    \small
+    \begin{algorithmic}[1]
+    \REQUIRE Base policy $\pi_{\text{base}}$, teacher model $\mathcal{M}$, environment $\mathrm{Env}$, unlocking threshold $\theta_{\text{unlock}}$
+    \ENSURE Trained policy $\pi_{\theta^*}$, evolved skill graph $\mathcal{G}^*$
+    \STATE \textbf{--- Graph Construction ---}
+    \STATE $\mathcal{T}^+, \mathcal{T}^- \leftarrow \text{Rollout}(\pi_{\text{base}}, \mathrm{Env})$
+    \STATE $\mathcal{V} \leftarrow \mathcal{M}(\mathcal{T}^+, \mathcal{T}^-)$ \hfill $\triangleright$ Distill general \& task-specific skills
+    \STATE $\mathcal{G}=(\mathcal{V},\mathcal{E}) \leftarrow \text{InitGraph}(\mathcal{V})$ \hfill $\triangleright$ Add prereq, enhance, co-occur edges
+    \STATE Compute topological levels $\ell(v)$ for all $v \in \mathcal{V}$
+    \STATE \textbf{--- Cold-Start SFT ---}
+    \STATE $\theta \leftarrow \text{SFT}(\pi_{\text{base}},\, \mathcal{M}(\mathrm{Env}, \mathcal{G}))$; \quad $\pi_{\text{ref}} \leftarrow \pi_\theta$
+    \STATE $\mathcal{V}_{\text{active}} \leftarrow \{v : \ell(v) = 0\}$; \quad $L \leftarrow 0$ \hfill $\triangleright$ Unlock level-0 skills
+    \STATE \textbf{--- Closed-Loop RL Training ---}
+    \FOR{epoch $= 1$ to $N$}
+        \FOR{each task $d$ with type $t(d)$}
+            \STATE \textbf{Graph-Aware Retrieval:}
+            \STATE \quad $\mathcal{R}_{\text{seed}} \leftarrow \{v \in \mathcal{V}_{\text{active}} : \mathrm{category}(v)=\texttt{general} \vee \mathrm{category}(v)=t(d)\}$
+            \STATE \quad $\mathcal{R}_{\text{BFS}} \leftarrow \text{BackwardBFS}(\mathcal{R}_{\text{seed}}, \mathcal{G}, D)$; \quad $\mathcal{R}_{\text{beam}} \leftarrow \text{ForwardBeam}(\mathcal{R}_{\text{seed}}, \mathcal{G}, B)$
+            \STATE \quad $\mathcal{R}_{\text{ret}} \leftarrow \text{TopoSort}_{\mathcal{G}}(\mathcal{R}_{\text{seed}} \cup \mathcal{R}_{\text{BFS}} \cup \mathcal{R}_{\text{beam}})$ \hfill $\triangleright$ Cap at $K_{\max}$ skills
+            \STATE Sample $G$ rollouts $\{\tau^{(i)}\}_{i=1}^G \sim \pi_\theta(\cdot \mid d, \mathcal{R}_{\text{ret}})$; \quad Update $\theta$ via GRPO
+        \ENDFOR
+        \IF{validation step}
+            \STATE \textbf{Graph Evolution:}
+            \STATE \textit{Node-level:} Insert / Merge / Split / Deprecate skills via $\mathcal{M}$
+            \STATE \textit{Edge-level:} Reinforce paths in $\tau^+$; Discover new co-occur edges; Decay \& prune weak edges
+            \STATE Recompute topological levels $\ell(v)$
+            \STATE \textbf{Progressive Unlocking:} \textbf{if} $\bar{p}(L) \geq \theta_{\text{unlock}}$ \textbf{then} $\mathcal{V}_{\text{active}} \leftarrow \mathcal{V}_{\text{active}} \cup \{v : \ell(v) = L{+}1\}$; $L \leftarrow L{+}1$
+        \ENDIF
+    \ENDFOR
+    \RETURN $\pi_\theta, \mathcal{G}$
+    \end{algorithmic}
+    \end{algorithm}
+\vspace{10pt}

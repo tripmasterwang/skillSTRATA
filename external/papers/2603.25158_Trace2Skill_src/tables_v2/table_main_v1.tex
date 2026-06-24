@@ -1,0 +1,64 @@
+\begin{table*}[t]
+\centering
+\setlength{\tabcolsep}{3.5pt}
+\caption{Main spreadsheet results across skill-author (evolves the skill) and skill-user (runs it at inference) models. SpreadsheetBench reports Vrf (verified), Soft (problem pass rate), and Hard (task pass rate); WikiTQ and HiTab are out-of-distribution (OOD) table-QA transfer, and $\mathrm{Avg}{=}(\mathrm{ID}_{\mathrm{avg}}{+}\mathrm{OOD}_{\mathrm{avg}})/2$ equally weights in-distribution (ID, SpreadsheetBench) and OOD. Reference rows are absolute scores; evolved rows are signed deltas from the Human-Written (Deepening) or Parametric (Creation) baseline. \textbf{Bold} marks the largest absolute score per column. Per-seed standard deviations are in \cref{tab:main_std}.}
+\label{tab:main_v1}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}l ccccc ccccc c@{}}
+\toprule
+& \multicolumn{5}{c}{\textit{Skill User: Qwen3.5-122B-A10B}}
+& \multicolumn{5}{c}{\textit{Skill User: Qwen3.5-35B-A3B}}
+& \\
+\cmidrule(lr){2-6}\cmidrule(lr){7-11}
+& \multicolumn{3}{c}{\textit{SpreadsheetBench}} & \multicolumn{2}{c}{\textit{OOD}}
+& \multicolumn{3}{c}{\textit{SpreadsheetBench}} & \multicolumn{2}{c}{\textit{OOD}}
+& \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-6}\cmidrule(lr){7-9}\cmidrule(lr){10-11}
+\textbf{Condition}
+    & \textbf{Vrf}$\uparrow$ & \textbf{Soft}$\uparrow$ & \textbf{Hard}$\uparrow$ & \textbf{WikiTQ}$\uparrow$ & \textbf{HiTab}$\uparrow$
+    & \textbf{Vrf}$\uparrow$ & \textbf{Soft}$\uparrow$ & \textbf{Hard}$\uparrow$ & \textbf{WikiTQ}$\uparrow$ & \textbf{HiTab}$\uparrow$
+    & \textbf{Avg}$\uparrow$ \\
+\midrule
+\multicolumn{12}{l}{\textit{Baseline (absolute scores)}} \\
+\quad No Skill
+    & 27.67 & 28.90 & 17.57 & 21.50 & 14.42 & 19.00 & 18.00 & 4.60 & 13.33 & 19.12 & 18.19 \\
+\quad Human-Written
+    & 48.33 & 36.30 & 17.03 & 74.68 & 41.31 & 9.67 & 13.03 & 3.37 & 9.02 & 5.30 & 26.93 \\
+\quad Parametric
+    & 26.17 & 36.60 & 17.50 & 23.73 & 17.36 & 20.17 & 13.70 & 3.87 & 20.14 & 13.94 & 19.23 \\
+\midrule
+\multicolumn{12}{l}{\textit{Skill Author: Qwen3.5-122B-A10B}} \\[2pt]
+\multicolumn{12}{l}{\quad\textit{Deepening (Delta from init: Human-Written)}} \\
+\quad\quad +Error
+    & \cellcolor{Green3!46}+17.50 & \cellcolor{Green3!57}+10.30 & \cellcolor{Green3!50}+10.40 & \cellcolor{Green3!2}+1.62 & \cellcolor{Green3!5}+2.14 & \cellcolor{Green3!60}\textbf{+27.00} & \cellcolor{Green3!39}+9.44 & \cellcolor{Green3!24}+2.86 & \cellcolor{Green3!13}+9.26 & \cellcolor{Green3!16}+9.55 & \cellcolor{Green3!30}+9.28 \\
+\quad\quad +Success
+    & \cellcolor{Green3!47}+18.00 & \cellcolor{Green3!47}+8.60 & \cellcolor{Green3!42}+8.70 & \cellcolor{Red1!11}-10.35 & \cellcolor{Red1!2}-0.95 & \cellcolor{Green3!44}+19.66 & \cellcolor{Green3!28}+6.84 & \cellcolor{Green3!11}+1.33 & \cellcolor{Green3!17}+12.09 & \cellcolor{Green3!37}+22.33 & \cellcolor{Green3!26}+8.15 \\
+\quad\quad +Combined
+    & \cellcolor{Green3!57}\textbf{+21.50} & \cellcolor{Green3!60}\textbf{+10.87} & \cellcolor{Green3!60}\textbf{+12.50} & \cellcolor{Green3!5}+4.56 & \cellcolor{Green3!6}+2.97 & \cellcolor{Green3!47}+21.16 & \cellcolor{Green3!37}+8.84 & \cellcolor{Green3!15}+1.80 & \cellcolor{Green3!9}+6.64 & \cellcolor{Green3!20}+11.94 & \cellcolor{Green3!31}+9.65 \\[2pt]
+\multicolumn{12}{l}{\quad\textit{Creation (Delta from init: Parametric)}} \\
+\quad\quad +Error
+    & \cellcolor{Green3!60}+22.83 & \cellcolor{Green3!21}+3.77 & \cellcolor{Green3!28}+5.87 & \cellcolor{Green3!8}+7.89 & \cellcolor{Red1!4}-1.70 & \cellcolor{Green3!19}+8.66 & \cellcolor{Green3!39}+9.53 & \cellcolor{Green3!33}+4.00 & \cellcolor{Green3!3}+2.06 & \cellcolor{Green3!16}+9.64 & \cellcolor{Green3!22}+6.79 \\
+\quad\quad +Success
+    & \cellcolor{Green3!40}+15.33 & \cellcolor{Red1!5}-0.93 & \cellcolor{Green3!21}+4.33 & \cellcolor{Green3!25}+23.70 & \cellcolor{Green3!42}+19.89 & \cellcolor{Green3!29}+12.83 & \cellcolor{Green3!48}+11.57 & \cellcolor{Green3!51}+6.13 & \cellcolor{Green3!42}+30.36 & \cellcolor{Green3!48}\textbf{+28.90} & \cellcolor{Green3!55}+16.96 \\
+\quad\quad +Combined
+    & \cellcolor{Green3!37}+14.00 & \cellcolor{Red1!3}-0.63 & \cellcolor{Green3!17}+3.53 & \cellcolor{Green3!34}+32.32 & \cellcolor{Green3!49}+23.11 & \cellcolor{Green3!34}+15.50 & \cellcolor{Green3!60}\textbf{+14.50} & \cellcolor{Green3!60}\textbf{+7.23} & \cellcolor{Green3!41}+29.70 & \cellcolor{Green3!46}+27.71 & \cellcolor{Green3!60}+18.62 \\[2pt]
+\midrule
+\multicolumn{12}{l}{\textit{Skill Author: Qwen3.5-35B-A3B}} \\[2pt]
+\multicolumn{12}{l}{\quad\textit{Deepening (Delta from init: Human-Written)}} \\
+\quad\quad +Error
+    & \cellcolor{Green3!44}+16.67 & \cellcolor{Green3!47}+8.50 & \cellcolor{Green3!39}+8.14 & \cellcolor{Red1!7}-6.36 & \cellcolor{Red1!5}-2.38 & \cellcolor{Green3!39}+17.33 & \cellcolor{Green3!38}+9.17 & \cellcolor{Green3!40}+4.83 & \cellcolor{Green3!4}+2.71 & \cellcolor{Green3!13}+8.08 & \cellcolor{Green3!18}+5.64 \\
+\quad\quad +Success
+    & \cellcolor{Green3!6}+2.17 & \cellcolor{Green3!15}+2.73 & \cellcolor{Green3!16}+3.30 & \cellcolor{Green3!2}+1.46 & \cellcolor{Green3!4}+1.70 & \cellcolor{Green3!27}+12.33 & \cellcolor{Green3!24}+5.87 & \cellcolor{Green3!10}+1.23 & \cellcolor{Green3!60}\textbf{+43.23} & \cellcolor{Green3!57}+34.70 & \cellcolor{Green3!40}+12.44 \\
+\quad\quad +Combined
+    & \cellcolor{Green3!18}+6.67 & \cellcolor{Green3!21}+3.87 & \cellcolor{Green3!20}+4.17 & \cellcolor{Green3!3}+2.65 & \cellcolor{Green3!5}+2.44 & \cellcolor{Green3!44}+20.00 & \cellcolor{Green3!24}+5.77 & \cellcolor{Green3!20}+2.36 & \cellcolor{Green3!59}+42.20 & \cellcolor{Green3!60}+36.46 & \cellcolor{Green3!45}\textbf{+14.04} \\[2pt]
+\multicolumn{12}{l}{\quad\textit{Creation (Delta from init: Parametric)}} \\
+\quad\quad +Error
+    & \cellcolor{Green3!3}+1.00 & \cellcolor{Red1!43}-7.70 & \cellcolor{Green3!5}+1.03 & \cellcolor{Green3!60}\textbf{+57.65} & \cellcolor{Green3!60}\textbf{+28.25} & \cellcolor{Green3!9}+3.83 & \cellcolor{Green3!30}+7.30 & \cellcolor{Green3!22}+2.66 & \cellcolor{Green3!18}+12.66 & \cellcolor{Green3!29}+17.81 & \cellcolor{Green3!49}+15.22 \\
+\quad\quad +Success
+    & \cellcolor{Green3!14}+5.33 & \cellcolor{Red1!25}-4.57 & \cellcolor{Green3!12}+2.43 & \cellcolor{Green3!9}+9.09 & \cellcolor{Green3!5}+2.34 & \cellcolor{Green3!13}+5.66 & \cellcolor{Green3!24}+5.80 & \cellcolor{Green3!22}+2.63 & \cellcolor{Green3!5}+3.31 & \cellcolor{Green3!31}+18.94 & \cellcolor{Green3!18}+5.65 \\
+\quad\quad +Combined
+    & \cellcolor{Green3!22}+8.33 & \cellcolor{Red1!32}-5.83 & \cellcolor{Green3!10}+2.00 & \cellcolor{Green3!32}+30.82 & \cellcolor{Green3!36}+16.93 & \cellcolor{Green3!10}+4.33 & \cellcolor{Green3!40}+9.73 & \cellcolor{Green3!39}+4.73 & \cellcolor{Green3!25}+18.00 & \cellcolor{Green3!42}+25.22 & \cellcolor{Green3!43}+13.31 \\[2pt]
+\bottomrule
+\end{tabular}
+}%
+\end{table*}

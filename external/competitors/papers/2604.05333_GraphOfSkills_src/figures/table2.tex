@@ -1,0 +1,105 @@
+\begin{figure*}[t]
+\caption{Sensitivity to library size on full SkillsBench under GPT-5.2 Codex. Left: compact summary table for Vanilla Skills, Vector Skills, and GoS. Right: reward and input-token trends as the skill repository grows from 200 to 2,000 skills. GoS preserves the strongest reward once the library becomes moderately large, while both retrieval-based methods substantially weaken the growth of prompt cost relative to flat exposure.}
+\label{fig:scaleup-skillsbench}
+\centering
+% 左侧：表格部分 (稍微调窄一点占 46%，给中间和图表留白)
+\begin{minipage}[c]{0.46\textwidth}
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.0} % 【关键修改1】拉大表格行高，让表格显得更高，以匹配右侧图表
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{@{}llrrr@{}}
+\toprule
+N & Method & R $\uparrow$ & T $\downarrow$ & S $\downarrow$ \\
+\midrule
+200  & Vanilla Skills    & \textbf{32.5} & 1.85 & \textbf{701.6} \\
+     & Vector Skills & 21.2 & \textbf{1.06} & 833.8 \\
+     & + GoS         & \underline{32.1} & \underline{1.36} & \underline{731.2} \\
+\addlinespace[2pt]
+500  & Vanilla Skills    & \underline{26.0} & 1.93 & \textbf{756.8} \\
+     & Vector Skills & 20.7 & \textbf{1.10} & \underline{849.5} \\
+     & + GoS         & \textbf{31.4} & \textbf{1.16} & 890.3 \\
+\addlinespace[2pt]
+1000 & Vanilla Skills    & \underline{27.4} & 3.19 & \textbf{686.8} \\
+     & Vector Skills & 21.5 & \textbf{1.24} & 773.0 \\
+     & + GoS         & \textbf{34.4} & \underline{1.38} & \underline{715.6} \\
+\addlinespace[2pt]
+2000 & Vanilla Skills    & \underline{26.7} & 5.84 & \textbf{733.5} \\
+     & Vector Skills & 23.8 & \textbf{1.11} & 799.8 \\
+     & + GoS         & \textbf{31.3} & \underline{1.14} & \underline{788.0} \\
+\bottomrule
+\end{tabular}
+
+\vspace{8pt}
+\parbox{0.95\linewidth}{\scriptsize \textbf{N}: library size, \textbf{R}: reward, \textbf{T}: input tokens (M), \textbf{S}: runtime (s).}
+\end{minipage}\hfill
+% 右侧：折线图部分 (占比 50%)
+\begin{minipage}[c]{0.52\textwidth}
+\centering
+\begin{tikzpicture}
+
+% 上方图表：Reward
+\begin{axis}[
+    name=plot1, 
+    width=0.82\linewidth, % 【关键修改2】让出 12% 宽度给 Y 轴数字，防止超出页面边界
+    height=2.0cm,         % 【关键修改3】高度压低至 1.4cm
+    scale only axis, 
+    xmode=log,
+    log basis x=10,
+    xmin=180, xmax=2200, 
+    xtick={200,500,1000,2000}, 
+    xticklabels=\empty, 
+    ymin=16, ymax=37, 
+    ymajorgrids=true,
+    grid style={draw=gray!15},
+    axis line style={draw=black!50},
+    tick style={draw=black!50},
+    label style={font=\footnotesize},
+    tick label style={font=\footnotesize},
+    ylabel={Reward (\%)},
+    legend columns=3, 
+    legend style={
+        draw=none, fill=none, font=\scriptsize, 
+        at={(0.5,1.05)}, anchor=south, 
+        /tikz/every even column/.append style={column sep=0.3cm}
+    },
+    legend cell align=left,
+]
+\addplot+[color=black!55, mark=square*, dashed, line width=0.95pt, mark size=2pt] coordinates {(200,32.5) (500,26.0) (1000,27.4) (2000,26.7)};
+\addplot+[color=orange!85!black, mark=triangle*, dashdotted, line width=1.0pt, mark size=2.3pt] coordinates {(200,21.2) (500,20.7) (1000,21.5) (2000,23.8)};
+\addplot+[color=darkblue, mark=*, line width=1.2pt, mark size=2.2pt] coordinates {(200,32.1) (500,31.4) (1000,34.4) (2000,31.3)};
+\legend{Vanilla Skills, Vector Skills, GoS}
+\end{axis}
+
+% 下方图表：Tokens
+\begin{axis}[
+    name=plot2,
+    at={(plot1.below south west)}, 
+    anchor=north west,
+    yshift=-0.15cm,       % 稍微调整上下图间隙
+    width=0.82\linewidth, % 【关键修改2】同上
+    height=2.0cm,         % 【关键修改3】同上
+    scale only axis, 
+    xmode=log,
+    log basis x=10,
+    xmin=180, xmax=2200, 
+    xtick={200,500,1000,2000},
+    xticklabels={200,500,1000,2000}, 
+    ymin=0, ymax=6.5,
+    ymajorgrids=true,
+    grid style={draw=gray!15},
+    axis line style={draw=black!50},
+    tick style={draw=black!50},
+    label style={font=\footnotesize},
+    tick label style={font=\footnotesize},
+    xlabel={Skill library size},
+    ylabel={Tokens (M)}, 
+]
+\addplot+[color=black!55, mark=square*, dashed, line width=0.95pt, mark size=2pt] coordinates {(200,1.850) (500,1.925) (1000,3.188) (2000,5.836)};
+\addplot+[color=orange!85!black, mark=triangle*, dashdotted, line width=1.0pt, mark size=2.3pt] coordinates {(200,1.063) (500,1.102) (1000,1.244) (2000,1.106)};
+\addplot+[color=darkblue, mark=*, line width=1.2pt, mark size=2.2pt] coordinates {(200,1.340) (500,1.157) (1000,1.380) (2000,1.136)};
+\end{axis}
+\end{tikzpicture}
+\end{minipage}
+
+\end{figure*}

@@ -1,0 +1,65 @@
+\centering
+\small
+\setlength{\tabcolsep}{3.5pt}
+\caption{Agentic error analysis (+Error) versus single-call +Error~LLM, across Deepening and Creation and all 122B/35B author--user pairs. Vrf/Soft/Hard, the OOD splits (WikiTQ/HiTab), and Avg are as in \cref{tab:main_v1}. \textbf{Bold} marks the better of the two methods per column.}
+\label{tab:agentic_ablation}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}l ccccc ccccc c@{}}
+\toprule
+& \multicolumn{5}{c}{\textit{Skill User: Qwen3.5-122B-A10B}}
+& \multicolumn{5}{c}{\textit{Skill User: Qwen3.5-35B-A3B}}
+& \\
+\cmidrule(lr){2-6}\cmidrule(lr){7-11}
+& \multicolumn{3}{c}{\textit{SpreadsheetBench}} & \multicolumn{2}{c}{\textit{OOD}}
+& \multicolumn{3}{c}{\textit{SpreadsheetBench}} & \multicolumn{2}{c}{\textit{OOD}}
+& \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-6}\cmidrule(lr){7-9}\cmidrule(lr){10-11}
+\textbf{Condition}
+    & \textbf{Vrf} & \textbf{Soft} & \textbf{Hard} & \textbf{WikiTQ} & \textbf{HiTab}
+    & \textbf{Vrf} & \textbf{Soft} & \textbf{Hard} & \textbf{WikiTQ} & \textbf{HiTab}
+    & \textbf{Avg} \\
+\midrule
+%% ── 122B Author ──────────────────────────────────────────────────────────────
+\multicolumn{12}{l}{\textit{Skill Author: Qwen3.5-122B-A10B}} \\[2pt]
+\multicolumn{12}{l}{\quad\textit{Deepening}} \\
+\quad +Error (ours)
+    & {65.83}      & {\textbf{46.60}} & {\textbf{27.43}} & {\textbf{76.30}} & {\textbf{43.45}}
+    & \textbf{36.67}          & \textbf{22.47}              & \textbf{6.23}               & \textbf{18.28} & \textbf{14.85}
+    & \textbf{36.21} \\
+\quad +Error LLM
+    & {\textbf{67.00}} & {43.93}       & {25.23}          & {39.81} & {36.68}
+    & 25.00                   & 22.43                       & 6.23                        & 11.24 & 9.74
+    & 28.00 \\[2pt]
+\multicolumn{12}{l}{\quad\textit{Creation}} \\
+\quad +Error (ours)
+    & {\textbf{49.00}} & {\textbf{40.37}} & {\textbf{23.37}} & {31.62} & {15.66}
+    & \textbf{28.83}          & \textbf{23.23}              & \textbf{7.87}               & 22.20 & 23.58
+    & 26.02 \\
+\quad +Error LLM
+    & {27.17}      & {27.73}          & {16.20}          & {\textbf{47.26}} & {\textbf{30.26}}
+    & 19.83                   & 17.60                       & 4.70                        & \textbf{23.30} & \textbf{36.53}
+    & \textbf{26.60} \\
+\midrule
+%% ── 35B Author ───────────────────────────────────────────────────────────────
+\multicolumn{12}{l}{\textit{Skill Author: Qwen3.5-35B-A3B}} \\[2pt]
+\multicolumn{12}{l}{\quad\textit{Deepening}} \\
+\quad +Error (ours)
+    & \textbf{65.00}          & \textbf{44.80}              & \textbf{25.17}              & 68.32 & 38.93
+    & {27.00}      & {\textbf{22.20}} & {8.20}           & {\textbf{11.73}} & {\textbf{13.38}}
+    & \textbf{32.58} \\
+\quad +Error LLM
+    & 37.83                   & 22.93                       & 12.83                       & \textbf{77.05} & \textbf{42.05}
+    & {\textbf{30.50}} & {20.17}       & {\textbf{8.73}} & {9.95} & {12.73}
+    & 28.80 \\[2pt]
+\multicolumn{12}{l}{\quad\textit{Creation}} \\
+\quad +Error (ours)
+    & \textbf{27.17}          & \textbf{28.90}              & \textbf{18.53}              & \textbf{81.38} & \textbf{45.61}
+    & {\textbf{24.00}} & {\textbf{21.00}} & {\textbf{6.53}} & {\textbf{32.80}} & {31.75}
+    & \textbf{34.45} \\
+\quad +Error LLM
+    & 22.00                   & 27.67                       & 16.60                       & 54.61 & 37.93
+    & {23.50}      & {16.87}          & {4.93}           & {11.24} & \textbf{33.75}
+    & 26.49 \\
+\bottomrule
+\end{tabular}
+}%

@@ -1,0 +1,67 @@
+\input{table/alg}
+\section{Experiments}
+\label{sec:experiments}
+\subsection{Experimental Setup}
+
+\input{table/alf_web}
+\paragraph{Environments.}
+ALFWorld~\citep{shridhar2020alfworld} is a text-based household interaction environment that covers six task categories (Pick, Look, Clean, Heat, Cool, Pick2), each requiring multi-step goal-directed manipulation. WebShop~\citep{yao2022webshop} presents a web navigation challenge in which agents must search, browse, and purchase products meeting specific user requirements. For search-augmented question answering, we evaluate on three single-hop benchmarks---NQ~\citep{kwiatkowski2019nq}, TriviaQA~\citep{joshi2017triviaqa}, and PopQA~\citep{mallen2023popqa}---and four multi-hop benchmarks---HotpotQA~\citep{yang2018hotpotqa}, 2Wiki~\citep{ho2020twowiki}, MuSiQue~\citep{trivedi2022musique}, and Bamboogle~\citep{press2023bamboogle}.
+
+\paragraph{Baselines.}
+We compare \textsc{SkillGraph} against four groups of methods. \textbf{(1) Closed-source LLMs}: GPT-4o~\citep{openai2024gpt4o} and Gemini-2.5-Pro~\citep{comanici2025gemini}, serving as strong references. \textbf{(2) Prompt-based and memory-augmented methods}: ReAct~\citep{yao2022react}, Reflexion~\citep{shinn2023reflexion}, Mem0~\citep{chhikara2025mem0}, MemP~\citep{fang2025memp}, ExpeL~\citep{zhao2024expel}, and SimpleMem~\citep{liu2025simplemem}, which use in-context experience without parameter updates. \textbf{(3) RL-based methods}: RLOO~\citep{ahmadian2024rloo} and GRPO~\citep{shao2024deepseekmath}. \textbf{(4) Memory-augmented RL methods}: MemRL~\citep{zhang2026memrl}, EvolveR~\citep{wu2025evolver}, Mem0+GRPO, SimpleMem+GRPO, and SkillRL~\citep{xia2025skillrl}. For search-augmented QA, we additionally compare against CoT~\citep{wei2022chain}, RAG~\citep{arslan2024survey}, Search-o1~\citep{li2025searcho1}, Search-R1~\citep{jin2025searchr1} and ZeroSearch~\citep{sun2025zerosearch}.
+
+\paragraph{Implementation details.}
+We adopt Qwen2.5-7B-Instruct~\citep{bai2023qwen} as the base policy $\pi_{\text{base}}$, initialized via cold-start SFT, and OpenAI o3~\citep{openai2025o3} as the teacher model $\mathcal{M}$ for skill distillation, SFT data generation, and graph evolution operations. RL training uses GRPO with learning rate $1 \times 10^{-6}$, KL coefficient $\beta=0.01$, clipping parameter $\epsilon_c=0.2$, train batch size $16$, and group size $G=8$. For graph-aware retrieval, we cap the retrieved skill sequence at $K_{\max}=8$, set backward-BFS depth $D=2$, and forward beam width $B=3$. For graph evolution, edges are initialized with weights $w=0.3$ (co-occur) and $w=0.2$ (enhance); at each validation checkpoint, successful paths receive additive reinforcement $\alpha=0.05$, all weights decay by factor $\gamma=0.99$, and edges below $w_{\min}=0.05$ are pruned. Node-level evolution uses merge threshold $\tau_{\text{merge}}=0.85$, and at most $m=3$ newly inserted skills per update. Progressive unlocking activates level-$(L{+}1)$ skills when the average success rate of level-$L$ skills exceeds $\theta_{\text{unlock}}=0.6$.
+
+\subsection{Main Results}
+
+\paragraph{Comparison with baselines.}
+Table~\ref{tab:main} reports results on ALFWorld and WebShop. \textsc{SkillGraph} achieves the best overall performance on both benchmarks.
+\textit{(i)} Notably, \textsc{SkillGraph} with a 7B open-source model substantially outperforms closed-source LLMs: it surpasses GPT-4o by $42.6$ points and Gemini-2.5-Pro by $30.3$ points on ALFWorld, and exceeds both by over $48$ points on WebShop, demonstrating that structured skill reasoning can compensate for the scale gap.
+\textit{(ii)} Compared with prompt-based and memory methods, \textsc{SkillGraph} outperforms the best method (ExpeL) by $44.3$ points on ALFWorld, with the largest gains on Clean ($100.0$ vs.\ $55.0$) and Heat ($100.0$ vs.\ $56.2$). These subtasks require executing prerequisite actions in a strict order, which flat retrieval cannot enforce but graph-aware retrieval handles naturally.
+\textit{(iii)} Over the vanilla GRPO baseline with the same optimizer, \textsc{SkillGraph} improves by $13.0$ and $18.3$ points on ALFWorld and WebShop respectively, directly quantifying the benefit of graph-structured skill guidance in reducing exploration burden.
+\textit{(iv)} Against the strongest prior method SkillRL, \textsc{SkillGraph} achieves slightly higher ALFWorld performance while gaining $11.7$ points on WebShop. The gap stems from the evolving graph structure: graph evolution continuously refines the skill set and discovers inter-skill relations (e.g., query refinement $\to$ attribute matching $\to$ price comparison), providing higher-quality compositional guidance than a static flat skill bank.
+
+\paragraph{Generalization to search-augmented QA.}
+\input{table/search}
+Table~\ref{tab:qa} reports results on seven QA benchmarks. Trained only on NQ and HotpotQA, \textsc{SkillGraph} achieves the highest average performance ($48.9$) and generalizes zero-shot to five unseen datasets.
+On single-hop tasks, \textsc{SkillGraph} surpasses all baselines on NQ ($52.9$) and PopQA ($52.6$), improving over SkillRL by $2.1$ and $2.6$ respectively. This advantage stems from graph evolution, which keeps the skill set aligned with the evolving policy rather than relying on a fixed skill library.
+On multi-hop tasks, \textsc{SkillGraph} leads on HotpotQA ($44.7$) and 2Wiki ($43.4$), where prerequisite-ordered retrieval helps decompose chained queries into sub-questions.
+These results confirm that the structured skill representation learned from two training domains transfers effectively to unseen tasks, demonstrating strong generalization without task-specific adaptation.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{figure/skill_graph_evolution.pdf}
+    \vspace{-20pt}
+    \caption{Skill graph evolution over training on WebShop. Left: node counts (total, active, inserted, deprecated). Middle: edge counts by type. Right: average node success rate.}
+    \label{fig:graph_evolution}
+    \vspace{-10pt}
+\end{figure}
+\subsection{Analysis}
+
+\input{table/ablation}
+\paragraph{Ablation study.}
+Table~\ref{tab:ablation} isolates each component's contribution. The components exhibit complementary strengths across environments.
+On ALFWorld, removing graph-aware retrieval causes the largest single drop ($-31.2$), confirming that the rigid multi-step subtasks (e.g., Clean, Heat) critically depend on prerequisite-ordered skill sequences, consistent with the large gains reported in the main results.
+On WebShop, graph evolution ($-14.1$) and graph structure ($-11.7$) contribute the most, indicating that WebShop benefits primarily from maintaining a high-quality, evolving skill set---the correct skills matter more than their ordering in this flexible navigation setting, which explains why the graph structure gap over SkillRL ($+11.7$) is larger than the retrieval ordering gap.
+Cold-start SFT yields the largest combined drop ($-17.2$ on both), confirming that a good initialization is essential for RL convergence in complex agent environments.
+
+\paragraph{Skill graph evolution dynamics.}
+Figure~\ref{fig:graph_evolution} tracks graph statistics over training. Node count grows from ${\sim}20$ to ${\sim}140$ via failure-driven insertion, but the active count plateaus earlier as deprecation prunes failing skills---a self-regulating loop that prevents unbounded growth. Co-occur edges grow fastest through automatic discovery, while prerequisite and enhance edges increase steadily via path reinforcement, showing that the graph discovers relational structure beyond initial construction. The average node success rate rises confirming that evolution progressively filters low-quality skills while reinforcing useful ones.
+
+\begin{figure}[t]
+    \centering
+    \begin{minipage}[t]{0.48\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figure/webshop_task_score.pdf}
+    \end{minipage}\hfill
+    \begin{minipage}[t]{0.48\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figure/prompt_length.pdf}
+    \end{minipage}
+    \caption{Training dynamics and context efficiency. Left: WebShop task score over training epochs. Right: average prompt length during training.}
+    \label{fig:analysis_curves}
+\end{figure}
+
+\paragraph{Convergence and context efficiency.}
+Figure~\ref{fig:analysis_curves}~(left) shows that \textsc{SkillGraph} surpasses SkillRL after roughly $50$ training steps and maintains a consistently higher score thereafter, converging to a superior final performance. The faster convergence is driven by dependency-ordered retrieval reducing early-stage exploration and progressive unlocking acting as an automatic curriculum. Figure~\ref{fig:analysis_curves}~(right) shows that graph-guided retrieval maintains shorter prompts than flat retrieval throughout training, because graph traversal limits the retrieved set to topologically relevant skills rather than all semantically similar entries, improving both inference cost and signal-to-noise ratio.

@@ -1,0 +1,26 @@
+\begin{table*}[t]
+\caption{\textbf{R} denotes average reward (\%), \textbf{T} denotes tokens, and \textbf{S} denotes runtime (\textbf{s}) ($\uparrow$ indicates larger values are better, and $\downarrow$ denotes smaller values are better). Results are means over two runs per setting. For ALFWorld, average reward equals success rate. The top-performing results are highlighted in \textbf{bold}, and the second-best are \underline{underlined}.}
+\label{results-table}
+\centering
+\small
+\setlength{\tabcolsep}{6pt}
+\begin{tabular}{ll ccc c ccc}
+\toprule
+& & \multicolumn{3}{c}{SkillsBench} & & \multicolumn{3}{c}{ALFWorld} \\
+\cmidrule(lr){3-5} \cmidrule(lr){7-9}
+Model & Method & R $\uparrow$ & T $\downarrow$ & S $\downarrow$ & & R $\uparrow$ & T $\downarrow$ & S $\downarrow$ \\
+\midrule
+& Vanilla Skills & \underline{25.0} & 967,791 & 465.8 & & 89.3 & 1,524,401 & 53.2 \\
+Claude Sonnet 4.5 & Vector Skills & 19.3 & \underline{894,640} & \textbf{357.3} & & \underline{93.6} & \underline{28,407} & \textbf{37.8} \\
+& + GoS & \textbf{31.0} & \textbf{860,315} & \underline{364.9} & & \textbf{97.9} & \textbf{27,215} & \underline{49.2} \\
+\midrule
+& Vanilla Skills & \underline{17.2} & 942,113 & 580.7 & & 47.1 & 2,184,823 & 88.6 \\
+MiniMax M2.7 & Vector Skills & 10.4 & \textbf{852,881} & \underline{552.9} & & \underline{50.7} & \underline{66,109} & \underline{73.4} \\
+& + GoS & \textbf{18.7} & \underline{867,452} & \textbf{502.5} & & \textbf{54.3} & \textbf{65,227} & \textbf{68.8} \\
+\midrule
+& Vanilla Skills & \underline{27.4} & 3,187,749 & \textbf{686.8} & & 89.3 & 1,435,614 & 83.3 \\
+GPT-5.2 Codex & Vector Skills & 21.5 & \textbf{1,243,648} & 773.0 & & \underline{92.9} & \textbf{34,436} & \textbf{57.0} \\
+& + GoS & \textbf{34.4} & \underline{1,379,773} & \underline{715.6} & & \textbf{93.6} & \underline{46,462} & \underline{64.7} \\
+\bottomrule
+\end{tabular}
+\end{table*}

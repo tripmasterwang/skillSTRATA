@@ -1,0 +1,16 @@
+\section{Related Work}
+\label{sec:related}
+
+\myparagraph{Agent skills.}
+Agent skills package task procedures, domain knowledge, and operational guardrails into loadable artifacts \citep{anthropic2026skills}, but ecosystems and benchmarks show the abstraction is delicate: focused, well-matched skills improve performance, while broad, stale, or mismatched ones can distract or even hurt the agent \citep{zhou2026comprehensivesurveyagentskills,li2026skillsbenchbenchmarkingagentskills,han2026sweskillsbenchagentskillsactually,li2026singleagentskillsreplacemultiagent,li2026organizingorchestratingbenchmarkingagent,liang2026skillnetcreateevaluateconnect}. \systemname{} keeps this view of skills as portable SoPs, but asks a narrower question: how to compress broad execution evidence into guidance that stays useful across models and task distributions.
+
+\myparagraph{Experience memory for agent self-evolution.}
+Another line improves agents by storing execution experience for reuse, from verbal reflection and accumulated behaviors to retrieval, procedural, workflow, or replay memories queried at test time \citep{shinn2023reflexionlanguageagentsverbal,wang2023voyageropenendedembodiedagent,ouyang2026reasoningbankscalingagentselfevolving,fang2026mempexploringagentprocedural,wang2024agentworkflowmemory,qian2024investigateconsolidateexploitgeneralstrategyintertask,nottingham2024skillsetoptimizationreinforcing,liu2025contextualexperiencereplayselfimprovement}. These methods share our premise that experience contains reusable structure but retain an external memory or retrieval module, whereas \systemname{} distills many local observations into one static skill directory. It favors inductive compression over nearest-neighbor reuse and avoiding test-time dependence on retrieval quality.
+
+
+\myparagraph{Skill and policy evolution.}
+The closest concurrent line evolves skills from agent interaction or guided refinement
+\citep{zheng2025skillweaverwebagentsselfimprove,yang2026autoskillexperiencedrivenlifelonglearning,jiang2026xskillcontinuallearningexperience,alzubi2026evoskillautomatedskilldiscovery,zhou2026mementoskillsletagentsdesign,ma2026skillgenverifiedinferencetime,anthropic2026skillcreatorconversation},
+while a broader family co-evolves policies, skills, or agent loops online through skill-augmented reinforcement learning, intrinsic skill evolution, or meta-learning
+\citep{xia2026skillrlevolvingagentsrecursive,li2026ariseagentreasoningintrinsic,xia2026metaclawjusttalk}.
+\systemname{} asks a complementary question: whether traces collected with one model can be compressed into a static skill directory that directly benefits other models and tasks. Instead of maintaining a test-time memory, retrieval index, or updated policy, it consolidates trajectory-local evidence into reusable SoPs that can be loaded unchanged. Thus, our focus is not adaptive reuse within a particular agent loop, but portability of the learned artifact across deployment settings.

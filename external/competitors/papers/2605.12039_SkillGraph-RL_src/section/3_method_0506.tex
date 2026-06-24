@@ -1,0 +1,113 @@
+\section{\textsc{SkillGraph}}
+\label{sec:method}
+
+We present \textsc{SkillGraph}, a framework that organizes agent skills as a directed dependency graph and co-evolves the graph with the agent's policy through RL. The key insight is that explicitly modeling inter-skill relations enables two mutually reinforcing capabilities: \emph{structured retrieval} that produces dependency-aware skill sequences for compositional planning, and \emph{principled evolution} that uses training feedback to refine both individual skills and their relations. As illustrated in Figure~\ref{fig:overview}, the framework consists of three stages---graph construction (Section~\ref{sec:construction}), graph-aware retrieval (Section~\ref{sec:retrieval}), and graph evolution (Section~\ref{sec:evolution})---integrated into a closed-loop training procedure (Section~\ref{sec:training}).
+
+\subsection{Graph Construction}
+\label{sec:construction}
+
+The first step is to build a skill graph that makes inter-skill relations explicit, providing the structural foundation for both retrieval and evolution.
+
+\paragraph{Skill distillation.}
+We collect trajectories by rolling out the base policy $\pi_{\text{base}}$ in the environment. A teacher language model $\mathcal{M}$ then distills successful trajectories $\tau^+$ and failed trajectories $\tau^-$ into two types of skills: \emph{general skills}, which capture domain-independent reasoning strategies applicable across tasks (e.g., ``verify each sub-goal before proceeding''), and \emph{task-specific skills}, which encode strategies tied to particular task types (e.g., ``check the microwave for heated objects''). Each skill is represented as a compact record containing a title, a core principle describing the strategy, an applicability condition, and a category label indicating its type.
+
+\paragraph{Graph structure.}
+The distilled skills form the node set $\mathcal{V}$ of a directed graph $\mathcal{G} = (\mathcal{V}, \mathcal{E})$, where $\mathcal{E}$ denotes the edge set. To capture how skills relate to one another, we define three typed edges:
+\begin{itemize}[leftmargin=*, nosep]
+    \item \textbf{Prerequisite} ($A \xrightarrow{\texttt{prereq}} B$): skill $A$ must be applied before skill $B$.
+    \item \textbf{Enhances} ($A \xrightarrow{\texttt{enhance}} B$): general skill $A$ improves the effectiveness of task-specific skill $B$.
+    \item \textbf{Co-occurs} ($A \xleftrightarrow{\texttt{co\_occur}} B$): skills $A$ and $B$ frequently appear together in successful episodes.
+\end{itemize}
+Each edge $e \in \mathcal{E}$ carries a weight $w(e) \in [0, 1]$ reflecting the strength of the relation, which is dynamically adjusted during training. Each node $v \in \mathcal{V}$ maintains running statistics---usage count $n_\text{use}(v)$, success count $n_\text{succ}(v)$, and empirical success rate $\hat{p}(v) = n_\text{succ}(v) / n_\text{use}(v)$---that drive both evolution decisions and progressive unlocking in Section~\ref{sec:evolution}. Based on the directed prerequisite and enhancement edges, each node is assigned a topological level $\ell(v)$ indicating its position in the dependency hierarchy: level-0 skills have no prerequisites, while higher-level skills depend on lower-level ones. Details of edge initialization and level computation are provided in Appendix~\ref{app:entire_pipeline}.
+
+\subsection{Graph-Aware Retrieval}
+\label{sec:retrieval}
+
+Flat skill retrieval returns a set of individually relevant skills but ignores their dependencies, making it inadequate for tasks that require ordered skill composition. To address this, we design a graph-aware retrieval procedure that traverses the skill graph to produce a dependency-respecting sequence of skills. Given a task description $d$ with task type $t(d)$, retrieval proceeds in three steps.
+
+\paragraph{Seed selection.}
+We first identify task-relevant entry points from the currently active skill set $\mathcal{V}_{\text{active}} \subseteq \mathcal{V}$, which contains skills that have been progressively unlocked (see Section~\ref{sec:unlocking}). From $\mathcal{V}_{\text{active}}$, we select all general skills and task-type-matched skills as seed nodes, where $\mathcal{R}$ denotes a retrieved subset of skill nodes:
+\begin{equation}
+    \mathcal{R}_{\text{seed}} = \left\{ v \in \mathcal{V}_{\text{active}} : \mathrm{category}(v)=\texttt{general} \;\vee\; \mathrm{category}(v)=t(d) \right\}.
+    \label{eq:seed_selection}
+\end{equation}
+
+\paragraph{Graph expansion.}
+Starting from the seed set $\mathcal{R}_{\text{seed}}$, we expand in two complementary directions to recover the full dependency context:
+\begin{itemize}[leftmargin=*, nosep]
+    \item \emph{Backward expansion} traverses incoming prerequisite edges via breadth-first search (BFS) up to a maximum depth $D$, producing the backward-expanded set $\mathcal{R}_{\text{BFS}}$ that recovers foundational skills the seeds depend on but that may belong to other task categories.
+    \item \emph{Forward expansion} explores outgoing edges via beam search with beam width $B$, producing the forward-expanded set $\mathcal{R}_{\text{beam}}$. Each candidate node $v$ receives an expansion score $\sigma(v)$ propagated from its predecessors: $\sigma(v) = \max_{u \in \text{parents}(v)} \sigma(u) \cdot w(u,v)$, where seed nodes are initialized with $\sigma = 1$. This prioritizes skills connected by well-validated relations.
+\end{itemize}
+
+\paragraph{Topological ordering.}
+The union of seeds, backward-expanded, and forward-expanded skills is topologically sorted according to the graph's dependency edges, producing an ordered skill sequence:
+\begin{equation}
+    \mathcal{R}_{\text{ret}} = \text{TopoSort}_{\mathcal{G}}\!\left(\mathcal{R}_{\text{seed}} \cup \mathcal{R}_{\text{BFS}} \cup \mathcal{R}_{\text{beam}}\right).
+    \label{eq:topo_sort}
+\end{equation}
+This sequence, capped at $K_{\max}$ skills, is prepended to the task prompt as structured guidance for the policy. Because the ordering reflects dependency relations, the agent receives skills in a natural simple-to-complex order that mirrors how sub-tasks should be composed.
+
+\subsection{Graph Evolution}
+\label{sec:evolution}
+
+A static skill graph cannot keep pace with a continuously improving policy: new failure modes demand new skills, redundant skills accumulate, and the relative importance of inter-skill relations shifts over training. To address this, we evolve both the skill nodes and their edges at each validation step, driven by trajectory-level feedback.
+
+\subsubsection{Node-Level: Adaptive Granularity Control}
+\label{sec:granularity}
+
+We maintain appropriate skill granularity through four operations, each triggered by specific diagnostic signals from the training process.
+
+\paragraph{Insert.} When the agent fails on tasks that existing skills do not adequately cover, we generate targeted new skills. The teacher model $\mathcal{M}$ analyzes a batch of failed trajectories $\tau^-$ together with the current skill set $\mathcal{R}_{\text{existing}}$, and proposes up to $m$ new skills addressing the identified failure causes:
+\begin{equation}
+    \{s_{\text{new}}^1, \ldots, s_{\text{new}}^m\} = \mathcal{M}(\text{insert},\, \tau^-,\, \mathcal{R}_{\text{existing}}).
+    \label{eq:skill_insert}
+\end{equation}
+
+\paragraph{Merge.} Redundant skills inflate context length and dilute retrieval precision. We identify candidates for merging by measuring the overlap of their graph neighborhoods: let $\mathcal{N}(v)$ denote the set of neighbors of node $v$ in $\mathcal{G}$; when two skills $s_i$ and $s_j$ share most of their neighbors (Jaccard similarity $J(\mathcal{N}(s_i), \mathcal{N}(s_j)) \geq \tau_{\text{merge}}$, where $\tau_{\text{merge}}$ is the merge threshold), they likely encode redundant strategies and are synthesized into a single unified skill by $\mathcal{M}$.
+
+\paragraph{Split.} Overly broad skills that conflate distinct sub-strategies exhibit moderate success rates despite high usage ($\hat{p}(v) \in [0.15, 0.4]$ and $n_{\text{use}}(v) \geq 10$). We decompose such skills into more focused sub-skills via $\mathcal{M}$, reconnecting them with prerequisite edges.
+
+\paragraph{Deprecate.} Skills that are frequently retrieved but consistently fail ($n_{\text{use}}(v) \geq 20$ and $\hat{p}(v) < 0.15$) are deprecated and excluded from future retrieval, preventing them from degrading policy performance.
+
+\subsubsection{Edge-Level: Topology Evolution}
+\label{sec:edge_evolution}
+
+While node-level operations adjust \emph{what} skills are available, edge-level operations adjust \emph{how} skills relate to one another, directly shaping retrieval quality.
+
+\paragraph{Path reinforcement.} Successful trajectories provide evidence that the retrieved skill sequence was effective. We reinforce this signal by increasing the weight of every edge along the successful path:
+\begin{equation}
+    w(e) \leftarrow \min\bigl(w(e) + \alpha,\; 1.0\bigr), \quad \forall e \in \text{path}(\tau^+),
+    \label{eq:path_reinforce}
+\end{equation}
+where $\alpha \in (0, 1)$ is the reinforcement step size and $\text{path}(\tau^+)$ denotes the set of edges traversed by the skill sequence used in successful trajectory $\tau^+$. This makes validated dependency paths more likely to be traversed in future retrieval.
+
+\paragraph{Co-occurrence discovery.} New inter-skill relations emerge as the policy improves. When two skills co-occur in a successful episode but are not yet connected in $\mathcal{G}$, we add a $\texttt{co\_occur}$ edge to capture this discovered association.
+
+\paragraph{Decay and pruning.} To prevent stale relations from persisting indefinitely, all edge weights undergo multiplicative decay with decay factor $\gamma \in (0, 1)$: $w(e) \leftarrow \gamma \cdot w(e)$ at each checkpoint. Edges whose weights fall below a pruning threshold $w_{\min}$ are removed from $\mathcal{E}$. After all updates, node levels $\ell(v)$ are recomputed to reflect the new topology.
+
+\subsubsection{Progressive Unlocking}
+\label{sec:unlocking}
+
+Exposing the agent to complex, high-level skills before it has mastered their prerequisites can hinder learning. To implement a curriculum over skill complexity, \textsc{SkillGraph} progressively unlocks skills based on their topological level. Initially, only level-0 foundational skills are active. Let $L$ denote the current highest active level. When the average success rate of level-$L$ skills exceeds an unlocking threshold $\theta_{\text{unlock}}$, level-$(L{+}1)$ skills are activated:
+\begin{equation}
+    \bar{p}(L) = \frac{1}{|\{v : \ell(v) = L\}|} \sum_{v:\, \ell(v) = L} \hat{p}(v) \;\geq\; \theta_{\text{unlock}} \;\;\Longrightarrow\;\; \mathcal{V}_{\text{active}} \leftarrow \mathcal{V}_{\text{active}} \cup \{v : \ell(v) = L+1\}.
+    \label{eq:unlock}
+\end{equation}
+This ensures that the agent builds competence from the ground up, with advanced compositional skills becoming available only when their foundations are reliable.
+
+\subsection{Policy Optimization and Closed-Loop Training}
+\label{sec:training}
+
+We optimize the skill-augmented policy $\pi_\theta$, parameterized by $\theta$, using GRPO~\citep{shao2024deepseekmath}. For each task, we sample a group of $G$ rollouts from $\pi_\theta$ conditioned on the task description $d$ and the retrieved skill sequence $\mathcal{R}_{\text{ret}}$. Each rollout $i$ receives a binary reward $R_i \in \{0,1\}$ indicating task success, and the estimated advantage $\hat{A}_i$ is computed by within-group normalization:
+\begin{equation}
+    \hat{A}_i = \frac{R_i - \text{mean}(\{R_j\}_{j=1}^G)}{\text{std}(\{R_j\}_{j=1}^G) + \epsilon},
+    \label{eq:advantage}
+\end{equation}
+where $\epsilon$ is a small constant for numerical stability. The policy is updated via the clipped surrogate objective with a KL penalty anchored to the reference policy $\pi_{\text{ref}}$ (initialized from the SFT model):
+\begin{equation}
+    \mathcal{L}(\theta) = \mathbb{E}\!\left[\min\!\left(r(\theta)\,\hat{A}_i,\; \text{clip}(r(\theta), 1\!-\!\epsilon_c, 1\!+\!\epsilon_c)\,\hat{A}_i\right) - \beta\, D_{\text{KL}}\!\left(\pi_\theta \,\|\, \pi_{\text{ref}}\right)\right],
+    \label{eq:grpo}
+\end{equation}
+where $r(\theta) = \pi_\theta / \pi_{\text{old}}$ is the importance sampling ratio between the current and previous policies, $\epsilon_c$ is the clipping parameter, $\beta$ is the KL penalty coefficient, and $D_{\text{KL}}$ denotes the Kullback--Leibler divergence.
+
+At each validation step, the full graph evolution pipeline is executed, creating a closed training loop: the improving policy generates richer trajectories that refine the skill graph through node- and edge-level updates, while the refined graph provides higher-quality structured retrieval that accelerates subsequent policy learning. The complete procedure is summarized in Algorithm~\ref{alg:skillgraph}.

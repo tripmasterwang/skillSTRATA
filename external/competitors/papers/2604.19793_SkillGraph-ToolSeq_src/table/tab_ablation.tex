@@ -1,0 +1,38 @@
+\begin{table}[!t]
+\caption{Ablation Study on ToolBench (9,965 test instances).
+\textit{Top}: Stage-2 Hybrid-Rerank mixing coefficient $\alpha$ (Stage-1: GS-Hybrid fixed).
+Set-F1 improves from 0.266 ($\alpha{=}0$) to 0.271 ($\alpha{=}0.4$); ordering metrics
+are $\alpha$-stable for $\alpha \in [0.1, 1.0]$, confirming stage decoupling.
+\textit{Middle}: Stage-2 strategy comparison (Stage-1: GS-Hybrid, $\alpha{=}0.4$).
+\textit{Bottom}: LR feature-group ablation (inference-time zeroing; Set-F1 fixed at 0.271 for all).}
+\label{tab:ablation}
+\centering
+\small
+\setlength{\tabcolsep}{4pt}%
+\begin{tabular}{l@{\hspace{5pt}}c@{\hspace{5pt}}c@{\hspace{5pt}}c}
+\toprule
+\textbf{Configuration} & \textbf{Ord.Prec} & \textbf{Kendall-$\tau$} & \textbf{Trans.Acc} \\
+\midrule
+\multicolumn{4}{l}{\textit{Stage-2 HR $\alpha$ sensitivity (Stage-1: GS-Hybrid fixed)}} \\
+$\alpha = 0.0$              & 0.134 & 0.052 & 0.084 \\
+$\alpha = 0.1$              & 0.152 & 0.087 & 0.097 \\
+$\alpha = 0.4$ \textbf{(ours)} & 0.154 & 0.092 & 0.098 \\
+$\alpha = 0.7$              & 0.153 & 0.089 & 0.097 \\
+$\alpha = 1.0$              & 0.152 & 0.087 & 0.097 \\
+\midrule
+\multicolumn{4}{l}{\textit{Stage-2 strategy ($\alpha{=}0.4$; Stage-1: GS-Hybrid)}} \\
+Sem-Sort                        & 0.133 & 0.051 & 0.083 \\
+Hybrid-Rerank (non-learned)     & 0.152 & 0.089 & 0.097 \\
+Opt-Perm (graph-only exhaustive) & 0.151 & 0.086 & 0.097 \\
+Learned Reranker \textbf{(ours)}& \textbf{0.156} & \textbf{0.096} & \textbf{0.098} \\
+\midrule
+\multicolumn{4}{l}{\textit{LR feature ablation (Set-F1 $= 0.271$ for all rows)}} \\
+Full LR (all 8 features)            & \textbf{0.157} & \textbf{0.096} & \textbf{0.099} \\
+$-$ Graph transitions (f3--f6)      & 0.149 & 0.081 & 0.095 \\
+$-$ Positional priors (f7--f8)      & 0.152 & 0.086 & 0.095 \\
+$-$ Semantic features (f1--f2)      & 0.154 & 0.090 & 0.099 \\
+\bottomrule
+\end{tabular}
+\smallskip\par\noindent\footnotesize
+$^\dagger$Results across blocks may differ by ${\leq}0.003$ due to run-to-run variation in Stage-1 retrieval (approximate nearest-neighbour search); this affects all methods including non-learned ones. LR additionally exhibits ${\leq}0.001$ variation from training stochasticity.
+\end{table}

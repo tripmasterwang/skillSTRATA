@@ -1,0 +1,22 @@
+\section{Conclusion}
+Skill retrieval is a critical bottleneck for agents over massive skill libraries: vanilla loading is expensive and noisy, while vector retrieval misses prerequisite chains.
+%
+GoS addresses both by retrieving a small, jointly sufficient bundle---target skill plus the parsers, preprocessors, and dependencies needed for execution.
+%
+On the 1{,}000-skill SkillsBench under GPT-5.2 Codex, GoS attains a peak reward gain of $25.55\%$ over the full-loading baseline while reducing total tokens by $56.72\%$, and improves over both baselines in every one of the six model--benchmark blocks spanning Claude Sonnet 4.5, MiniMax M2.7, and GPT-5.2 Codex.
+%
+The library-size study from 200 to 2{,}000 skills confirms this advantage holds as the library scales.
+
+
+
+\section*{Limitations}
+
+\noindent\textbf{Graph construction quality.} GoS depends on the quality of its offline skill graph. Poorly documented skills or ambiguous I/O schemas can degrade edge quality, and these errors propagate into retrieval.
+
+\noindent\textbf{Static graph after construction.} The skill graph is built offline and is not updated from downstream execution traces or user feedback. As a result, GoS cannot self-correct when an induced dependency is wrong or when a useful relation was missed during construction.
+
+\noindent\textbf{Evaluation scope.} Our evaluation covers two benchmarks (SkillsBench and ALFWorld) and three model families. We have not evaluated GoS on multimodal embodied agents, web-browsing agents, or other interactive settings where the operational notion of a skill may differ from the one studied here.
+
+
+% \section*{Ethical Considerations} 
+% This paper presents work whose goal is to advance the field of machine learning. There are no potential societal consequences of our work which we feel must be specifically highlighted here.

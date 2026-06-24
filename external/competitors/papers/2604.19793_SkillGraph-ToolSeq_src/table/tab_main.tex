@@ -1,0 +1,26 @@
+\begin{table*}[!t]
+\caption{Tool Sequence Recommendation Results on ToolBench (9,965 Test Instances).
+Best results in \textbf{bold}.
+Significance vs.\ GS-Hybrid+Sem-Sort (bootstrap, 10K resamples):
+$^{*}$~$p{<}0.05$, $^{**}$~$p{<}0.01$.}
+\label{tab:main}
+\centering
+\small
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Method} & \textbf{Set-F1} & \textbf{Ord.Prec} & \textbf{Kendall-$\tau$} & \textbf{Trans.Acc} & \textbf{1st.Acc} \\
+\midrule
+\multicolumn{6}{l}{\textit{Single-Stage Methods}} \\
+Semantic Only         & 0.266 & 0.123 & 0.042 & 0.070 & 0.262 \\
+BM25                  & 0.215 & 0.073 & $-$0.001 & 0.041 & 0.143 \\
+Beam Search           & 0.240 & 0.149 & 0.089 & 0.099 & 0.206 \\
+Hybrid Sem-Graph      & 0.271 & 0.130 & 0.044 & 0.082 & 0.262 \\
+\midrule
+\multicolumn{6}{l}{\textit{Two-Stage Methods (Stage~1: GS-Hybrid)}} \\
+GS-Hybrid + Sem-Sort              & 0.271 & 0.133 & 0.051 & 0.083 & 0.262 \\
+GS-Hybrid + Hyb-Rerank            & 0.271 & 0.152$^{**}$ & 0.089$^{**}$ & 0.097$^{**}$ & 0.252 \\
+GS-Hybrid + Opt-Perm              & 0.271 & 0.151 & 0.086 & 0.097 & 0.227 \\
+GS-Hybrid + LR (ours)             & \textbf{0.271} & \textbf{0.156}$^{**}$ & \textbf{0.096}$^{**}$ & \textbf{0.098}$^{**}$ & 0.234 \\
+\bottomrule
+\end{tabular}
+\end{table*}

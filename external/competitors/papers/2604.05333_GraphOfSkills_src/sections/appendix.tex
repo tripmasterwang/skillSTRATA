@@ -1,0 +1,433 @@
+\appendix
+
+\section{Appendix Overview}
+
+To make the supplementary material easier to navigate, we briefly summarize the organization of the appendix before presenting the detailed evidence. The appendix is designed to complement the main paper along four axes: implementation fidelity, prompt/interface design, retrieval mechanics, and trajectory-grounded empirical analysis.
+
+\begin{table}[H]
+\centering
+\small
+\caption{Appendix roadmap. The table summarizes the role of each supplementary section and how it complements the main paper.}
+\label{tab:appendix_roadmap}
+\begin{ApdxTabFrame}
+\begin{tabular}{p{0.28\linewidth}p{0.62\linewidth}}
+\toprule
+\rowcolor{appendixolive}
+\apdxhdr{Section} & \apdxhdr{Purpose} \\
+\midrule
+Implementation Details & Documents how GoS is instantiated in code, including parsing, graph construction, hybrid seeding, diffusion, reranking, and hydration. \\
+Prompt and Interface Examples & Shows representative internal prompts and agent-facing interface rules used during graph construction and online retrieval. \\
+Core Retrieval Pseudocode & Gives compact pseudocode for the offline indexing pipeline and the online graph-based retrieval pipeline. \\
+Error Analysis & Separates retrieval misses, partial retrieval, execution drift, and infrastructure failures. \\
+Qualitative Analysis & Provides trajectory-grounded case studies that compare the actual skill context exposed under different retrieval conditions. \\
+\bottomrule
+\end{tabular}
+\end{ApdxTabFrame}
+\end{table}
+
+\section{Implementation Details}
+
+This appendix summarizes the implementation decisions behind GoS and clarifies how the abstract pipeline in the main text is instantiated in code. The purpose is not to enumerate every engineering detail, but to expose the concrete design choices that determine graph quality, retrieval behavior, and the final agent-facing bundle.
+
+\begin{table}[H]
+\centering
+\small
+\caption{GoS implementation summary. The table highlights the main design choices that determine graph construction, retrieval, and agent-facing hydration.}
+\label{tab:appendix_impl_summary}
+\begin{ApdxTabFrame}
+\begin{tabular}{p{0.23\linewidth}p{0.69\linewidth}}
+\toprule
+\rowcolor{appendixolive}
+\apdxhdr{Component} & \apdxhdr{Implementation choice} \\
+\midrule
+Node construction & Parser-first normalization from \texttt{SKILL.md} plus optional LLM completion of retrieval-critical semantic fields. \\
+Dependency edges & Directed edges induced by bidirectional output--input compatibility checks. \\
+Higher-order edges & Sparse LLM validation over a bounded candidate pool for workflow, semantic, and alternative relations. \\
+Seed retrieval & Hybrid semantic and lexical seeding over normalized node fields. \\
+Graph scoring & Reverse-aware typed Personalized PageRank with relation-specific reverse transitions. \\
+Final output & Reranked, budgeted hydration into agent-usable skill payloads with stable \texttt{Source:} paths. \\
+\bottomrule
+\end{tabular}
+\end{ApdxTabFrame}
+\end{table}
+
+\begin{table*}[!t]
+\centering
+\small
+\caption{Normalized node fields used at retrieval time. The table lists the fields retained in each skill node and their retrieval role in GoS.}
+\label{tab:appendix_node_fields}
+\begin{ApdxTabFrame}
+\begin{tabular}{p{0.24\linewidth}p{0.22\linewidth}p{0.44\linewidth}}
+\toprule
+\rowcolor{appendixolive}
+\apdxhdr{Field} & \apdxhdr{Primary role} & \apdxhdr{Why it matters} \\
+\midrule
+\texttt{name}, \texttt{description} & canonical identity and coarse semantic match & Provide the most stable high-level skill signature during lexical and semantic seeding. \\
+
+\texttt{one\_line\_capability} & concise capability abstraction & Helps retrieval align a task to what the skill actually does, rather than to document wording alone. \\
+
+\texttt{inputs}, \texttt{outputs} & executable interface schema & Support deterministic dependency induction and help retrieval recover prerequisite producers and consumers. \\
+
+\texttt{domain\_tags}, \texttt{tooling} & technical context & Improve matching on domain-specific libraries, APIs, and workflows when task language is underspecified. \\
+
+\texttt{example\_tasks} & usage priors & Improve recall for tasks described by objective or scenario rather than by direct tool names. \\
+
+\texttt{script\_entrypoints} & implementation affordances & Help the agent discover reusable scripts instead of re-implementing logic from scratch. \\
+
+\texttt{compatibility}, \texttt{allowed\_tools} & execution constraints & Preserve operational restrictions that are important for verifier-aligned use. \\
+
+\texttt{source\_path}, \texttt{rendered\_snippet} & hydration and agent consumption & Make retrieved skills directly inspectable inside the execution environment and keep the bundle compact. \\
+\bottomrule
+\end{tabular}
+\end{ApdxTabFrame}
+\end{table*}
+
+\begin{table*}[!t]
+\centering
+\small
+\caption{Relation types and edge weights used in reverse-aware graph diffusion. Forward weights govern transition mass along the stored edge direction; reverse weights govern backward propagation from a matched skill toward its likely prerequisites. Dependency edges, the only deterministically induced relation, receive the largest weight in both directions; the three LLM-validated relations receive smaller reverse weights to limit topical drift during diffusion.}
+\label{tab:appendix_relation_weights}
+\begin{ApdxTabFrame}
+\begin{tabular}{p{0.16\linewidth}p{0.10\linewidth}p{0.10\linewidth}p{0.22\linewidth}p{0.28\linewidth}}
+\toprule
+\rowcolor{appendixolive}
+\apdxhdr{Relation} & \apdxhdr{Forward} & \apdxhdr{Reverse} & \apdxhdr{Meaning} & \apdxhdr{Retrieval consequence} \\
+\midrule
+Dependency & 1.0 & 1.0 & Skill $u$ produces an artifact consumed by skill $v$ & Strongest forward and backward propagation, since recovering prerequisites is the main purpose of GoS. \\
+
+Workflow & 0.7 & 0.5 & Two skills are commonly chained in a concrete multi-step pipeline & Allows moderate backward expansion toward adjacent pipeline stages without dominating dependency evidence. \\
+
+Semantic & 0.4 & 0.2 & Two skills belong to the same narrow capability cluster & Provides weak smoothing across near-neighbor skills while limiting topical drift. \\
+
+Alternative & 0.3 & 0.1 & Two skills solve the same subproblem via different implementations & Provides minimal backward mass, mainly to keep interchangeable options reachable. \\
+\bottomrule
+\end{tabular}
+\end{ApdxTabFrame}
+\end{table*}
+
+\begin{table*}[!t]
+\centering
+\small
+\caption{GoS hyperparameters used in all reported experiments. Values are the defaults shipped in the released code and are held fixed across benchmarks, model families, and library sizes unless explicitly noted.}
+\label{tab:appendix_hyperparams}
+\begin{ApdxTabFrame}
+\begin{tabular}{p{0.30\linewidth}p{0.10\linewidth}p{0.50\linewidth}}
+\toprule
+\rowcolor{appendixolive}
+\apdxhdr{Hyperparameter} & \apdxhdr{Value} & \apdxhdr{Role} \\
+\midrule
+PPR restart $\alpha$ & 0.2 & Teleport probability in Eq.~\eqref{eq:ppr}; controls how much mass stays near the seeds. \\
+PPR max iterations & 50 & Power-iteration cap for the diffusion in Eq.~\eqref{eq:ppr}. \\
+PPR tolerance & $10^{-6}$ & Convergence threshold on $\lVert \mathbf{s}^{(\ell+1)} - \mathbf{s}^{(\ell)} \rVert$. \\
+Dependency I/O threshold $\zeta$ & 0.6 & Minimum schema-overlap score required to add a deterministic dependency edge. \\
+Validation candidates per node $k$ & 8 & Top-$k$ candidates per node sent to the LLM relation validator. \\
+Semantic seed pool & 20 & Dense-retrieval candidate count per query before merging. \\
+Lexical seed pool & 20 & Lexical-retrieval candidate count per query before merging. \\
+Seed set size & 5 & Number of merged seeds carried into graph diffusion. \\
+Retrieval top-$N$ & 8 & Maximum number of hydrated skills returned to the agent. \\
+Per-skill char budget & 2{,}400 & Truncation limit applied to each hydrated skill payload. \\
+Global context char budget & 12{,}000 & Total character budget over the hydrated bundle. \\
+\bottomrule
+\end{tabular}
+\end{ApdxTabFrame}
+\end{table*}
+
+\begin{ApdxCallout}
+\noindent\textbf{Pipeline Summary.}
+GoS proceeds in two phases. Offline, it parses local skill packages into normalized nodes, adds dependency edges by I/O matching, and augments the graph with sparse workflow, semantic, and alternative relations. Online, it forms a hybrid semantic--lexical seed set, applies reverse-aware graph diffusion, and returns a reranked, budgeted bundle of execution-ready skills.
+\end{ApdxCallout}
+
+\paragraph{Implementation Substrate.}
+GoS is implemented on top of a graph-backed retrieval substrate for workspace management, vector indexing, and graph storage, while replacing document-centric assumptions with skill-specific parsing, relation induction, and agent-oriented hydration. Concretely, the system maintains an HNSW vector index over skill representations together with a typed directed graph whose vertices are normalized skills and whose edges carry relation labels, directional semantics, and scalar weights. This yields a retrieval substrate in which semantic proximity and structural connectivity can be combined inside a single inference-time pipeline rather than treated as disjoint retrieval regimes.
+
+\paragraph{Parser-First Skill Normalization.}
+Each local \skillpackage{} is first parsed deterministically from its primary \texttt{SKILL.md} file and nearby package structure. The parser extracts the canonical name and description from YAML frontmatter, collects explicit input and output fields, recovers domain tags, tooling, example tasks, compatibility notes, and allowed tools from both frontmatter and markdown sections, and resolves script entrypoints by scanning the local \texttt{scripts/} directory when present. It also materializes a stable local source path and a rendered snippet used later for retrieval and hydration. This parser-first design keeps node construction anchored in executable package structure rather than relying entirely on free-form semantic extraction.
+
+\paragraph{LLM-Assisted Semantic Completion.}
+When package documentation is incomplete, GoS optionally performs a lightweight LLM pass over the full markdown body to recover retrieval-critical semantic fields, including capability summaries, inputs, outputs, domain tags, tooling, and example tasks. Importantly, this stage is constrained to normalize a single skill node and is not used to emit graph relations directly. In other words, the LLM here serves as a high-precision semantic completion module for node attributes rather than as an unconstrained graph-construction oracle. The inferred fields are then merged back with the deterministic parse, with the implementation favoring completed semantic fields only when they improve the retrieval representation.
+
+\paragraph{Typed Node Representation.}
+After normalization, each skill is serialized into a node record that stores both structured lists and compact textual views. Besides canonical descriptive fields, the node retains raw skill content, rendered snippets, script entrypoints, and a stable \texttt{Source:} path. This dual representation is operationally important: the graph and vector index operate over normalized fields, whereas the final agent-facing bundle requires concise but directly usable payloads that can be opened inside the execution environment without path reconstruction.
+
+\paragraph{Directed Typed Relation Induction.}
+The GoS graph is a typed directed graph rather than an undirected similarity graph. Dependency edges are induced deterministically by matching producer outputs against consumer inputs in both directions for each candidate pair. An edge $u \rightarrow v$ therefore has explicit executable semantics: $u$ can plausibly provide an artifact consumed by $v$. Because I/O compatibility is asymmetric in general, this dependency structure cannot be reduced to undirected similarity without losing the notion of prerequisite direction.
+
+Non-dependency relations, namely \emph{workflow}, \emph{semantic}, and \emph{alternative}, are added through sparse LLM validation rather than dense all-pairs inference. For each node, GoS first forms a bounded candidate pool by combining lexical overlap, semantic neighbors from the vector index, and I/O-based candidate expansion. The LLM is then asked only to validate high-confidence relations inside this restricted pool. This two-stage design keeps graph construction tractable and biases the resulting graph toward precision rather than density.
+
+\paragraph{Hybrid Seeding at Query Time.}
+At retrieval time, GoS does not rely on vector search alone. The system first optionally rewrites the raw task request into a compact query schema containing the goal, operations, artifacts, constraints, and high-value keywords. Semantic seeding is then obtained from nearest-neighbor search in embedding space, while lexical seeding is computed from token overlap over normalized node fields such as name, capability, I/O descriptors, tooling, example tasks, entrypoints, and snippets. These candidate pools are merged and reranked before graph diffusion, so the graph is seeded by a hybrid entry set rather than by a single retriever. In practice, this detail matters because the quality of the initial seeds strongly influences whether later graph expansion can recover the correct prerequisite chain.
+
+\paragraph{Reverse-Aware Structural Diffusion.}
+Retrieval over the graph uses a Personalized PageRank-style diffusion operator constructed from the directed typed edges. The implementation first inserts forward transition mass along each stored edge, and then injects type-specific reverse transitions so that relevance can flow back from a matched high-level skill toward likely prerequisites. The reverse coefficients are largest for dependency edges and smaller for workflow, semantic, and alternative links, reflecting the fact that reverse traversal is most justified when recovering executable prerequisites. Operationally, this means the graph remains directed, but retrieval is explicitly reverse-aware. GoS therefore does not collapse the graph into an undirected graph; instead, it performs controlled backward propagation during scoring.
+
+\paragraph{Reranking and Budgeted Hydration.}
+The stationary graph score is not exposed to the agent directly. After diffusion, GoS reranks candidate skills by combining graph relevance with field-level query evidence, then hydrates only the top skills into an agent-facing bundle under both per-skill and global context budgets. Each hydrated payload includes a concise skill rendering, relevant execution notes, and the original local source path. The retrieval output therefore functions as a bounded execution context rather than a generic search-result list. This final budgeted hydration step is essential for preserving the efficiency advantage over flat all-skills loading while still presenting enough structure for downstream execution.
+
+\paragraph{Section Summary.}
+From an implementation perspective, GoS is best understood as a hybrid graph-construction and retrieval system: deterministic parsing and I/O matching provide a reliable executable backbone; optional LLM semantic completion improves node quality when documentation is incomplete; sparse LLM relation validation adds higher-order inter-skill structure; and reverse-aware graph diffusion converts a small hybrid seed set into a compact, more execution-complete bundle. These implementation choices are what instantiate the central claim of the paper that structural retrieval should recover not only relevant skills, but also the prerequisite context needed to use them effectively.
+
+\section{Prompt and Interface Examples}
+
+\paragraph{Layered Prompt Design.}
+GoS uses two prompt layers with deliberately separated responsibilities. The first layer operates \emph{inside} the indexing and retrieval stack, where LLMs are used only for constrained normalization, optional query rewriting, and sparse relation validation. The second layer operates at the \emph{agent interface}, where the environment prompt tells the downstream agent when to call retrieval, how to interpret the returned bundle, and how strongly to prefer reuse over open-ended exploration. This separation is methodologically important. Graph-side prompts determine what semantic structure enters the retrieval substrate, whereas agent-side prompts determine whether that retrieved structure is converted into a verifier-aligned execution plan.
+
+\paragraph{Presentation Goal.}
+This section is not intended to enumerate full prompt templates. Instead, it exposes the narrow prompt fragments and interface rules that are most important for understanding the method. From a reviewer perspective, the key point is that GoS does not rely on unconstrained prompt engineering. The internal prompts are used to normalize or validate bounded objects, and the external interface is used to constrain downstream behavior once retrieval has occurred. Together, these prompts form an interface contract between offline graph construction and online execution.
+
+\begin{table*}[t]
+\centering
+\small
+\caption{Representative prompt and interface components in GoS. The table highlights the small set of prompt contracts that shape graph construction and downstream agent behavior.}
+\label{tab:appendix_prompt_examples}
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.2}
+\begin{ApdxTabFrame}[width=\textwidth]
+\begin{tabular}{p{0.16\textwidth}p{0.18\textwidth}p{0.27\textwidth}p{0.27\textwidth}}
+\toprule
+\rowcolor{appendixolive}
+\apdxhdr{Component} & \apdxhdr{Role} & \apdxhdr{Key constraint} & \apdxhdr{Intended effect} \\
+\midrule
+\textbf{Internal Prompt A}\\Skill semantic completion & Normalize one skill document into retrieval-critical fields. & Preserve canonical \texttt{name}/\texttt{description}; fill only node-local semantic fields; return an empty \texttt{edges} list. & Improve node quality when \texttt{SKILL.md} is incomplete while preventing relation hallucination. \\
+
+\textbf{Internal Prompt B}\\Relation validation & Verify whether a bounded candidate pair should receive a typed edge. & Restrict outputs to \{dependency, workflow, semantic, alternative\}; preserve exact source/target names; emit nothing when uncertain. & Keep the graph sparse and precise instead of generating dense all-pairs links. \\
+
+\textbf{Internal Prompt C}\\Query rewrite & Rewrite a raw request into a compact retrieval schema. & Extract \texttt{goal}, \texttt{operations}, \texttt{artifacts}, \texttt{constraints}, and \texttt{keywords} without redefining the task. & Improve seed-stage lexical and semantic coverage while preserving task intent. \\
+
+\textbf{Agent Interface}\\Retrieval usage contract & Tell the downstream agent when retrieval must be called and how the returned bundle should be used. & Run \texttt{graphskills-query} first; read \texttt{Retrieval Status}; use exact \texttt{Source:} paths; prefer adapting retrieved scripts; prioritize verifier-minimal behavior. & Make retrieval operational immediately, so the bundle narrows search instead of serving as optional background context. \\
+\bottomrule
+\end{tabular}
+\end{ApdxTabFrame}
+\end{table*}
+
+\paragraph{Internal Prompt A: Skill Semantic Completion.}
+The semantic-completion prompt is intentionally narrow. It asks the model to normalize exactly one skill document and extract only retrieval-critical fields. In the implementation, the prompt explicitly preserves the canonical \texttt{name} and \texttt{description} when present, emphasizes high precision, and requires the returned \texttt{edges} list to be empty. This design reflects a conservative use of LLMs: the model is allowed to fill semantic gaps in node attributes, but not to invent graph structure. Operationally, this improves the quality of node representations used for indexing while avoiding a common failure mode in LLM-built graphs, namely relation over-generation. The prompt is therefore best understood as a constrained semantic completion module, not as a latent graph generator.
+
+\paragraph{Internal Prompt B: Relation Validation.}
+The relation-validation prompt is invoked only after GoS has formed a small candidate pool using lexical overlap, semantic neighbors, and I/O-based expansion. The prompt defines four edge types: \emph{dependency}, \emph{workflow}, \emph{semantic}, and \emph{alternative}. It also explicitly instructs the model to prefer sparse, high-precision edges, to emit nothing when uncertain, and to preserve exact skill names in the \texttt{source} and \texttt{target} fields. This makes the prompt function more like a relation verifier than a free-form graph generator. In practice, this design is important because it limits graph density and preserves the typed semantics later used during reverse-aware diffusion.
+
+\begin{GosPromptBox}{Prompt excerpt: skill semantic completion}
+1. Extract exactly one skill node from the document.
+3. Infer only retrieval-critical fields: capability, inputs,
+   outputs, domain_tags, tooling, example_tasks.
+6. Use high precision. If uncertain, leave a field empty.
+7. Do not invent relationships. Return an empty `edges` list.
+\end{GosPromptBox}
+
+This excerpt illustrates the central design principle of the internal extraction prompt: GoS uses the LLM as a constrained semantic normalizer, not as an unconstrained graph author. For the appendix, the important point is not merely that an LLM appears in the pipeline, but that the allowable output space is sharply restricted to node-local semantic completion.
+
+\paragraph{Internal Prompt C: Query Rewrite.}
+The optional query-rewrite prompt maps a raw task request to a compact retrieval schema with fields such as \texttt{goal}, \texttt{operations}, \texttt{artifacts}, \texttt{constraints}, and \texttt{keywords}. The prompt explicitly instructs the model not to invent benchmark-specific labels and to leave unclear fields empty. This is consistent with the retrieval objective in GoS: rewriting is used only to expose retrieval-critical technical terms such as file formats, APIs, protocols, and concrete operations. It is not intended to change the task itself. When rewriting is disabled or unavailable, the system falls back to deterministic lexical normalization, so query rewriting is a retrieval enhancement rather than a mandatory dependency. In other words, the prompt improves lexical and semantic coverage at the seed stage, but it is not allowed to redefine the problem.
+
+\paragraph{Agent Interface Prompt.}
+In the SkillsBench GoS environment, the agent is instructed to begin with a targeted retrieval query built from the task goal, artifact or format, operation or API, and verifier-critical constraints. The interface then forces the agent to read the retrieval status before continuing. A \texttt{NO\_SKILL\_HIT} response means the agent must explicitly acknowledge that no relevant skill was found and proceed without claiming skill use. A \texttt{SKILL\_HIT} response means the returned bundle should be treated as a narrowing device: the agent is told to use the returned local source paths, inspect scripts before implementing from scratch, and prioritize the shortest path to verifier pass. This interface design matters because the main quality difference is often not whether some relevant skill exists somewhere in the library, but whether the agent receives a compact, execution-ready bundle early enough to affect the trajectory. In that sense, the interface prompt is part of the method rather than a presentation detail.
+
+\begin{GosPromptBox}{Prompt excerpt: agent-facing retrieval interface}
+Before writing any code, run:
+graphskills-query "goal + artifact/format + operation/API +
+verifier-critical constraint"
+
+- If Retrieval Status: NO_SKILL_HIT, proceed without claiming skill use.
+- If Retrieval Status: SKILL_HIT, use retrieved skills only as constraints.
+- Use the exact Source path already returned.
+- Prefer adapting retrieved scripts over broader re-implementation.
+\end{GosPromptBox}
+
+This second excerpt shows that the agent-facing interface is itself part of the method. It does not merely expose a search command. It constrains when retrieval is called, how the returned bundle is interpreted, and how aggressively the downstream agent is allowed to branch away from authoritative local implementations. The resulting effect is to make retrieval operational rather than decorative: the bundle is meant to narrow the search space immediately, not merely provide optional background context.
+
+\paragraph{Section Summary.}
+Taken together, these examples show that prompt design in GoS is not generic scaffolding. The internal prompts constrain how semantic structure enters the graph; the external interface constrains how retrieved structure enters the agent's working context. The two layers therefore form an interface contract between offline graph construction and online agent execution. This contract is especially important in our setting because many failures are not pure retrieval misses, but retrieval-hit trajectories in which the agent still drifts unless the interface strongly biases it toward verifier-minimal reuse. The appendix evidence should therefore be read as support for a broader methodological claim: in graph-augmented agent systems, retrieval quality depends not only on what is indexed, but also on how the retrieved structure is exposed and behaviorally enforced downstream.
+
+\section{Core Retrieval Pseudocode}
+
+\paragraph{Presentation Goal.}
+For completeness, we provide pseudocode for the two main algorithmic stages of GoS: offline graph construction and online structural retrieval. The presentation is intentionally close to the implementation, but abstracted enough to foreground the method rather than the surrounding engineering details.
+
+\begin{algorithm}[t]
+\caption{Offline graph construction for GoS}
+\label{alg:gos_offline}
+\begin{algobox}
+\alginput{Local skill documents $\mathcal{C}$, optional LLM services, linking budget $k$}
+\algoutput{Typed directed graph $G=(V,E)$ and vector index over normalized skills}
+\algstep{Initialize empty node set $V$ and edge set $E$.}
+\algstep{For each skill document $d \in \mathcal{C}$:}
+\algindent{Parse YAML frontmatter and markdown structure from \texttt{SKILL.md}.}
+\algindent{Extract deterministic fields: name, description, inputs, outputs, tags, tooling, \texttt{Source:} path, and script entrypoints.}
+\algindent{If retrieval-critical semantic fields are incomplete, run constrained semantic completion to fill capability, inputs, outputs, and example tasks.}
+\algindent{Serialize the result as a normalized skill node $v$ and add $v$ to $V$.}
+\algstep{For each ordered pair of nodes $(u,v)$ in a bounded candidate pool:}
+\algindent{Compute producer--consumer overlap between outputs of $u$ and inputs of $v$.}
+\algindent{If overlap exceeds threshold, add typed dependency edge $u \rightarrow v$.}
+\algstep{For each node $u$:}
+\algindent{Form a sparse candidate set using lexical similarity, semantic neighbors, and I/O-based expansion.}
+\algindent{Run constrained relation validation on this candidate set.}
+\algindent{Add validated workflow, semantic, and alternative edges to $E$.}
+\algstep{Build an embedding index over the normalized node representations.}
+\algstep{Persist the typed graph, vector index, and retrieval metadata to the GoS workspace.}
+\end{algobox}
+\end{algorithm}
+
+\begin{algorithm}[t]
+\caption{Online graph-based skill retrieval}
+\label{alg:gos_online}
+\begin{algobox}
+\alginput{Query $q$, prebuilt GoS workspace, retrieval budget $\tau$}
+\algoutput{Bounded execution bundle $B(q)$}
+\algstep{Optionally rewrite $q$ into a compact schema containing goal, operations, artifacts, constraints, and keywords.}
+\algstep{Retrieve semantic seed candidates from the vector index.}
+\algstep{Retrieve lexical seed candidates from normalized node fields.}
+\algstep{Merge the candidate pools and construct a seed distribution $\mathbf{p}$.}
+\algstep{Build a typed transition matrix over the graph.}
+\algindent{Add forward transition mass for each stored edge.}
+\algindent{Add relation-specific reverse mass, with the largest reverse coefficient on dependency edges.}
+\algstep{Run reverse-aware Personalized PageRank until convergence to obtain graph scores $\mathbf{s}^{\star}$.}
+\algstep{Rerank candidate skills using graph score plus direct field-level evidence from the query.}
+\algstep{Hydrate the ranked skills into agent-facing payloads with exact \texttt{Source:} paths and concise execution notes.}
+\algstep{Truncate the hydrated bundle under per-skill and global context budgets.}
+\algstep{Return retrieval status, ranked bundle summary, bounded agent-facing context, and graph evidence among selected skills when it fits the budget.}
+\end{algobox}
+\end{algorithm}
+
+\paragraph{Implementation Correspondence.}
+Algorithm~1 corresponds to the parser-first normalization and relation-induction logic in the GoS implementation. Algorithm~2 corresponds to the retrieval path and the reverse-aware Personalized PageRank utilities. In practice, these stages additionally include engineering details such as workspace bootstrapping, embedding-dimension checks, source-path rewriting for containerized environments, and context clipping under hard character budgets. We omit those details from the pseudocode because they are not conceptually central, but they are nevertheless important for stable end-to-end deployment.
+
+\section{Error Analysis}
+
+\paragraph{Error Taxonomy.}
+We distinguish retrieval-side errors from downstream execution failures, since these correspond to different limits of the overall system. A retrieval method can fail because it never surfaces the correct skill, because it retrieves an incomplete bundle that omits critical prerequisites, or because it produces a broadly adequate bundle that is subsequently misused by the downstream agent. Treating these failure modes separately is important for attributing gains correctly: GoS is designed to improve retrieval completeness, but it cannot by itself eliminate planning or execution failures once a bundle has already been provided. Across our trajectories, several of the most informative failures are not simple retrieval misses, but long-horizon search failures in which the correct general tool family is present and the agent still does not converge to a verifier-passing implementation.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Primary error modes in GoS-style retrieval experiments. The table separates retrieval failures, downstream execution failures, and infrastructure issues.}
+\label{tab:appendix_error_modes}
+\begin{ApdxTabFrame}
+\setlength{\tabcolsep}{4.5pt}
+\renewcommand{\arraystretch}{1.2}
+% Narrow third column caused bad header hyphenation; \rowcolor + booktabs leaves thin inter-column gaps—tighter \tabcolsep and ragged p-columns reduce both.
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.20\linewidth}>{\raggedright\arraybackslash}p{0.40\linewidth}>{\raggedright\arraybackslash}p{0.32\linewidth}@{}}
+\rowcolor{appendixolive}
+\apdxhdr{Error type} & \apdxhdr{Typical symptom} & \makecell[l]{\textcolor{white}{\textbf{Whether helps}}} \\
+\midrule
+Retrieval miss & The correct skill exists in the library but is never surfaced, so the agent falls back to a from-scratch path. & Yes; better seed quality and graph completion can reduce this failure. \\
+Partial retrieval & A topically relevant skill is retrieved, but a parser, setup routine, converter, or constraint-carrying prerequisite is absent. & Yes; this is the main failure mode GoS is designed to reduce. \\
+Good retrieval, bad execution & The retrieved bundle is broadly adequate, but the agent still drifts, over-engineers, or mismatches the verifier. & Only indirectly; this is primarily a backbone or planning issue. \\
+Infrastructure failure & Build, environment, or startup failures prevent a meaningful episode from occurring. & No; these are excluded from model-quality comparisons. \\
+\bottomrule
+\end{tabular}
+\end{ApdxTabFrame}
+\end{table}
+
+\paragraph{Retrieval Misses.}
+A retrieval miss occurs when the correct skill exists in the repository but is not surfaced at all. In this regime, the agent is forced onto a generic from-scratch path, so any downstream failure should be attributed primarily to the retriever rather than to execution drift. Misses typically arise when the query language does not overlap strongly with the skill description, when the task is phrased around a downstream objective but the critical skill is an upstream parser or setup utility, or when semantic retrieval overweights topical similarity relative to executable relevance. A representative example is \texttt{dapt-intrusion-detection}. In the failed GoS-style trajectory, the agent issued \texttt{graphskills-query} but did not recover \texttt{pcap-analysis}, instead receiving an irrelevant bundle that included items such as \texttt{dc-power-flow} and \texttt{dialogue-graph}. By contrast, the stronger baseline trajectory opened \texttt{pcap-analysis} and reused its tested helper code. The resulting difference in behavior is characteristic of a true retrieval miss: once the relevant analysis skill is absent, the task degrades into from-scratch implementation and fails the verifier.
+
+\paragraph{Partial Retrieval.}
+Partial retrieval is more subtle and often more important. Here, the retrieved bundle contains an obviously relevant high-level skill, but omits one or more prerequisite helpers needed for successful completion. In our setting, these missing items are often parsers, format converters, preprocessing utilities, setup routines, or constraint-carrying reference skills. This is precisely the regime in which graph-aware retrieval is intended to help: once a high-level skill is matched as a seed, reverse-aware propagation can recover supporting skills that are weak semantic matches to the raw query but strong structural neighbors in the skill graph. \texttt{earthquake-phase-association} illustrates the boundary of this idea. In the stronger all-skills trajectory, the agent assembled a coherent seismic stack including \texttt{gamma-phase-associator}, \texttt{obspy-data-api}, \texttt{seisbench-model-api}, and \texttt{seismic-picker-selection}, and the task passed. In the corresponding GoS case, the graph retrieval did bring in a partially relevant seismic bundle, but the resulting context was still less complete, and the task failed with reward $0.0$. This suggests that structural retrieval helps only when the recovered neighborhood is sufficiently complete to support the downstream pipeline, not merely when one or two domain-relevant skills are present.
+
+\paragraph{Good Retrieval, Bad Execution.}
+Some failures occur even when the retrieved bundle is broadly adequate. In these cases, the agent may still over-generalize the task, ignore a retrieved authoritative interface, implement unnecessary functionality, or fail to align with the verifier. These episodes matter because they bound what can be credited to retrieval alone. They also motivate the conservative agent-facing instructions used in our environments, which emphasize verifier-minimal solutions, direct use of returned local source paths, and avoidance of unnecessary branching. \texttt{energy-market-pricing} is a representative example: both all-skills and GoS had access to the relevant economic-dispatch / power-flow skill family and both eventually passed, but the all-skills trajectory required substantially more agent time before converging. This is not a retrieval miss; it is a difference in how efficiently a broadly adequate bundle is converted into a verifier-passing plan. Conversely, \texttt{adaptive-cruise-control} shows the opposite failure mode: the retrieved bundle included clearly relevant control skills such as \texttt{pid-controller}, \texttt{mpc-horizon-tuning}, \texttt{vehicle-dynamics}, and \texttt{simulation-metrics}, yet the run still finished with reward $0.0$. In that case the failure is better described as long-horizon execution drift or verifier mismatch rather than poor retrieval.
+
+A related example is \texttt{dialogue-parser}. Multiple conditions had access to relevant task structure, yet only the strongest GoS trajectory converted that context into a full pass, while other conditions remained at partial reward. This again indicates that the dominant bottleneck was not the absence of any relevant skill at all, but how effectively the agent translated the available skill context into the exact output expected by the verifier.
+
+\paragraph{Infrastructure Failures.}
+Finally, a subset of observed failures are not retrieval failures at all, but infrastructure failures such as environment build issues, setup crashes, or startup timeouts before a substantive episode begins. These cases are methodologically important but conceptually distinct: they should be tracked for experiment hygiene and rerun logic, yet they should not be interpreted as evidence against the quality of the retrieval method or the underlying model. Representative examples include Docker / BuildKit failures such as \texttt{layer does not exist} on \texttt{dapt-intrusion-detection}, missing compiler toolchains for \texttt{obspy}-dependent tasks, and logging failures that leave some trials with incomplete session traces or null token fields. These episodes matter operationally because they require reruns and infrastructure fixes, but they are not evidence about the retrieval quality of GoS, vector retrieval, or all-skills. For this reason, we treat them as experiment-hygiene issues and exclude them from method-quality interpretation whenever possible.
+
+\section{Qualitative Analysis}
+\label{sec:appendix_qualitative}
+
+\paragraph{Section Framing.}
+We next examine a set of trajectory-grounded qualitative cases and compare the concrete skill evidence that actually entered the agent's working context in each condition. Table~\ref{tab:appendix_qualitative_retrieval} reports the skills that materially shaped each run: for GoS and Vector Skills, these are the skills surfaced by the retrieval call and then used downstream, while for \textit{Vanilla Skills} they are the skills the agent explicitly opened from the mounted library. This keeps the comparison grounded in executed trajectories rather than hypothetical retrieval quality.
+
+Across the cases below, we focus on a single question: does the method expose a compact, execution-ready bundle early enough to change the trajectory? The main qualitative difference is often not whether a relevant skill exists somewhere in the repository, but whether the agent receives the right subset in a form that can be operationalized under the task budget.
+
+\begingroup
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.12}
+\newcommand{\qskill}[1]{\texttt{#1}}
+\newcommand{\qcell}[1]{\parbox[t]{\linewidth}{\raggedright #1}}
+\begin{table*}[t]
+\centering
+\scriptsize
+\caption{Trajectory-grounded skill evidence from executed qualitative cases. \textsc{Useful} denotes skills that were clearly operationalized downstream; \textsc{Noisy} denotes retrieved or opened items that were tangential or not visibly used.}
+\label{tab:appendix_qualitative_retrieval}
+\begin{ApdxTabFrame}[width=\textwidth]
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{0.145\textwidth}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\rowcolor{appendixolive}
+\apdxhdr{Task} & \apdxhdr{GoS Bundle} & \apdxhdr{Vanilla Bundle} & \apdxhdr{Vector Bundle} \\
+\midrule
+\qcell{\texttt{pedestrian-}\\\texttt{traffic-}\\\texttt{counting}} &
+\qcell{\textsc{Useful} \qskill{gemini-count-in-video}; \qskill{multimodal-fusion}; \qskill{openai-vision}; \qskill{video-frame-extraction}\\\textsc{Noisy} \qskill{threat-detection}} &
+\qcell{\textsc{Useful} \qskill{gemini-count-in-video}; \qskill{object\_counter}; \qskill{openai-vision}; \qskill{video-frame-extraction}\\\textsc{Noisy} \qskill{alfworld-heat-object-}\\\qskill{with-appliance}; \qskill{alfworld-object-locator}; broader noisy context} &
+\qcell{\textsc{Useful} none\\\textsc{Noisy} \qskill{google-classroom-automation}; \qskill{rdkit}; \qskill{salesforce-service-cloud-}\\\qskill{automation}; \qskill{segmetrics-automation}} \\
+
+\qcell{\texttt{flood-risk-}\\\texttt{analysis}} &
+\qcell{\textsc{Useful} \qskill{flood-detection}; \qskill{nws-flood-thresholds}; \qskill{usgs-data-download}\\\textsc{Noisy} \qskill{time\_series\_anomaly\_detection}; \qskill{-21risk-automation}} &
+\qcell{\textsc{Useful} \qskill{flood-detection}; \qskill{nws-flood-thresholds}; \qskill{usgs-data-download}} &
+\qcell{\textsc{Useful} none\\\textsc{Noisy} \qskill{leverly-automation}; \qskill{scienceworld-room-navigator}; \qskill{text-to-speech}; broader noisy context} \\
+
+\qcell{\texttt{travel-}\\\texttt{planning}} &
+\qcell{\textsc{Useful} \qskill{search-accommodations}; \qskill{search-attractions}; \qskill{search-cities}; \qskill{search-driving-distance}; \qskill{search-restaurants}\\\textsc{Noisy} \qskill{search-flights}; \qskill{fjsp-baseline-repair-}\\\qskill{with-downtime-and-policy}} &
+\qcell{\textsc{Useful} \qskill{search-accommodations}; \qskill{search-attractions}; \qskill{search-cities}; \qskill{search-restaurants}} &
+\qcell{\textsc{Useful} \qskill{search-accommodations}; \qskill{search-attractions}; \qskill{search-cities}; \qskill{search-driving-distance}; \qskill{search-restaurants}\\\textsc{Noisy} additional noisy items} \\
+
+\qcell{\texttt{dapt-}\\\texttt{intrusion-}\\\texttt{detection}} &
+\qcell{\textsc{Useful} \qskill{pcap-analysis}; \qskill{pcap-triage-tshark}\\\textsc{Noisy} \qskill{dc-power-flow}; \qskill{power-flow-data}; \qskill{-21risk-automation}} &
+\qcell{\textsc{Useful} no clearly reused core skill} &
+\qcell{\textsc{Useful} none\\\textsc{Noisy} \qskill{codacy-automation}; \qskill{jakarta-namespace}; \qskill{rootly-automation}; broader noisy context} \\
+
+\qcell{\texttt{dialogue-}\\\texttt{parser}} &
+\qcell{\textsc{Useful} \qskill{dialogue\_graph}; \qskill{webshop-query-parser}\\\textsc{Noisy} \qskill{browser-testing}; \qskill{obj-exporter}; \qskill{alfworld-goal-interpreter}} &
+\qcell{\textsc{Useful} \qskill{dialogue\_graph}} &
+\qcell{\textsc{Useful} none\\\textsc{Noisy} \qskill{docnify-automation}; \qskill{scienceworld-task-focuser}; \qskill{temporal-python-testing}; broader noisy context} \\
+
+\qcell{\texttt{earthquake-}\\\texttt{phase-}\\\texttt{association}} &
+\qcell{\textsc{Useful} \qskill{gamma-phase-associator}; \qskill{seisbench-model-api}; \qskill{seismic-picker-selection}\\\textsc{Noisy} \qskill{flood-detection}; \qskill{-21risk-automation}} &
+\qcell{\textsc{Useful} \qskill{gamma-phase-associator}; \qskill{obspy-data-api}; \qskill{obspy-datacenter-client}; \qskill{seisbench-model-api}; \qskill{seismic-picker-selection}\\\textsc{Noisy} \qskill{gamma-automation}; \qskill{seismic-automation}} &
+\qcell{\textsc{Useful} none\\\textsc{Noisy} \qskill{fixer-automation}; \qskill{maven-build-lifecycle}; \qskill{segmetrics-automation}; broader noisy context} \\
+
+\qcell{\texttt{energy-}\\\texttt{market-}\\\texttt{pricing}} &
+\qcell{\textsc{Useful} \qskill{dc-power-flow}; \qskill{power-flow-data}; \qskill{locational-marginal-}\\\qskill{prices}; \qskill{casadi-ipopt-nlp}\\\textsc{Noisy} \qskill{-21risk-automation}} &
+\qcell{\textsc{Useful} \qskill{dc-power-flow}; \qskill{economic-dispatch}} &
+\qcell{\textsc{Useful} \qskill{power-flow-data}\\\textsc{Noisy} \qskill{aryn-automation}; \qskill{moxie-automation}; \qskill{mural-automation}; broader noisy context} \\
+
+\qcell{\texttt{3d-scan-}\\\texttt{calc}} &
+\qcell{\textsc{Useful} \qskill{mesh-analysis}; \qskill{dyn-object-masks}\\\textsc{Noisy} \qskill{scienceworld-circuit-builder}; \qskill{scienceworld-circuit-}\\\qskill{connector}; \qskill{scienceworld-conductivity-}\\\qskill{tester}} &
+\qcell{\textsc{Useful} \qskill{mesh-analysis}\\\textsc{Noisy} broader noisy context} &
+\qcell{\textsc{Useful} \qskill{mesh-analysis}; \qskill{obj-exporter}; \qskill{pymatgen}; \qskill{threejs}\\\textsc{Noisy} \qskill{reflow-profile-compliance-}\\\qskill{toolkit}} \\
+
+\qcell{\texttt{adaptive-}\\\texttt{cruise-}\\\texttt{control}} &
+\qcell{\textsc{Useful} \qskill{imc-tuning-rules}; \qskill{pid-controller}; \qskill{safety-interlocks}; \qskill{vehicle-dynamics}\\\textsc{Noisy} \qskill{-21risk-automation}} &
+\qcell{\textsc{Useful} no clearly reused core skill} &
+\qcell{\textsc{Useful} \qskill{pid-controller}; \qskill{mpc-horizon-tuning}; \qskill{integral-action-design}; \qskill{simulation-metrics}; \qskill{vehicle-dynamics}} \\
+
+\qcell{\texttt{econ-}\\\texttt{detrending-}\\\texttt{correlation}} &
+\qcell{\textsc{Useful} \qskill{timeseries-detrending}\\\textsc{Noisy} \qskill{artifacts-builder}; \qskill{dyn-object-masks}; \qskill{mesh-analysis}; \qskill{-21risk-automation}} &
+\qcell{\textsc{Useful} no clearly reused core skill} &
+\qcell{\textsc{Useful} none\\\textsc{Noisy} \qskill{breezy-hr-automation}; \qskill{scienceworld-object-}\\\qskill{classifier}; \qskill{webshop-purchase-}\\\qskill{initiator}; broader noisy context} \\
+\bottomrule
+\end{tabularx}
+\end{ApdxTabFrame}
+\end{table*}
+\endgroup
+
+\paragraph{Case Study 1: Pedestrian Traffic Counting.} The clearest intermediate case in our trajectories is \texttt{pedestrian-traffic-counting}. The task requires frame extraction, reliable pedestrian counting, and structured output generation. GoS surfaced a compact visual pipeline centered on \texttt{gemini-count-in-video}, \texttt{video-frame-extraction}, and \texttt{openai-vision}, and achieved the strongest outcome among the three conditions ($0.417$). The \textit{Vanilla Skills} baseline did eventually open relevant helpers, including \texttt{gemini-count-in-video}, \texttt{video-frame-extraction}, and \texttt{object\_counter}, but reached only a partial score ($0.267$). The \textit{Vector Skills} run performed worst ($0.041$): although it issued the retrieval call, the retrieved context was not converted into a workable plan. This example is useful because it is not a pure pass/fail contrast. \textit{Vanilla Skills} does locate relevant functionality, but GoS exposes a smaller and more coherent bundle that appears easier to operationalize within the available task budget.
+
+\paragraph{Case Study 2: Flood Risk Analysis.} The \texttt{flood-risk-analysis} task illustrates a different regime: both GoS and \textit{Vanilla Skills} succeed, but GoS exposes the required chain with much less search friction. In this task the correct workflow is not generic time-series analysis; it is specifically the combination of \texttt{usgs-data-download} for measurements, \texttt{nws-flood-thresholds} for stage cutoffs, and \texttt{flood-detection} for aggregation and comparison. GoS surfaced exactly this bundle and passed with reward $1.0$. The \textit{Vanilla Skills} baseline also passed with reward $1.0$, but only after the agent explicitly searched through the large mounted library and opened the same family of skills. \textit{Vector Skills}, by contrast, issued the retrieval command but never translated retrieval into a usable flood-analysis bundle, and the run failed with reward $0.0$. This case is useful because it does not primarily show a reward gap between GoS and \textit{Vanilla Skills}; instead, it shows that when the right execution chain exists in the repository, GoS mainly helps by making that chain explicit earlier in the trajectory.
+
+\paragraph{Case Study 3: Travel Planning.} The \texttt{travel-planning} task is informative precisely because all three conditions surfaced clearly relevant travel skills. In the GoS run, the retrieved context centered on \texttt{search-cities}, \texttt{search-accommodations}, \texttt{search-attractions}, \texttt{search-driving-distance}, and \texttt{search-restaurants}, which is very close to the intended tool chain for the task. The \textit{Vanilla Skills} baseline likewise opened essentially the same family of skills after searching through the library. \textit{Vector Skills} also surfaced and used this same cluster of \texttt{search-*} skills, and that run passed the verifier with reward $1.0$. This example sharpens the qualitative claim of the paper. The advantage of GoS is not that flat semantic retrieval can never recover the correct skill family; rather, it is that GoS more reliably exposes a compact and coherent bundle early in the episode. When \textit{Vector Skills} does succeed, as it does here, its behavior becomes qualitatively much closer to GoS than to a clean retrieval miss.
+
+\paragraph{Case Study 4: Network Intrusion Detection.} A clean GoS-positive example is \texttt{dapt-intrusion-detection}. In this case, GoS surfaced \texttt{pcap-analysis} together with adjacent analysis helpers such as \texttt{pcap-triage-tshark} and \texttt{threat-detection}, and the task passed. By contrast, the corresponding vector condition retrieved unrelated automation-oriented skills rather than a usable PCAP analysis bundle, while the all-skills condition still failed despite full library access. This case is a useful counterpart to the retrieval-miss pattern discussed in the Error Analysis section: once retrieval surfaces the right analysis bundle, the task becomes a reuse problem rather than a from-scratch reverse-engineering problem.
+
+\paragraph{Case Study 5: Dialogue Parsing.} The \texttt{dialogue-parser} examples show a strong gradient across methods. GoS converted the task into a full pass while exposing a compact bundle centered on \texttt{dialogue\_graph}, together with structural helpers such as \texttt{obj-exporter}, \texttt{browser-testing}, and parser-oriented support. \textit{Vanilla Skills} eventually improved once it explicitly opened \texttt{dialogue\_graph}, and \textit{Vector Skills} also reached a substantial partial score, but neither condition showed the same level of structured completeness as the strongest GoS trajectory. This case illustrates a pattern that appears repeatedly: once the right latent-representation skill is surfaced early, the rest of the pipeline becomes much easier for the agent to operationalize.
+
+\paragraph{Case Study 6: Earthquake Phase Association.} \texttt{earthquake-phase-association} is a useful negative case for GoS because it shows that structural retrieval does not help automatically when the recovered neighborhood is still incomplete. In the strongest all-skills trajectory, the agent assembled a seismic processing stack including \texttt{gamma-phase-associator}, \texttt{obspy-data-api}, \texttt{obspy-datacenter-client}, \texttt{seisbench-model-api}, and \texttt{seismic-picker-selection}, and the task passed. The corresponding GoS case surfaced only a weaker subset, centered on \texttt{gamma-phase-associator}, \texttt{seisbench-model-api}, and \texttt{seismic-picker-selection}, with an irrelevant distraction skill mixed into the bundle, and the task failed. This is exactly the kind of case that is easy to miss if one looks only at whether some domain-relevant skill was retrieved. The qualitative difference is that the all-skills trajectory assembled a more execution-complete stack, while the GoS trajectory remained one step short of the required pipeline.
+
+\paragraph{Case Study 7: Energy Market Pricing.} A final useful case is \texttt{energy-market-pricing}, where all-skills and GoS both passed but with very different trajectory quality. The all-skills condition explicitly used \texttt{dc-power-flow} and \texttt{economic-dispatch}, while GoS surfaced a broader but still coherent optimization bundle including \texttt{dc-power-flow}, \texttt{power-flow-data}, \texttt{locational-marginal-prices}, and \texttt{casadi-ipopt-nlp}. Both runs eventually passed the verifier, but the trajectory quality differed sharply: GoS converted the retrieved bundle into a solution with substantially less agent-side search. This is one of the clearest examples in which the main value of GoS is not higher reward, but a shorter path from retrieval to execution.
+
+\paragraph{Case Study 8: 3D Scan Calculation.} The \texttt{3d-scan-calc} task serves as a useful control because all three conditions can succeed when they recover the same latent geometry bottleneck. GoS exposed \texttt{mesh-analysis} together with adjacent geometric helpers, directly matching the preprocessing structure of the task. \textit{Vanilla Skills} also reached a passing solution once the agent opened \texttt{mesh-analysis}, but the surrounding library context was notably noisier. \textit{Vector Skills} likewise passed when it surfaced \texttt{mesh-analysis} together with geometry-oriented companions such as \texttt{obj-exporter}, \texttt{pymatgen}, and \texttt{threejs}. The qualitative lesson is therefore not that GoS is uniquely capable of solving the task; rather, when all methods recover a geometry-centered bundle, all can succeed, and the remaining difference is how directly that bundle is exposed.
+
+\paragraph{Case Study 9: Adaptive Cruise Control.} \texttt{adaptive-cruise-control} is a useful failure case because all three conditions surfaced highly plausible control-related skills and still failed. GoS exposed \texttt{imc-tuning-rules}, \texttt{pid-controller}, \texttt{safety-interlocks}, and \texttt{vehicle-dynamics}, while \textit{Vector Skills} surfaced an even more explicit control bundle including \texttt{pid-controller}, \texttt{mpc-horizon-tuning}, \texttt{integral-action-design}, \texttt{simulation-metrics}, and \texttt{vehicle-dynamics}. The \textit{Vanilla Skills} condition also had access to a broad control-oriented context, yet none of the three settings converged to a passing solution. This case is important precisely because it is not a retrieval miss. It shows that once the task requires a long control-design and verifier-alignment chain, even a qualitatively good skill bundle may not be enough; the dominant bottleneck shifts from retrieval to execution discipline.
+
+\paragraph{Case Study 10: Economic Detrending and Correlation.} The \texttt{econ-detrending-correlation} task offers a complementary success case. GoS surfaced \texttt{timeseries-detrending} and converted the task into a full pass, while the all-skills condition failed to assemble a comparably coherent detrending-centered bundle. \textit{Vector Skills} also reached a full pass, but with a noisier retrieved context whose skills were only weakly connected to the intended econometric workflow. This case is useful in two ways. First, it shows another task where surfacing the right latent preprocessing step, here detrending rather than raw correlation, materially changes the result. Second, it reinforces the lesson from \texttt{travel-planning}: vector retrieval can still succeed, but its successful episodes do not always arise from a bundle that is as semantically crisp or structurally interpretable as the one surfaced by GoS.
+
+\paragraph{Takeaway.} Across all ten qualitative cases in this appendix, the main pattern is not simply that GoS retrieves skills with better topical overlap. Rather, GoS more often exposes a bundle that is already close to the executable decomposition of the task. The \texttt{pedestrian-traffic-counting} example shows a genuine middle case in which \textit{Vanilla Skills} finds relevant tools but still underperforms the tighter GoS bundle. The \texttt{flood-risk-analysis} example shows that when the correct chain is available to multiple methods, GoS mainly reduces search friction and makes the intended execution path explicit earlier. The \texttt{travel-planning}, \texttt{3d-scan-calc}, and \texttt{econ-detrending-correlation} examples show that \textit{Vector Skills} can also succeed when it recovers the right family of skills, but these successes are most convincing when the retrieved bundle becomes qualitatively similar to what GoS surfaces directly. The \texttt{dialogue-parser} and \texttt{dapt-intrusion-detection} cases show how GoS can convert that structural advantage into clearer downstream wins. By contrast, \texttt{earthquake-phase-association} shows a real boundary condition in which GoS still falls short of an execution-complete bundle, while \texttt{energy-market-pricing} and \texttt{adaptive-cruise-control} show that even with broadly adequate retrieval, trajectory efficiency and verifier alignment remain separate bottlenecks. Taken together, these cases support the core claim of the paper: structural retrieval helps not only by improving relevance, but by presenting agents with a more execution-ready context.

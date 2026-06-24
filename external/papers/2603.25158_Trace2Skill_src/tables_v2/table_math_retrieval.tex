@@ -1,0 +1,24 @@
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{\systemname{} outperforms ReasoningBank retrieval on math reasoning. D-Test/AIME are as in \cref{tab:math}.}
+\label{tab:math_retrieval}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{@{}l cccc@{}}
+\toprule
+\textbf{Condition}
+    & \multicolumn{2}{c}{\textit{Runner: 122B}}
+    & \multicolumn{2}{c}{\textit{Runner: 35B}} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+    & \textbf{D-Test}$\uparrow$
+    & \textbf{AIME}$\uparrow$
+    & \textbf{D-Test}$\uparrow$
+    & \textbf{AIME}$\uparrow$ \\
+\midrule
+No Skill & 92.0 & 90.4 & 89.0 & 83.3 \\
+ReasoningBank (error-only) & 94.0 & 90.8 & 91.0 & 80.8 \\
+ReasoningBank (combined) & 94.0 & 90.4 & 91.0 & 80.4 \\
+\systemname{} +Error (ours) & \textbf{95.0} & \textbf{91.7} & \textbf{94.0} & \textbf{88.3} \\
+\bottomrule
+\end{tabular}
+}%

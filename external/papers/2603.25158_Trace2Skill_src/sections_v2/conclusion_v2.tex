@@ -1,0 +1,14 @@
+% conclusion_v2.tex — Trajectory-grounded distillation framing; generalization as central finding.
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+We introduced \systemname, a framework that distills agent execution traces into a portable skill: parallel analyst sub-agents propose targeted patches from disjoint trajectory batches, and a consolidation step merges them at once into one declarative skill directory. Skills distilled from a single model's traces transfer across model scales, families, and OOD tasks. \systemname{} also exhibits strong applicability in various domains.
+
+\section*{Limitations}
+\systemname{} applies all consolidated patches by default; selecting a higher-quality subset with Bayesian optimization can help (\cref{sec:analysis:selective_patch_aggregation}), but it is costly. A reliable selection signal needs a large, representative validation set and BO must materialize and score a new skill for every candidate subset, so cost grows quickly with both the validation set and the patch universe. Ideally, using the whole evolving set for validation would better reflect patch quality than our sampled validation with only 32 questions, but it would be much more computationally expensive. We therefore leave a more thorough exploration of combinatorial patch selection to future work.
+
+\section*{Ethics Statement}
+
+We use publicly available datasets, which have no data privacy issues. All artifacts we use are under licenses allowing research usage. Human annotation in qualitative analyses were conducted by the authors of this paper. We do not identify any other ethical risks associated with this study. AI coding tools (Codex/Claude Code) are used to assist with coding. We confirm that all such coding is under careful human supervision. Unit tests are implemented to avoid hacking or unaligned behavior. We will also open-source the code for full reproducibility. We also leverage ChatGPT for grammar check and fix, fully supervised by human authors.
+

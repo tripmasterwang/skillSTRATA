@@ -1,0 +1,64 @@
+\begin{table*}[t]
+\centering
+\setlength{\tabcolsep}{3.5pt}
+\caption{Standard deviations across seeds 41, 42, and 43 for the main spreadsheet results in \cref{tab:main_v1}. Reference rows are standard deviations of absolute scores; evolved rows are standard deviations of the paired deltas defined in \cref{tab:main_v1}. The summary metric Avg is stable (standard deviation $\le 3.4$ in every row), and the mean gains in \cref{tab:main_v1} stay large relative to the per-cell spread, so the comparisons are robust. The higher variance in individual columns (Vrf and the OOD WikiTQ/HiTab transfer) is expected rather than a sign of instability: each score aggregates long agentic rollouts that often exceed 30 turns of environment interaction, so single-benchmark run-to-run stochasticity accumulates while averaging out in Avg. For conciseness, we omit additional standard-deviation tables for the paper's other results, whose deviations are similarly small: std ranges for spreadsheet tasks are similar to this table. Std ranges of DAPO-Test, AIME'26, and DocVQA ANLS are 1.1-2.4, 1.8-3.4, and 0.034-0.139 correspondingly.}
+\label{tab:main_std}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}l ccccc ccccc c@{}}
+\toprule
+& \multicolumn{5}{c}{\textit{Skill User: Qwen3.5-122B-A10B}}
+& \multicolumn{5}{c}{\textit{Skill User: Qwen3.5-35B-A3B}}
+& \\
+\cmidrule(lr){2-6}\cmidrule(lr){7-11}
+& \multicolumn{3}{c}{\textit{SpreadsheetBench}} & \multicolumn{2}{c}{\textit{OOD}}
+& \multicolumn{3}{c}{\textit{SpreadsheetBench}} & \multicolumn{2}{c}{\textit{OOD}}
+& \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-6}\cmidrule(lr){7-9}\cmidrule(lr){10-11}
+\textbf{Condition}
+    & \textbf{Vrf}$\uparrow$ & \textbf{Soft}$\uparrow$ & \textbf{Hard}$\uparrow$ & \textbf{WikiTQ}$\uparrow$ & \textbf{HiTab}$\uparrow$
+    & \textbf{Vrf}$\uparrow$ & \textbf{Soft}$\uparrow$ & \textbf{Hard}$\uparrow$ & \textbf{WikiTQ}$\uparrow$ & \textbf{HiTab}$\uparrow$
+    & \textbf{Avg}$\uparrow$ \\
+\midrule
+\multicolumn{12}{l}{\textit{Baseline (absolute scores)}} \\
+\quad No Skill
+    & 3.75 & 0.90 & 0.70 & 0.81 & 0.67 & 1.80 & 2.77 & 1.25 & 1.27 & 5.28 & 0.42 \\
+\quad Human-Written
+    & 8.10 & 1.39 & 0.40 & 0.65 & 0.71 & 2.93 & 0.57 & 0.40 & 0.36 & 2.68 & 0.46 \\
+\quad Parametric
+    & 0.58 & 1.04 & 0.75 & 6.52 & 8.93 & 1.44 & 1.56 & 0.50 & 13.32 & 18.31 & 3.28 \\
+\midrule
+\multicolumn{12}{l}{\textit{Skill Author: Qwen3.5-122B-A10B}} \\[2pt]
+\multicolumn{12}{l}{\quad\textit{Deepening (Delta from init: Human-Written)}} \\
+\quad\quad +Error
+    & 4.82 & 1.10 & 0.78 & 0.78 & 0.60 & 6.76 & 3.36 & 2.06 & 2.62 & 4.16 & 1.02 \\
+\quad\quad +Success
+    & 12.53 & 0.75 & 1.35 & 1.68 & 0.75 & 3.69 & 3.78 & 2.23 & 1.43 & 4.01 & 1.43 \\
+\quad\quad +Combined
+    & 9.53 & 1.68 & 0.61 & 1.22 & 0.85 & 5.92 & 2.92 & 1.73 & 2.53 & 2.74 & 1.57 \\[2pt]
+\multicolumn{12}{l}{\quad\textit{Creation (Delta from init: Parametric)}} \\
+\quad\quad +Error
+    & 1.53 & 1.10 & 0.55 & 7.07 & 6.98 & 3.62 & 1.63 & 1.22 & 13.30 & 18.93 & 3.24 \\
+\quad\quad +Success
+    & 1.89 & 0.91 & 1.45 & 5.25 & 9.60 & 4.86 & 2.39 & 1.76 & 14.66 & 19.38 & 3.00 \\
+\quad\quad +Combined
+    & 3.04 & 0.90 & 1.10 & 6.07 & 9.69 & 3.04 & 1.48 & 1.13 & 13.52 & 19.72 & 2.99 \\[2pt]
+\midrule
+\multicolumn{12}{l}{\textit{Skill Author: Qwen3.5-35B-A3B}} \\[2pt]
+\multicolumn{12}{l}{\quad\textit{Deepening (init: Human-Written)}} \\
+\quad\quad +Error
+    & 11.50 & 1.31 & 2.31 & 1.40 & 0.63 & 5.11 & 3.00 & 1.12 & 0.67 & 1.46 & 1.10 \\
+\quad\quad +Success
+    & 15.81 & 4.63 & 2.42 & 1.69 & 0.84 & 0.76 & 2.47 & 1.16 & 1.18 & 2.90 & 1.32 \\
+\quad\quad +Combined
+    & 9.00 & 2.14 & 1.33 & 1.94 & 0.85 & 0.50 & 3.62 & 2.54 & 3.27 & 2.71 & 0.88 \\[2pt]
+\multicolumn{12}{l}{\quad\textit{Creation (init: Parametric)}} \\
+\quad\quad +Error
+    & 2.18 & 1.04 & 0.58 & 6.96 & 8.84 & 1.76 & 1.77 & 1.08 & 14.60 & 17.83 & 3.36 \\
+\quad\quad +Success
+    & 1.61 & 1.00 & 0.90 & 6.94 & 8.64 & 4.51 & 1.10 & 1.19 & 14.24 & 19.02 & 3.21 \\
+\quad\quad +Combined
+    & 2.75 & 1.02 & 1.28 & 6.37 & 8.19 & 5.51 & 1.62 & 1.91 & 10.98 & 19.64 & 3.16 \\[2pt]
+\bottomrule
+\end{tabular}
+}%
+\end{table*}

@@ -1,0 +1,73 @@
+\begin{figure}[!t]
+\centering
+\resizebox{\columnwidth}{!}{%
+\begin{tikzpicture}
+\begin{axis}[
+  ybar,
+  bar width=6.5pt,
+  width=8.4cm, height=6.0cm,
+  xlabel={Ground-truth sequence length},
+  ylabel={Kendall-$\tau$},
+  xlabel style={font=\small},
+  ylabel style={font=\small},
+  tick label style={font=\footnotesize},
+  symbolic x coords={1-2 tools, 3-4 tools, 5+ tools, All lengths},
+  xtick=data,
+  xticklabels={1--2 tools, 3--4 tools, $5{+}$ tools, All lengths},
+  xticklabel style={font=\small},
+  ymin=0.0, ymax=0.135,
+  ytick={0.02,0.04,0.06,0.08,0.10,0.12},
+  yticklabel style={font=\footnotesize},
+  legend style={font=\scriptsize, at={(0.02,0.98)}, anchor=north west,
+    inner sep=2pt, row sep=-1pt, draw=gray!40},
+  legend cell align=left,
+  ymajorgrids=true,
+  grid style={gray!20, line width=0.4pt},
+  enlarge x limits=0.15,
+]
+
+\addplot[fill=gray!45, draw=gray!60]
+  coordinates {
+    (1-2 tools,  0.044)
+    (3-4 tools,  0.040)
+    (5+ tools,   0.049)
+    (All lengths,0.042)
+  };
+\addlegendentry{Semantic Only}
+
+\addplot[fill=blue!40, draw=blue!60]
+  coordinates {
+    (1-2 tools,  0.085)
+    (3-4 tools,  0.087)
+    (5+ tools,   0.111)
+    (All lengths,0.089)
+  };
+\addlegendentry{GS-Hybrid+HR}
+
+\addplot[fill=red!55, draw=red!70!black]
+  coordinates {
+    (1-2 tools,  0.098)
+    (3-4 tools,  0.093)
+    (5+ tools,   0.108)
+    (All lengths,0.096)
+  };
+\addlegendentry{GS-Hybrid+LR \textbf{(ours)}}
+
+\node[font=\scriptsize, text=red!70!black, anchor=south]
+  at (axis cs:1-2 tools,  0.098) {\raisebox{1pt}{$+$123\%}};
+\node[font=\scriptsize, text=red!70!black, anchor=south]
+  at (axis cs:3-4 tools,  0.093) {\raisebox{1pt}{$+$134\%}};
+\node[font=\scriptsize, text=red!70!black, anchor=south]
+  at (axis cs:5+ tools,   0.108) {\raisebox{1pt}{$+$119\%}};
+\node[font=\scriptsize, text=red!70!black, anchor=south]
+  at (axis cs:All lengths,0.096) {\raisebox{1pt}{$+$129\%}};
+
+\end{axis}
+\end{tikzpicture}}%
+\caption{Kendall-$\tau$ by ground-truth sequence length on ToolBench (9,965
+instances). GS-Hybrid+LR (ours) improves over Semantic Only by $+$119--134\%
+across \emph{all} length buckets, confirming that SkillGraph dependency priors
+are beneficial regardless of workflow length. Percentages above bars indicate
+relative improvement of LR over Semantic Only.}
+\label{fig:length_bar}
+\end{figure}

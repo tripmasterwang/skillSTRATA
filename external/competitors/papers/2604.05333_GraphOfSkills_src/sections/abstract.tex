@@ -1,0 +1,24 @@
+\begin{abstract}
+Modern LLM agents increasingly rely on reusable skills, and as they interact with personal applications, web browsers, and other interfaces, skill libraries can scale to thousands of skills.
+% ~\citep{patil2023gorilla, li2023apibank, qin2024toolllm}.
+%
+Scaling to larger skill sets introduces two key challenges. First, loading the full skill set saturates the context window, driving up token costs, hallucination, and latency. Second, semantic retrieval surfaces topically relevant skills but misses their prerequisite chain of upstream and downstream skills, creating a prerequisite gap that leaves the retrieved bundle execution-incomplete.
+% ~\citep{agentskills2026, liu-etal-2024-lost}. 
+% the full skill set saturates the context window, driving up token costs, hallucination, and latency. 
+% the bottleneck shifts from \emph{skill authoring} to \emph{reusable skill retrieval}: organizing skills into hierarchical, easily traversable structures so that only the most relevant subset actually needed for execution is loaded into context to complete tasks.
+%
+% Flat skill loading saturates the context window and inflates both token cost and latency. Vector retrieval surfaces semantically similar skills but often misses the parsers, preprocessors, and setup utilities they depend on---the \textit{Prerequisite Gap}.
+%
+In this paper, we present \textbf{Graph-of-Skills (GoS)}, an inference-time structural retrieval layer for large skill libraries.
+%
+GoS constructs an executable skill graph offline from skill packages, then at inference time retrieves a bounded, dependency-aware skill bundle through hybrid semantic--lexical seeding, reverse-aware Personalized PageRank, and context-budgeted hydration.
+%
+On SkillsBench and ALFWorld, GoS consistently delivers substantial reward improvements and token savings across three model families (Claude Sonnet 4.5, MiniMax M2.7, and GPT-5.2 Codex). 
+%
+On SkillsBench, GoS achieves a peak reward increase of $25.55\%$ while reducing total tokens by $56.72\%$ over the vanilla full skill-loading baseline using GPT-5.2 Codex.
+%
+Ablations confirm this pattern across skill libraries from 200 to 2{,}000 skills.
+%
+% Additional ablation studies show that semantic--lexical seeding and Personalized PageRank
+
+\end{abstract}

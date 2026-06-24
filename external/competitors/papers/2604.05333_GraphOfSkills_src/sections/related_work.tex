@@ -1,0 +1,30 @@
+\section{Related Work}
+
+\noindent\textbf{Tool Use, Tool Discovery, and Tool Retrieval for Agents.}
+%
+Early research on tool-augmented language models focuses on relatively small, fixed toolsets, where the primary challenge is deciding \emph{when} to invoke a tool and formatting the call correctly~\citep{schick2023toolformer, mialon2023augmented}.
+%
+As tool sets grow from dozens of tools to thousands~\citep{patil2023gorilla, li2023apibank, xu2023toolbench, qin2024toolllm} and context windows continue to expand~\citep{singh2025openai,li2026mm, comanici2025gemini}, the problem shifts toward \emph{tool discovery} and \emph{tool retrieval}. Systems and benchmarks such as Gorilla~\cite{patil2023gorilla}, API-Bank~\cite{li2023apibank}, ToolBench-style evaluations~\cite{xu2023toolbench}, and ToolLLM~\cite{qin2024toolllm} show that large tool universes require scalable retrieval over API descriptions and tool documentation.
+%
+ToolNet \citep{liu2024toolnet} introduces graph structure into large-scale tool access, with the objective to connect models to broad tool ecosystems rather than recover dependency-complete local executable bundles. 
+%
+However, \citet{shi2025toolret} shows that tool retrieval is itself a difficult modeling problem and that generic dense retrievers are often poorly aligned with real tool-use needs \citep{shi2025toolret}. 
+%
+% GoS builds on this literature but targets a different failure mode: the semantically nearest skill may be retrieved while the supporting prerequisite chain is omitted.
+
+% \noindent\textbf{Experience Consolidation and Skill Acquisition.} A parallel line of work studies how agents acquire reusable skills, memories, and abstractions from prior interaction. Reflexion \citep{reflexion2023} and ExpeL \citep{zhao2024expel} show that agents can summarize failures and reuse verbalized experience. Voyager \citep{wang2023voyager} demonstrates open-ended skill accumulation in embodied environments. More recent work studies programmatic or agent-induced skill formation, including SkillWeaver \citep{zheng2025skillweaver}, ASI \citep{wang2025asi}, and CUA-Skill \citep{chen2026cuaskill}. These methods primarily expand, refine, or transfer a skill set over time. GoS is complementary: it assumes a local skill corpus already exists and asks how an agent should retrieve from that corpus efficiently at inference time. In this sense, skill-acquisition methods grow the repository, whereas GoS structures and traverses it to recover the smallest executable subset for a given task.
+
+\noindent\textbf{Agent Skills Ecosystems.} Recent systems increasingly treat agent skills as reusable assets rather than ad hoc prompts~\citep{agentskills2026, skillnet2026, li2026agentskillos}.
+%
+SkillNet~\citep{skillnet2026} and AgentSkillOS~\citep{li2026agentskillos} advocate ecosystem-level approaches emphasizing systematic categorization, ontology construction, and dynamic chaining over large skill collections, while SkillsBench~\citep{li2026skillsbench} shows that curated external skills can improve agent performance but having many skills available does not guarantee reliable use.
+%
+Adjacent registries such as SkillsMP, ClawHub, and LangSkills similarly support packaging, discovery, and search over large skill collections~\citep{skillsmp2026, clawhub2026, li2025self,langskills2026}, but their primary interface remains entry-level search or distribution over individual skills or bundles.
+% GoS instead targets the downstream inference-time problem of recovering a small bundle that is not only relevant, but also structurally sufficient for execution.
+
+
+\noindent\textbf{Graph-Based Retrieval and Relational Memory.} 
+Graph-structured retrieval has recently improved knowledge access in document, memory, and tool-use settings, but its role differs substantially across these regimes. GraphRAG \citep{edge2024graphrag} uses graph structure to support query-focused synthesis over document collections, HippoRAG \citep{gutierrez2024hipporag} models long-term memory as an associative graph for improved retrieval, and adjacent agent systems such as ControlLLM \citep{liu2023controlllm} and ToolNet \citep{liu2024toolnet} incorporate graph structure over tools rather than treating tools as a flat list.
+%
+However, these lines of work do not directly study retrieval over large local skill repositories. GraphRAG-style systems target knowledge synthesis, memory access, or relational QA; tool-graph methods focus primarily on graph-guided tool planning and navigation during reasoning. By contrast, our setting requires an \emph{upstream} retrieval layer that selects a small executable bundle \textit{before} generation begins. To our knowledge, prior work has not focused on graph-based retrieval for agent skills under this objective: recovering a dependency-complete executable bundle under a tight context budget, rather than merely retrieving one relevant item.
+
+% whereas GoS focuses on inference-time retrieval of a bounded local skill bundle for general-purpose coding and technical tasks. The shared intuition is that retrieval should exploit relations, but agent skills impose an additional operational constraint: the retrieved items must not only be relevant, but also \emph{jointly executable}. This motivates our use of a typed, directed skill graph with reverse-aware diffusion over dependency edges.

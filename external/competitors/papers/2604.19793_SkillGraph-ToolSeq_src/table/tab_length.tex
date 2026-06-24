@@ -1,0 +1,19 @@
+\begin{table*}[!t]
+\caption{Kendall-$\tau$ by Ground-Truth Sequence Length on ToolBench.
+GS-Hybrid+LR consistently improves over Semantic Only across all sequence lengths
+by $119$--$134\%$.}
+\label{tab:length}
+\centering
+\small
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Length bucket} & \textbf{Semantic Only} & \textbf{GS-Hybrid+HR} & \textbf{GS-Hybrid+LR} & \textbf{LR vs.\ Sem. (\%)} \\
+\midrule
+1--2 tools & 0.044 & 0.085 & 0.098 & $+$123\% \\
+3--4 tools & 0.040 & 0.087 & 0.093 & $+$134\% \\
+5$+$ tools & 0.049 & 0.111 & 0.108 & $+$119\% \\
+\midrule
+All lengths & 0.042 & 0.089 & 0.096 & $+$129\% \\
+\bottomrule
+\end{tabular}
+\end{table*}

@@ -1,0 +1,403 @@
+\begin{thebibliography}{10}
+
+\bibitem{BOOK_1991organizational_memory}
+James~P Walsh and Gerardo~Rivera Ungson.
+\newblock Organizational memory.
+\newblock {\em Academy of management review}, 16(1):57--91, 1991.
+
+\bibitem{driess2023palm-e}
+Danny Driess, Fei Xia, Mehdi~SM Sajjadi, Corey Lynch, Aakanksha Chowdhery, Ayzaan Wahid, Jonathan Tompson, Quan Vuong, Tianhe Yu, Wenlong Huang, et~al.
+\newblock Palm-e: An embodied multimodal language model.
+\newblock 2023.
+
+\bibitem{wang2024omnidrive}
+Shihao Wang, Zhiding Yu, Xiaohui Jiang, Shiyi Lan, Min Shi, Nadine Chang, Jan Kautz, Ying Li, and Jose~M Alvarez.
+\newblock Omnidrive: A holistic llm-agent framework for autonomous driving with 3d perception, reasoning and planning.
+\newblock {\em arXiv preprint arXiv:2405.01533}, 2024.
+
+\bibitem{zheng2023steve}
+Sipeng Zheng, Jiazheng Liu, Yicheng Feng, and Zongqing Lu.
+\newblock Steve-eye: Equipping llm-based embodied agents with visual perception in open worlds.
+\newblock {\em arXiv preprint arXiv:2310.13255}, 2023.
+
+\bibitem{wei2024editable}
+Yuxi Wei, Zi~Wang, Yifan Lu, Chenxin Xu, Changxing Liu, Hao Zhao, Siheng Chen, and Yanfeng Wang.
+\newblock Editable scene simulation for autonomous driving via collaborative llm-agents.
+\newblock In {\em Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition}, pages 15077--15087, 2024.
+
+\bibitem{zhu2024knowagent}
+Yuqi Zhu, Shuofei Qiao, Yixin Ou, Shumin Deng, Shiwei Lyu, Yue Shen, Lei Liang, Jinjie Gu, Huajun Chen, and Ningyu Zhang.
+\newblock Knowagent: Knowledge-augmented planning for llm-based agents.
+\newblock {\em arXiv preprint arXiv:2403.03101}, 2024.
+
+\bibitem{erdogan2025plan-and-act}
+Lutfi~Eren Erdogan, Nicholas Lee, Sehoon Kim, Suhong Moon, Hiroki Furuta, Gopala Anumanchipalli, Kurt Keutzer, and Amir Gholami.
+\newblock Plan-and-act: Improving planning of agents for long-horizon tasks.
+\newblock {\em arXiv preprint arXiv:2503.09572}, 2025.
+
+\bibitem{huang2024understanding}
+Xu~Huang, Weiwen Liu, Xiaolong Chen, Xingmei Wang, Hao Wang, Defu Lian, Yasheng Wang, Ruiming Tang, and Enhong Chen.
+\newblock Understanding the planning of llm agents: A survey.
+\newblock {\em arXiv preprint arXiv:2402.02716}, 2024.
+
+\bibitem{putta2024agentq}
+Pranav Putta, Edmund Mills, Naman Garg, Sumeet Motwani, Chelsea Finn, Divyansh Garg, and Rafael Rafailov.
+\newblock Agent q: Advanced reasoning and learning for autonomous ai agents.
+\newblock {\em arXiv preprint arXiv:2408.07199}, 2024.
+
+\bibitem{masterman2024landscape}
+Tula Masterman, Sandi Besen, Mason Sawtell, and Alex Chao.
+\newblock The landscape of emerging ai agent architectures for reasoning, planning, and tool calling: A survey.
+\newblock {\em arXiv preprint arXiv:2404.11584}, 2024.
+
+\bibitem{li2024embodied}
+Manling Li, Shiyu Zhao, Qineng Wang, Kangrui Wang, Yu~Zhou, Sanjana Srivastava, Cem Gokmen, Tony Lee, Erran~Li Li, Ruohan Zhang, et~al.
+\newblock Embodied agent interface: Benchmarking llms for embodied decision making.
+\newblock {\em Advances in Neural Information Processing Systems}, 37:100428--100534, 2024.
+
+\bibitem{yang2024embodied}
+Yijun Yang, Tianyi Zhou, Kanxue Li, Dapeng Tao, Lusong Li, Li~Shen, Xiaodong He, Jing Jiang, and Yuhui Shi.
+\newblock Embodied multi-modal agent trained by an llm from a parallel textworld.
+\newblock In {\em Proceedings of the IEEE/CVF conference on computer vision and pattern recognition}, pages 26275--26285, 2024.
+
+\bibitem{autogen}
+Qingyun Wu, Gagan Bansal, Jieyu Zhang, Yiran Wu, Shaokun Zhang, Erkang Zhu, Beibin Li, Li~Jiang, Xiaoyun Zhang, and Chi Wang.
+\newblock Autogen: Enabling next-gen llm applications via multi-agent conversation framework, August 01, 2023 2023.
+
+\bibitem{guo2024deepseekcoderlargelanguagemodel}
+Daya Guo, Qihao Zhu, Dejian Yang, Zhenda Xie, Kai Dong, Wentao Zhang, Guanting Chen, Xiao Bi, Y.~Wu, Y.~K. Li, Fuli Luo, Yingfei Xiong, and Wenfeng Liang.
+\newblock Deepseek-coder: When the large language model meets programming -- the rise of code intelligence, 2024.
+
+\bibitem{hong2024data-interpreter}
+Sirui Hong, Yizhang Lin, Bang Liu, Bangbang Liu, Binhao Wu, Ceyao Zhang, Chenxing Wei, Danyang Li, Jiaqi Chen, Jiayi Zhang, et~al.
+\newblock Data interpreter: An llm agent for data science.
+\newblock {\em arXiv preprint arXiv:2402.18679}, 2024.
+
+\bibitem{voyager}
+Guanzhi {Wang}, Yuqi {Xie}, Yunfan {Jiang}, Ajay {Mandlekar}, Chaowei {Xiao}, Yuke {Zhu}, Linxi {Fan}, and Anima {Anandkumar}.
+\newblock {Voyager: An Open-Ended Embodied Agent with Large Language Models}.
+\newblock {\em arXiv e-prints}, page arXiv:2305.16291, May 2023.
+
+\bibitem{chen2024driving}
+Long Chen, Oleg Sinavski, Jan H{\"u}nermann, Alice Karnsund, Andrew~James Willmott, Danny Birch, Daniel Maund, and Jamie Shotton.
+\newblock Driving with llms: Fusing object-level vector modality for explainable autonomous driving.
+\newblock In {\em 2024 IEEE International Conference on Robotics and Automation (ICRA)}, pages 14093--14100. IEEE, 2024.
+
+\bibitem{sun2024optimizing}
+Yuan Sun, Navid Salami~Pargoo, Peter Jin, and Jorge Ortiz.
+\newblock Optimizing autonomous driving for safety: A human-centric approach with llm-enhanced rlhf.
+\newblock In {\em Companion of the 2024 on ACM International Joint Conference on Pervasive and Ubiquitous Computing}, pages 76--80, 2024.
+
+\bibitem{generative-agents-simulacra}
+Joon~Sung Park, Joseph~C. O'Brien, Carrie~J. Cai, Meredith Ringel~Morris, Percy Liang, and Michael~S. Bernstein.
+\newblock Generative agents: Interactive simulacra of human behavior, April 01, 2023 2023.
+
+\bibitem{arXiv2023_MultiAgent-Debate}
+Yilun Du, Shuang Li, Antonio Torralba, Joshua~B. Tenenbaum, and Igor Mordatch.
+\newblock Improving factuality and reasoning in language models through multiagent debate.
+\newblock {\em CoRR}, abs/2305.14325, 2023.
+
+\bibitem{meta-gpt}
+Sirui Hong, Xiawu Zheng, Jonathan Chen, Yuheng Cheng, Jinlin Wang, Ceyao Zhang, Zili Wang, Steven Ka~Shing Yau, Zijuan Lin, Liyang Zhou, Chenyu Ran, Lingfeng Xiao, and Chenglin Wu.
+\newblock Metagpt: Meta programming for multi-agent collaborative framework, August 01, 2023 2023.
+
+\bibitem{Book1988_SoM}
+Marvin Minsky.
+\newblock {\em Society of mind}.
+\newblock Simon and Schuster, 1988.
+
+\bibitem{J2003_SoM}
+Push Singh.
+\newblock Examining the society of mind.
+\newblock {\em Comput. Artif. Intell.}, 22(6):521--543, 2003.
+
+\bibitem{NeurIPS2023_Agent-SoM}
+Guohao Li, Hasan Hammoud, Hani Itani, Dmitrii Khizbullin, and Bernard Ghanem.
+\newblock {CAMEL:} communicative agents for "mind" exploration of large language model society.
+\newblock In {\em NeurIPS}, 2023.
+
+\bibitem{multi-persona}
+Zhenhailong Wang, Shaoguang Mao, Wenshan Wu, Tao Ge, Furu Wei, and Heng Ji.
+\newblock Unleashing cognitive synergy in large language models: A task-solving agent through multi-persona self-collaboration, July 01, 2023 2023.
+\newblock work in progress.
+
+\bibitem{arXiv2024_Survey-MultiAgent}
+Taicheng Guo, Xiuying Chen, Yaqi Wang, Ruidi Chang, Shichao Pei, Nitesh~V. Chawla, Olaf Wiest, and Xiangliang Zhang.
+\newblock Large language model based multi-agents: A survey of progress and challenges.
+\newblock {\em CoRR}, abs/2402.01680, 2024.
+
+\bibitem{arXiv2024_Survey-MultiAgent_2}
+Pouya Pezeshkpour, Eser Kandogan, Nikita Bhutani, Sajjadur Rahman, Tom Mitchell, and Estevam Hruschka.
+\newblock Reasoning capacity in multi-agent systems: Limitations, challenges and human-centered solutions.
+\newblock {\em CoRR}, abs/2402.01108, 2024.
+
+\bibitem{piatti2024cooperate}
+Giorgio Piatti, Zhijing Jin, Max Kleiman-Weiner, Bernhard Sch{\"o}lkopf, Mrinmaya Sachan, and Rada Mihalcea.
+\newblock Cooperate or collapse: Emergence of sustainability behaviors in a society of llm agents.
+\newblock {\em arXiv preprint arXiv:2404.16698}, 2024.
+
+\bibitem{arXiv2023_MultiAgent-Cooperation}
+Rafael Pina, Varuna~De Silva, and Corentin Artaud.
+\newblock Discovering causality for efficient cooperation in multi-agent environments.
+\newblock {\em CoRR}, abs/2306.11846, 2023.
+
+\bibitem{zhang2024cut}
+Guibin Zhang, Yanwei Yue, Zhixun Li, Sukwon Yun, Guancheng Wan, Kun Wang, Dawei Cheng, Jeffrey~Xu Yu, and Tianlong Chen.
+\newblock Cut the crap: An economical communication pipeline for llm-based multi-agent systems.
+\newblock {\em arXiv preprint arXiv:2410.02506}, 2024.
+
+\bibitem{yue2025masrouter}
+Yanwei Yue, Guibin Zhang, Boyang Liu, Guancheng Wan, Kun Wang, Dawei Cheng, and Yiyan Qi.
+\newblock Masrouter: Learning to route llms for multi-agent systems.
+\newblock {\em arXiv preprint arXiv:2502.11133}, 2025.
+
+\bibitem{zhao2023competeai}
+Qinlin Zhao, Jindong Wang, Yixuan Zhang, Yiqiao Jin, Kaijie Zhu, Hao Chen, and Xing Xie.
+\newblock Competeai: Understanding the competition behaviors in large language model-based agents.
+\newblock {\em arXiv preprint arXiv:2310.17512}, 2023.
+
+\bibitem{arXiv2023_MultiAgent-Debate_2}
+Tian Liang, Zhiwei He, Wenxiang Jiao, Xing Wang, Yan Wang, Rui Wang, Yujiu Yang, Zhaopeng Tu, and Shuming Shi.
+\newblock Encouraging divergent thinking in large language models through multi-agent debate.
+\newblock {\em CoRR}, abs/2305.19118, 2023.
+
+\bibitem{wang2024battleagentbench}
+Wei Wang, Dan Zhang, Tao Feng, Boyan Wang, and Jie Tang.
+\newblock Battleagentbench: A benchmark for evaluating cooperation and competition capabilities of language models in multi-agent systems.
+\newblock {\em arXiv preprint arXiv:2408.15971}, 2024.
+
+\bibitem{PHPrompting}
+Chuanyang Zheng, Zhengying Liu, Enze Xie, Zhenguo Li, and Yu~Li.
+\newblock Progressive-hint prompting improves reasoning in large language models, April 01, 2023 2023.
+\newblock Tech Report.
+
+\bibitem{zhong2024memorybank}
+Wanjun Zhong, Lianghong Guo, Qiqi Gao, He~Ye, and Yanlin Wang.
+\newblock Memorybank: Enhancing large language models with long-term memory.
+\newblock In {\em Proceedings of the AAAI Conference on Artificial Intelligence}, volume~38, pages 19724--19731, 2024.
+
+\bibitem{packer2023memgpt}
+Charles Packer, Vivian Fang, Shishir\_G Patil, Kevin Lin, Sarah Wooders, and Joseph\_E Gonzalez.
+\newblock Memgpt: Towards llms as operating systems.
+\newblock 2023.
+
+\bibitem{modarressi2024memllm}
+Ali Modarressi, Abdullatif K{\"o}ksal, Ayyoob Imani, Mohsen Fayyaz, and Hinrich Sch{\"u}tze.
+\newblock Memllm: Finetuning llms to use an explicit read-write memory.
+\newblock {\em arXiv preprint arXiv:2404.11672}, 2024.
+
+\bibitem{RUC2024agent-memory}
+Zeyu Zhang, Xiaohe Bo, Chen Ma, Rui Li, Xu~Chen, Quanyu Dai, Jieming Zhu, Zhenhua Dong, and Ji-Rong Wen.
+\newblock A survey on the memory mechanism of large language model based agents.
+\newblock {\em arXiv preprint arXiv:2404.13501}, 2024.
+
+\bibitem{hu2023chatdb}
+Chenxu Hu, Jie Fu, Chenzhuang Du, Simian Luo, Junbo Zhao, and Hang Zhao.
+\newblock Chatdb: Augmenting llms with databases as their symbolic memory.
+\newblock {\em arXiv preprint arXiv:2306.03901}, 2023.
+
+\bibitem{lu2023memochat}
+Junru Lu, Siyu An, Mingbao Lin, Gabriele Pergola, Yulan He, Di~Yin, Xing Sun, and Yunsheng Wu.
+\newblock Memochat: Tuning llms to use memos for consistent long-range open-domain conversation.
+\newblock {\em arXiv preprint arXiv:2308.08239}, 2023.
+
+\bibitem{wang2023recmind}
+Yancheng Wang, Ziyan Jiang, Zheng Chen, Fan Yang, Yingxue Zhou, Eunah Cho, Xing Fan, Xiaojiang Huang, Yanbin Lu, and Yingzhen Yang.
+\newblock Recmind: Large language model powered agent for recommendation.
+\newblock {\em arXiv preprint arXiv:2308.14296}, 2023.
+
+\bibitem{zhao2024expel}
+Andrew Zhao, Daniel Huang, Quentin Xu, Matthieu Lin, Yong-Jin Liu, and Gao Huang.
+\newblock Expel: Llm agents are experiential learners.
+\newblock In {\em Proceedings of the AAAI Conference on Artificial Intelligence}, volume~38, pages 19632--19642, 2024.
+
+\bibitem{li2023metaagents}
+Yuan Li, Yixuan Zhang, and Lichao Sun.
+\newblock Metaagents: Simulating interactions of human behaviors for llm-based task-oriented coordination via collaborative generative agents.
+\newblock {\em arXiv preprint arXiv:2310.06500}, 2023.
+
+\bibitem{gao2023s3}
+Chen Gao, Xiaochong Lan, Zhihong Lu, Jinzhu Mao, Jinghua Piao, Huandong Wang, Depeng Jin, and Yong Li.
+\newblock S3: Social-network simulation system with large language model-empowered agents.
+\newblock {\em arXiv preprint arXiv:2307.14984}, 2023.
+
+\bibitem{software-dev}
+Chen Qian, Xin Cong, Cheng Yang, Weize Chen, Yusheng Su, Juyuan Xu, Zhiyuan Liu, and Maosong Sun.
+\newblock Communicative agents for software development, July 01, 2023 2023.
+\newblock 25 pages, 9 figures, 2 tables.
+
+\bibitem{qian2024scaling}
+Chen Qian, Zihao Xie, Yifei Wang, Wei Liu, Yufan Dang, Zhuoyun Du, Weize Chen, Cheng Yang, Zhiyuan Liu, and Maosong Sun.
+\newblock Scaling large-language-model-based multi-agent collaboration.
+\newblock {\em arXiv preprint arXiv:2406.07155}, 2024.
+
+\bibitem{zhuge2024gptswarm}
+Mingchen Zhuge, Wenyi Wang, Louis Kirsch, Francesco Faccio, Dmitrii Khizbullin, and J{\"u}rgen Schmidhuber.
+\newblock Gptswarm: Language agents as optimizable graphs.
+\newblock In {\em Forty-first International Conference on Machine Learning}, 2024.
+
+\bibitem{hu2024adas}
+Shengran Hu, Cong Lu, and Jeff Clune.
+\newblock Automated design of agentic systems.
+\newblock {\em arXiv preprint arXiv:2408.08435}, 2024.
+
+\bibitem{zhang_aflow_2024}
+Jiayi Zhang, Jinyu Xiang, Zhaoyang Yu, Fengwei Teng, Xionghui Chen, Jiaqi Chen, Mingchen Zhuge, Xin Cheng, Sirui Hong, Jinlin Wang, Bingnan Zheng, Bang Liu, Yuyu Luo, and Chenglin Wu.
+\newblock {AFlow}: {Automating} {Agentic} {Workflow} {Generation}, October 2024.
+\newblock arXiv:2410.10762.
+
+\bibitem{zhang2025maas}
+Guibin Zhang, Luyang Niu, Junfeng Fang, Kun Wang, Lei Bai, and Xiang Wang.
+\newblock Multi-agent architecture search via agentic supernet.
+\newblock {\em arXiv preprint arXiv:2502.04180}, 2025.
+
+\bibitem{yin2023exchange}
+Zhangyue Yin, Qiushi Sun, Cheng Chang, Qipeng Guo, Junqi Dai, Xuan-Jing Huang, and Xipeng Qiu.
+\newblock Exchange-of-thought: Enhancing large language model capabilities through cross-model communication.
+\newblock In {\em Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing}, pages 15135--15153, 2023.
+
+\bibitem{FCS2024_Survey-Agent}
+Lei Wang, Chen Ma, Xueyang Feng, Zeyu Zhang, Hao Yang, Jingsen Zhang, Zhiyuan Chen, Jiakai Tang, Xu~Chen, Yankai Lin, Wayne~Xin Zhao, Zhewei Wei, and Ji{-}Rong Wen.
+\newblock A survey on large language model based autonomous agents.
+\newblock {\em Front. Comput. Sci.}, 18, 2024.
+
+\bibitem{arXiv2023_Survey-Agent_2}
+Zhiheng Xi, Wenxiang Chen, Xin Guo, Wei He, Yiwen Ding, Boyang Hong, Ming Zhang, Junzhe Wang, Senjie Jin, Enyu Zhou, Rui Zheng, Xiaoran Fan, Xiao Wang, Limao Xiong, Yuhao Zhou, Weiran Wang, Changhao Jiang, Yicheng Zou, Xiangyang Liu, Zhangyue Yin, Shihan Dou, Rongxiang Weng, Wensen Cheng, Qi~Zhang, Wenjuan Qin, Yongyan Zheng, Xipeng Qiu, Xuanjing Huan, and Tao Gui.
+\newblock The rise and potential of large language model based agents: {A} survey.
+\newblock {\em arxiv preprint}, abs/2309.07864, 2023.
+
+\bibitem{arXiv2023_Survey-Agent_3}
+Chen Gao, Xiaochong Lan, Nian Li, Yuan Yuan, Jingtao Ding, Zhilun Zhou, Fengli Xu, and Yong Li.
+\newblock Large language models empowered agent-based modeling and simulation: A survey and perspectives.
+\newblock {\em CoRR}, abs/2312.11970, 2023.
+
+\bibitem{li2024survey-mas}
+Xinyi Li, Sai Wang, Siqi Zeng, Yu~Wu, and Yi~Yang.
+\newblock A survey on llm-based multi-agent systems: workflow, infrastructure, and challenges.
+\newblock {\em Vicinagearth}, 1(1):9, 2024.
+
+\bibitem{zheng2023synapse}
+Longtao Zheng, Rundong Wang, Xinrun Wang, and Bo~An.
+\newblock Synapse: Trajectory-as-exemplar prompting with memory for computer control.
+\newblock {\em arXiv preprint arXiv:2306.07863}, 2023.
+
+\bibitem{zhu2023ghost}
+Xizhou Zhu, Yuntao Chen, Hao Tian, Chenxin Tao, Weijie Su, Chenyu Yang, Gao Huang, Bin Li, Lewei Lu, Xiaogang Wang, et~al.
+\newblock Ghost in the minecraft: Generally capable agents for open-world environments via large language models with text-based knowledge and memory.
+\newblock {\em arXiv preprint arXiv:2305.17144}, 2023.
+
+\bibitem{tang2025chemagent}
+Xiangru Tang, Tianyu Hu, Muyang Ye, Yanjun Shao, Xunjian Yin, Siru Ouyang, Wangchunshu Zhou, Pan Lu, Zhuosheng Zhang, Yilun Zhao, et~al.
+\newblock Chemagent: Self-updating library in large language models improves chemical reasoning.
+\newblock {\em arXiv preprint arXiv:2501.06590}, 2025.
+
+\bibitem{reflexion}
+Noah Shinn, Beck Labash, and Ashwin Gopinath.
+\newblock Reflexion: an autonomous agent with dynamic memory and self-reflection.
+\newblock {\em arXiv preprint}, abs/2303.11366, 2023.
+
+\bibitem{xu2025a-mem}
+Wujiang Xu, Kai Mei, Hang Gao, Juntao Tan, Zujie Liang, and Yongfeng Zhang.
+\newblock A-mem: Agentic memory for llm agents.
+\newblock {\em arXiv preprint arXiv:2502.12110}, 2025.
+
+\bibitem{chhikara2025mem0}
+Prateek Chhikara, Dev Khant, Saket Aryan, Taranjeet Singh, and Deshraj Yadav.
+\newblock Mem0: Building production-ready ai agents with scalable long-term memory.
+\newblock {\em arXiv preprint arXiv:2504.19413}, 2025.
+
+\bibitem{salama2025meminsight}
+Rana Salama, Jason Cai, Michelle Yuan, Anna Currey, Monica Sunkara, Yi~Zhang, and Yassine Benajiba.
+\newblock Meminsight: Autonomous memory augmentation for llm agents.
+\newblock {\em arXiv preprint arXiv:2503.21760}, 2025.
+
+\bibitem{wang2024moa}
+Junlin Wang, Jue Wang, Ben Athiwaratkun, Ce~Zhang, and James Zou.
+\newblock Mixture-of-agents enhances large language model capabilities.
+\newblock {\em arXiv preprint arXiv:2406.04692}, 2024.
+
+\bibitem{zhou2024symbolic}
+Wangchunshu Zhou, Yixin Ou, Shengwei Ding, Long Li, Jialong Wu, Tiannan Wang, Jiamin Chen, Shuai Wang, Xiaohua Xu, Ningyu Zhang, et~al.
+\newblock Symbolic learning enables self-evolving agents.
+\newblock {\em arXiv preprint arXiv:2406.18532}, 2024.
+
+\bibitem{liang2024self}
+Xuechen Liang, Meiling Tao, Yinghui Xia, Tianyu Shi, Jun Wang, and JingSong Yang.
+\newblock Self-evolving agents with reflective and memory-augmented abilities.
+\newblock {\em arXiv preprint arXiv:2409.00872}, 2024.
+
+\bibitem{chen2023agentverse}
+Weize Chen, Yusheng Su, Jingwei Zuo, Cheng Yang, Chenfei Yuan, Chen Qian, Chi-Min Chan, Yujia Qin, Yaxi Lu, Ruobing Xie, Zhiyuan Liu, Maosong Sun, and Jie Zhou.
+\newblock Agentverse: Facilitating multi-agent collaboration and exploring emergent behaviors in agents, 2023.
+
+\bibitem{hu2024evomac}
+Yue Hu, Yuzhu Cai, Yaxin Du, Xinyu Zhu, Xiangrui Liu, Zijie Yu, Yuchen Hou, Shuo Tang, and Siheng Chen.
+\newblock Self-evolving multi-agent collaboration networks for software development.
+\newblock {\em arXiv preprint arXiv:2410.16946}, 2024.
+
+\bibitem{zhang2024g-designer}
+Guibin Zhang, Yanwei Yue, Xiangguo Sun, Guancheng Wan, Miao Yu, Junfeng Fang, Kun Wang, Tianlong Chen, and Dawei Cheng.
+\newblock G-designer: Architecting multi-agent communication topologies via graph neural networks.
+\newblock {\em arXiv preprint arXiv:2410.11782}, 2024.
+
+\bibitem{yuan2024evoagent}
+Siyu Yuan, Kaitao Song, Jiangjie Chen, Xu~Tan, Dongsheng Li, and Deqing Yang.
+\newblock Evoagent: Towards automatic multi-agent generation via evolutionary algorithms.
+\newblock {\em arXiv preprint arXiv:2406.14228}, 2024.
+
+\bibitem{zhang2025evoflow}
+Guibin Zhang, Kaijie Chen, Guancheng Wan, Heng Chang, Hong Cheng, Kun Wang, Shuyue Hu, and Lei Bai.
+\newblock Evoflow: Evolving diverse agentic workflows on the fly.
+\newblock {\em arXiv preprint arXiv:2502.07373}, 2025.
+
+\bibitem{arXiv2023_Dynamic-LLM-Agent}
+Zijun Liu, Yanzhe Zhang, Peng Li, Yang Liu, and Diyi Yang.
+\newblock Dynamic llm-agent network: An llm-agent collaboration framework with agent team optimization.
+\newblock {\em CoRR}, abs/2310.02170, 2023.
+
+\bibitem{wang2020microsoft}
+Kuansan Wang, Zhihong Shen, Chiyuan Huang, Chieh-Han Wu, Yuxiao Dong, and Anshul Kanakia.
+\newblock Microsoft academic graph: When experts are not enough.
+\newblock {\em Quantitative Science Studies}, 1(1):396--413, 2020.
+
+\bibitem{zhao2025sirius}
+Wanjia Zhao, Mert Yuksekgonul, Shirley Wu, and James Zou.
+\newblock Sirius: Self-improving multi-agent systems via bootstrapped reasoning.
+\newblock {\em arXiv preprint arXiv:2502.04780}, 2025.
+
+\bibitem{zhou2025reso}
+Heng Zhou, Hejia Geng, Xiangyuan Xue, Zhenfei Yin, and Lei Bai.
+\newblock Reso: A reward-driven self-organizing llm-based multi-agent system for reasoning tasks.
+\newblock {\em arXiv preprint arXiv:2503.02390}, 2025.
+
+\bibitem{yang2018hotpotqa}
+Zhilin Yang, Peng Qi, Saizheng Zhang, Yoshua Bengio, William~W Cohen, Ruslan Salakhutdinov, and Christopher~D Manning.
+\newblock Hotpotqa: A dataset for diverse, explainable multi-hop question answering.
+\newblock {\em arXiv preprint arXiv:1809.09600}, 2018.
+
+\bibitem{thorne2018fever}
+James Thorne, Andreas Vlachos, Christos Christodoulopoulos, and Arpit Mittal.
+\newblock Fever: a large-scale dataset for fact extraction and verification.
+\newblock {\em arXiv preprint arXiv:1803.05355}, 2018.
+
+\bibitem{shridhar2020alfworld}
+Mohit Shridhar, Xingdi Yuan, Marc-Alexandre C{\^o}t{\'e}, Yonatan Bisk, Adam Trischler, and Matthew Hausknecht.
+\newblock Alfworld: Aligning text and embodied environments for interactive learning.
+\newblock {\em arXiv preprint arXiv:2010.03768}, 2020.
+
+\bibitem{wang2022scienceworld}
+Ruoyao Wang, Peter Jansen, Marc-Alexandre C{\^o}t{\'e}, and Prithviraj Ammanabrolu.
+\newblock Scienceworld: Is your agent smarter than a 5th grader?
+\newblock {\em arXiv preprint arXiv:2203.07540}, 2022.
+
+\bibitem{ma2024agentboard}
+Chang Ma, Junlei Zhang, Zhihao Zhu, Cheng Yang, Yujiu Yang, Yaohui Jin, Zhenzhong Lan, Lingpeng Kong, and Junxian He.
+\newblock Agentboard: An analytical evaluation board of multi-turn llm agents.
+\newblock {\em arXiv preprint arXiv:2401.13178}, 2024.
+
+\bibitem{wang2020minilm}
+Wenhui Wang, Furu Wei, Li~Dong, Hangbo Bao, Nan Yang, and Ming Zhou.
+\newblock Minilm: Deep self-attention distillation for task-agnostic compression of pre-trained transformers.
+\newblock {\em Advances in Neural Information Processing Systems}, 33:5776--5788, 2020.
+
+\end{thebibliography}

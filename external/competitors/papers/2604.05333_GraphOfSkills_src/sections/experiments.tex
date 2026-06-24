@@ -1,0 +1,173 @@
+\section{Experiments}
+We evaluate whether graph-structured retrieval improves agent performance and efficiency relative to flat full-library access and non-graph semantic retrieval.
+
+
+\subsection{Experimental Setup}
+We evaluate GoS on two benchmarks using the full released task sets.
+%
+\textbf{SkillsBench}~\citep{li2026skillsbench} contains a diverse set of real-world technical tasks across 11 domains, paired with curated Skills: structured packages of procedural knowledge (instructions, code templates, resources) that augment LLM agents at inference time.
+%
+The task domains span complex technical work such as macroeconomic detrending, power-grid feasibility analysis, 3D scan analysis, financial modeling, and seismic phase picking.
+%
+%
+\textbf{ALFWorld}~\citep{shridhar2020alfworld} is an interactive simulator that aligns text descriptions and commands with a physically embodied robotic environment, built by combining TextWorld~\citep{cote2018textworld}, an engine for interactive text-based games and the ALFRED dataset~\citep{shridhar2020alfred}.
+%
+Its tasks involve multi-step household activities such as navigating rooms, finding objects, and manipulating them.
+%
+In the LLM agent literature, ALFWorld is widely used in its text-only mode as a benchmark for sequential decision making, where an agent receives textual room descriptions and must issue a chain of commands to accomplish a goal~\citep{yao2023react, reflexion2023}. We evaluate on the full 140 episodes.
+
+
+\noindent\textbf{Baselines.}
+%
+We compare GoS against two baselines.
+%
+\textit{Vanilla Skills} exposes the entire skill library directly to the agent, maximizing recall but providing no retrieval-time compression. On ALFWorld, this follows the official Agent Skills format and reference repository~\citep{agentskills2026}.
+%
+\textit{Vector Skills} retrieves a bounded set of skills using semantic similarity over the same embedding model used by GoS, namely \skillcode{openai/text-embedding-3-large}~\citep{openai2024textembedding3large} (3072 dimensions). It isolates the effect of graph structure from the general benefit of retrieval-time compression.
+%
+\textit{GoS} uses the same base embedding model as \textit{Vector Skills} but replaces flat nearest-neighbor retrieval with structure-aware retrieval over the skill graph. We disable the optional query-rewrite module so that any observed gain can be attributed to graph propagation rather than to an LLM rewrite of the query, and use the raw task instruction as the retrieval query. The critical comparison is therefore between flat semantic retrieval and dependency-aware structural retrieval under the same backbone and embedding setup.
+
+
+\noindent\textbf{Models and Evaluation.}
+Experiments are conducted with Claude Sonnet 4.5~\citep{anthropic2025claude45}, MiniMax M2.7~\citep{minimax2026m27}, and GPT-5.2 Codex~\citep{openai2025gpt52codex}.
+%
+Each model--method setting is run twice, and we report the mean across runs. We report average reward across tasks as the primary evaluation metric. For ALFWorld, rewards are binary, so average reward is equivalent to success rate. We additionally report average total token usage and agent-only runtime; runtime is measured from agent start to agent finish and excludes environment setup.
+
+
+\noindent\textbf{Evaluation Protocol.}
+We use the full benchmark task sets and apply the same retry policy across the main and sensitivity experiments. If environment construction fails, we rebuild and rerun the task up to two additional times; tasks that still fail after these retries are excluded as unresolved infrastructure failures rather than counted as model failures. For agent timeouts, we distinguish between substantive execution failures and startup failures: if the agent has already been executing for a long time and then times out, we record reward $0$ and keep the run in the aggregate; if the timeout occurs before a meaningful run is established, we rerun the trial. This protocol is applied to the full SkillsBench evaluation, the full 140-episode ALFWorld evaluation, and the library-size sensitivity study.
+
+
+\subsection{Main Results}
+
+We present the main results in Table~\ref{results-table}.
+%
+Across all six model--benchmark blocks, GoS attains the highest average reward. Relative to \textit{Vanilla Skills}, it reduces average token usage in all six blocks and reduces agent runtime in five of the six. Relative to \textit{Vector Skills}, it improves reward in every block while keeping the token budget in the same compressed regime.
+
+\input{figures/table1}
+
+
+\noindent\textbf{Semantic retrieval struggles on long-horizon tasks.}
+% 
+Many tasks in SkillsBench are long-horizon and require combining relevant skills with prerequisite utilities, such as environment setup, data preprocessing, or output formatting. These skills may not be lexically salient in the task description.
+%
+Vector Skills, which retrieves based solely on embedding similarity to the query, often misses these indirect but essential dependencies, leading to incomplete skill sets and lower task completion rates.
+%
+This pattern is most visible on SkillsBench. Under Claude Sonnet 4.5, \textit{Vector Skills} drops from 25.0 to 19.3 average reward relative to \textit{Vanilla Skills}; under MiniMax M2.7, it drops from 17.2 to 10.4; and under GPT-5.2 Codex, it drops from 27.4 to 21.5. In contrast, GoS improves over other baselines in all three SkillsBench blocks while substantially reducing token usage.
+%
+These results are consistent with the hypothesis that long-horizon tasks are sensitive not only to topical relevance, but also to whether the retrieved bundle contains the prerequisite helpers needed to complete the full execution path.
+
+
+\noindent\textbf{GoS achieves the strongest overall tradeoff.}
+%
+The ALFWorld results show that the same advantage transfers to a sequential embodied environment. Under Claude Sonnet 4.5, GoS reaches 97.9\% average success, compared with 93.6\% for \textit{Vector Skills} and 89.3\% for \textit{Vanilla Skills}, while reducing average total tokens from 1,524,401 to 27,215 relative to flat prompting. Under MiniMax M2.7, GoS again gives the strongest overall tradeoff, improving reward from 47.1\% under \textit{Vanilla Skills} and 50.7\% under \textit{Vector Skills} to 54.3\%, while also achieving the lowest token usage and runtime in that block. Under GPT-5.2 Codex, GoS and \textit{Vector Skills} are close on reward (93.6\% vs. 92.9\%), but GoS still maintains significant token efficiency. Taken together, these results suggest that the benefit of structure-aware retrieval is not limited to technical code-execution tasks.
+
+
+\noindent\textbf{GoS offers the best efficiency--performance tradeoff.}
+%
+\textit{Vanilla Skills} preserves maximal recall, but its cost grows rapidly with library size and leaves the agent to search an unstructured skill set at inference time. 
+%
+\textit{Vector Skills} reduces token cost, but its retrieved set is often incomplete, because semantically nearby skills are not always jointly sufficient. 
+%
+GoS improves reward over \textit{Vector Skills} by 10.97 points on SkillsBench and 2.87 points on ALFWorld while remaining far more efficient than \textit{Vanilla Skills} (Table~\ref{results-table}). 
+%
+The results are averaged over two runs per setting. We interpret them as a consistent empirical pattern rather than a formal significance claim.
+
+% % Our results support a narrower claim than ``graphs are always better than vectors.'' Rather, they suggest that graph structure is especially useful when skills exhibit directed prerequisite relations and when successful task completion depends on retrieving a small execution-complete set instead of a set of individually similar items. This is exactly the regime targeted by GoS. The library-size analysis below points in the same direction: as the repository grows from 200 to 2{,}000 skills, flat exposure becomes increasingly expensive, vector retrieval remains reward-limited, and GoS preserves the strongest effectiveness-efficiency tion{Component Ablation}
+
+\subsection{Qualitative Analysis}
+
+We inspect trajectory-level evidence to study how retrieval quality changes the downstream execution path, not just the final score. Appendix~\ref{sec:appendix_qualitative} provides a broader case set; here we focus on one representative example that isolates the main mechanism behind GoS.
+
+\noindent\textbf{Pedestrian Traffic Counting.} \skillcode{pedestrian-traffic-counting} requires a short but complete visual pipeline: extracting frames, counting pedestrians reliably, and formatting the output in the expected structure. In this case, GoS retrieved a compact bundle centered on \skillcode{gemini-count-in-video}, \skillcode{video-frame-extraction}, and \skillcode{openai-vision}, and achieved the highest score ($0.417$). \textit{Vanilla Skills} eventually opened related helpers, including \skillcode{gemini-count-in-video}, \skillcode{video-frame-extraction}, and \skillcode{object_counter}, but reached only $0.267$, suggesting that broad library access can recover relevant tools while still leaving the agent with a noisier search problem. \textit{Vector Skills} scored only $0.041$: it retrieved some relevant context, but not a bundle that the agent could convert into a workable end-to-end plan. The qualitative lesson is that GoS does not help merely by retrieving topically similar skills. It helps by exposing a bundle that is already close to the executable decomposition of the task, so the agent can commit earlier to a verifier-aligned plan rather than spending budget on additional search and assembly.
+
+% % \subsection{Sensitivity to Library Size:ablation}
+\section{Ablation Study}
+\label{sec:ablation}
+We conduct an additional ablation study to evaluate the impact of the skill library size on GoS, \textit{Vanilla Skills}, and \textit{Vector Skills}, alongside the effects of the lexical merge and reranker components on GoS performance.
+
+
+
+\subsection{Sensitivity to Skill Library Size}
+%
+We run an additional full-SkillsBench study with GPT-5.2 Codex while varying the library size from 200 to 500, 1{,}000, and 2{,}000 skills. 
+%
+We report average reward, average input tokens, and agent-only runtime under the same retry and exclusion rules used in the main experiments in Figure~\ref{fig:scaleup-skillsbench}.
+
+\input{figures/table2}
+
+\noindent\textbf{Prompt cost grows rapidly for all skill exposure.}
+The strongest trend is on input tokens. 
+%
+As the library grows from 500 to 2,000 skills, \textit{Vanilla Skills} rises from 1.93M to 5.84M average input tokens, roughly a 3$\times$ increase. Over the same range, \textit{Vector Skills} stays near 1.10M--1.24M tokens and GoS stays near 1.14M--1.38M tokens. 
+%
+This result shows that simple retrieval substantially weakens the coupling between repository size and prompt size, while GoS does so without giving up reward.
+
+\noindent\textbf{GoS maintains a reward advantage at all tested scales.}
+At 200 skills, \textit{Vanilla Skills} is still slightly ahead of GoS (32.5 vs. 32.1). 
+%
+Once the library becomes moderately large, GoS outperforms both baselines at every tested scale: 31.4 vs. 26.0 / 20.7 at 500 skills, 34.4 vs. 27.4 / 21.5 at 1{,}000 skills, and 31.3 vs. 26.7 / 23.8 at 2{,}000 skills (GoS / Vanilla Skills / Vector Skills). The margin is largest at 1{,}000 skills and remains substantial at 2{,}000, indicating that increasing library size does not weaken the benefit of dependency-aware retrieval.
+
+\noindent\textbf{Retrieval step does not change the scaling conclusion.}
+Both retrieval-based methods are slower than \textit{Vanilla Skills} in agent-only runtime for GPT at most scales, reflecting the overhead of searching before execution. 
+% However, that runtime overhead is modest relative to the reduction in prompt cost, and the main scaling bottleneck remains the prompt itself rather than retrieval latency. 
+%
+However, this reduced runtime is unique to GPT-5.2 Codex, likely due to caching mechanisms for fixed skill libraries within the black-box model, where Claude and MiniMax have longer runtime when using \textit{Vanilla Skills} than GoS and \textit{Vector Skills} (Table~\ref{results-table}).
+%
+In contrast, the Claude model lacks this optimization, making the \textit{Vanilla Skills} approach significantly slower than retrieval methods. 
+%
+Furthermore, the results suggest that the primary system bottleneck is not graph traversal or vector search, but rather the overhead of exposing an increasingly large, flat library directly to the model.
+% The runtime pattern is summarized in Table~\ref{tab:claude_runtime_wrap}. These comparisons indicate that for Claude-style agents, retrieval not only reduces tokens but also yields a practical runtime advantage. 
+% %
+% \begin{wraptable}{r}{0.5\linewidth}
+% % \vspace{-0.8em}
+% % \centering
+% \small
+% \label{tab:claude_runtime_wrap}
+% % \begin{tabular}{llll}
+% % \toprule
+% % Model & Method & S \\
+% % \midrule
+% % %  & Vanilla Skills & 465.8 & 53.22 \\
+% % Claude 4.5 & Vector & \textbf{357.3} & \textbf{37.8} \\
+% %  & +GoS & \underline{\underline{364.9}} & \underline{49.2}\\
+% % \midrule
+%  & Vanilla Skills & \underline{580.7} & 88.6\\
+% % MiniMax M2.7 & Vector Skills & \underline{552.9} & \textbf{57.0} \\
+% %  & +GoS & \textbf{502.5} & \underline{64.7} \\
+% % \bottomrule
+% % \end{tabular}
+% % \vspace{-0.8em}
+% % \end{wraptable}
+% % Furthermore, this suggests that the primary system bottleneck is not graph traversal or vector search, but rather the overhead of exposing an increasingly large, flat library directly to the model.
+
+
+% % This skillset size sensitivity study shows that GoS is not only stronger at the fixed 1{,}000-skill setting used in the main table; it is also more robust as the underlying skill repository grows. 
+% % %
+% As library size increases, the \textit{Vanilla Skills} baseline consumes increasing context cost without much reward gains, vector retrieval preserves compression but remains weaker on reward, and GoS preserves the most balanced overall contribution-efficiency key tradeoff.
+% 
+\subsection{Component Analysis of Retrieval Pipeline}
+%%
+\input{figures/ablation_table}
+We next evaluate the contribution of two key retrieval components in the GoS pipeline: graph propagation and lexical reranking, with results reported in Table~\ref{tab:gos-ablation}.
+%
+These ablations were run under the main SkillsBench configuration with GPT-5.2 Codex on the 1{,}000-skill library.
+%
+In the first ablation, we remove graph propagation, disabling the system's ability to expand beyond seed skills to structurally related prerequisites. 
+%
+In the second, we remove lexical retrieval and reranking, forcing the system to rely solely on the semantic retriever before graph expansion.
+%
+
+
+\textbf{Graph propagation and lexical reranking are important components for GoS' success.}
+%
+Removing graph propagation reduces average token usage from 1.38M to 0.89M, but it also lowers average reward from 34.4 to 29.3 ($\downarrow5.1$). 
+%
+Removing lexical retrieval and reranking lowers average token usage from 1.38M to 1.01M. It lowers average reward from 34.4 to 26.7 ($\downarrow7.7$). 
+%
+The larger degradation in the second ablation suggests that better seed quality is especially important on SkillsBench: if the initial retrieved skills are weak, graph expansion has less useful structure from which to recover missing prerequisites.
+% At the same time, graph propagation remains an important part of the final gain. Even with lexical retrieval and reranking intact, removing graph propagation still causes a substantial reward loss relative to the full system. Taken together, 
+These results show that hybrid semantic--lexical retrieval improves entry-point quality, and graph propagation then converts those stronger seeds into a more execution-complete bundle. 
+%
+
+%

@@ -1,0 +1,16 @@
+\begin{table*}[!t]
+\caption{Comparison with LLM-Based Stage-2 Reranking on ToolBench (Sampled $n=300$, Fair: All Methods Use Identical Stage-1 Output). Set-F1 is equal across LR/HR/LLaMA-0shot (same Stage-1); LLaMA-3shot differs marginally due to list-reordering affecting tool parsing.}
+\label{tab:llm}
+\centering
+\small
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Method} & \textbf{Set-F1} & \textbf{Ord.Prec} & \textbf{Kendall-$\tau$} & \textbf{Trans.Acc} \\
+\midrule
+GS-Hybrid + LR (ours)       & 0.254 & \textbf{0.140} & \textbf{0.097} & \textbf{0.084} \\
+GS-Hybrid + Hyb-Rerank      & 0.254 & 0.132 & 0.081 & 0.082 \\
+GS-Hybrid + LLaMA (0-shot)  & 0.254 & 0.116 & 0.048 & 0.083 \\
+GS-Hybrid + LLaMA (3-shot)  & 0.257 & 0.110 & 0.043 & 0.071 \\
+\bottomrule
+\end{tabular}
+\end{table*}

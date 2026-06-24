@@ -1,0 +1,23 @@
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{\systemname{} outperforms ReasoningBank retrieval on DocVQA. ANLS/Acc are as in \cref{tab:vqa}.}
+\label{tab:vqa_retrieval}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{@{}l cccc@{}}
+\toprule
+\textbf{Setting}
+    & \multicolumn{2}{c}{\textit{Runner: 122B}}
+    & \multicolumn{2}{c}{\textit{Runner: 35B}} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+    & \textbf{ANLS}$\uparrow$
+    & \textbf{Acc}$\uparrow$
+    & \textbf{ANLS}$\uparrow$
+    & \textbf{Acc}$\uparrow$ \\
+\midrule
+No Skill                    & 0.6300 & 70.27 & 0.6582 & 73.17 \\
+ReasoningBank (combined)      & 0.8668 & 90.90 & 0.8568 & 89.62 \\
+\systemname{} +Combined (ours) & \textbf{0.8833} & \textbf{92.52} & \textbf{0.8740} & \textbf{92.00} \\
+\bottomrule
+\end{tabular}
+}%

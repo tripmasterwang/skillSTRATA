@@ -1,0 +1,21 @@
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{Parallel consolidation versus sequential editing on DocVQA using the +Combined trace pool. ANLS/Acc are as in \cref{tab:vqa}.}
+\label{tab:vqa_seq_parallel}
+\begin{tabular}{@{}l cc c@{}}
+\toprule
+\textbf{Setting}
+    & \multicolumn{2}{c}{\textit{Runner: 122B}}
+    & \\
+\cmidrule(lr){2-3}
+    & \textbf{ANLS}$\uparrow$
+    & \textbf{Acc}$\uparrow$
+    & \textbf{Time}$\downarrow$ \\
+\midrule
+No Skill      & 0.6300 & 70.27 & 0 \\
+Seq-$B{=}4$   & 0.8674 & 90.80 & 5.2\,min \\
+Seq-$B{=}1$   & 0.8694 & 91.05 & 35.9\,min \\
+Parallel      & \textbf{0.8833} & \textbf{92.52} & \textbf{4.8\,min} \\
+\bottomrule
+\end{tabular}

@@ -1,0 +1,40 @@
+
+\begin{table}[t]
+    \caption{Main results on ALFWorld and WebShop. ALFWorld reports per-subtask and overall success rates~(\%); WebShop reports task score and success rate~(\%). \textbf{Bold} and \underline{underline} denote the best and second-best results, respectively.}
+    \label{tab:main}
+    \centering
+    \small
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{lrrrrrrr|rr}
+    \toprule
+    \multirow{2}{*}{Method} & \multicolumn{7}{c|}{ALFWorld} & \multicolumn{2}{c}{WebShop} \\
+     & Pick & Look & Clean & Heat & Cool & Pick2 & All & Score & Succ. \\
+    \midrule
+    \multicolumn{10}{l}{\textit{Closed-source LLMs}} \\
+    GPT-4o          & 75.3 & 60.8 & 31.2 & 56.7 & 21.6 & 49.8 & 48.0 & 31.8 & 23.7 \\
+    Gemini-2.5-Pro  & 92.8 & 63.3 & 62.1 & 69.0 & 26.6 & 58.7 & 60.3 & 42.5 & 35.9 \\
+    \midrule
+    \multicolumn{10}{l}{\textit{Prompt-based Agentic or Memory-based Methods}} \\
+    ReAct     & 48.5 & 35.4 & 34.3 & 13.2 & 18.2 & 17.6 & 31.2 & 46.2 & 19.5 \\
+    Reflexion  & 62.0 & 41.6 & 44.9 & 30.9 & 36.3 & 23.8 & 42.7 & 58.1 & 28.8 \\
+    Mem0            & 54.0 & 55.0 & 26.9 & 36.4 & 20.8 & 7.69 & 33.6 & 23.9 & 2.00 \\
+    MemP            & 54.3 & 38.5 & 48.1 & 56.2 & 32.0 & 16.7 & 41.4 & 25.3 & 6.40 \\
+    ExpeL           & 21.0 & 67.0 & 55.0 & 52.0 & 11.0 & 6.00 & 46.3 & 30.9 & 11.2 \\
+    SimpleMem       & 64.5 & 33.3 & 20.0 & 12.5 & 33.3 & 3.84 & 29.7 & 33.2 & 8.59 \\
+    \midrule
+    \multicolumn{10}{l}{\textit{RL-based Methods}} \\
+    RLOO       & 87.6 & \underline{78.2} & 87.3 & 81.3 & 71.9 & 48.9 & 75.5 & 80.3 & 65.7 \\
+    GRPO       & 90.8 & 66.1 & 89.3 & 74.7 & 72.5 & 64.7 & 77.6 & 79.3 & 66.1 \\
+    \midrule
+    \multicolumn{10}{l}{\textit{Memory-Augmented RL-based Methods}} \\
+    MemRL           & 62.8 & 38.5 & 22.2 & 12.5 &  8.00 &  0.00 & 21.4 & 29.5 &  9.20 \\
+    EvolveR         & 64.9 & 33.3 & 46.4 & 13.3 & 33.3 & 33.3 & 43.8 & 42.5 & 17.6 \\
+    Mem0+GRPO       & 78.1 & 54.8 & 56.1 & 31.0 & 65.0 & 26.9 & 54.7 & 58.1 & 37.5 \\
+    SimpleMem+GRPO  & 89.5 & 63.6 & 60.0 & 50.0 & 64.9 & 26.3 & 62.5 & 67.8 & 46.9 \\
+    SkillRL         & \underline{97.9} & 71.4 & \underline{90.0} & \underline{90.0} & \textbf{95.5} & \textbf{87.5} & \underline{89.9} & \underline{85.2} & \underline{72.7} \\
+    \midrule
+    \textsc{SkillGraph} (Ours) & \textbf{100.0} & \textbf{80.0} & \textbf{100.0} & \textbf{100.0} & \underline{80.0} & \underline{83.3} & \textbf{90.6} & \textbf{91.5} & \textbf{84.4} \\
+    \bottomrule
+    \end{tabular}
+    \end{table}
+    

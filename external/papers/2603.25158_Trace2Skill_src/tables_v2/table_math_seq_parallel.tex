@@ -1,0 +1,26 @@
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{Parallel consolidation versus sequential editing on math reasoning (same trace budget). D-Test/AIME are as in \cref{tab:math} (122B and 35B users).}
+\label{tab:math_seq_parallel}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{@{}l cccc c@{}}
+\toprule
+\textbf{Condition}
+    & \multicolumn{2}{c}{\textit{Runner: 122B}}
+    & \multicolumn{2}{c}{\textit{Runner: 35B}}
+    & \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+    & \textbf{D-Test}$\uparrow$
+    & \textbf{AIME}$\uparrow$
+    & \textbf{D-Test}$\uparrow$
+    & \textbf{AIME}$\uparrow$
+    & \textbf{Time}$\downarrow$ \\
+\midrule
+No Skill      & 92.0 & 90.4 & 89.0 & 83.3 & 0 \\
+Seq-$B{=}4$   & 93.0 & \textbf{91.7} & 89.0 & 68.3 & 3.8 min \\
+Seq-$B{=}1$   & 94.0 & 85.8 & 90.0 & 81.7 & 25.9 min \\
+Parallel      & \textbf{95.0} & \textbf{91.7} & \textbf{94.0} & \textbf{88.3} & \textbf{2.0 min} \\
+\bottomrule
+\end{tabular}
+}%

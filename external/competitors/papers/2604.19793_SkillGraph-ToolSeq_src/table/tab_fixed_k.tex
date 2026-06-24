@@ -1,0 +1,32 @@
+\begin{table}[!t]
+\caption{Fixed-$K$ Robustness on ToolBench (9,965 test instances).
+Semantic~Only uses top-$K$ retrieval; GS-Hybrid+LR uses hybrid
+graph-semantic stage~1 truncated to $K$, then the learned reranker.
+\textit{Oracle} uses $K=\max(|S^*|,3)$ as the reference.
+$\Delta\tau$ = relative improvement in Kendall-$\tau$.}
+\label{tab:fixed_k}
+\centering
+\small
+\setlength{\tabcolsep}{4pt}%
+\begin{tabular}{llccc}
+\toprule
+$K$ & \textbf{Method} & \textbf{Set-F1} & \textbf{Kendall-$\tau$} & \textbf{$\Delta\tau$} \\
+\midrule
+\multirow{2}{*}{3}
+ & Semantic Only       & 0.269 & 0.037 & -- \\
+ & GS-Hybrid+LR        & \textbf{0.274} & \textbf{0.095} & $+$156\% \\
+\midrule
+\multirow{2}{*}{5}
+ & Semantic Only       & 0.237 & 0.052 & -- \\
+ & GS-Hybrid+LR        & \textbf{0.243} & \textbf{0.107} & $+$106\% \\
+\midrule
+\multirow{2}{*}{8}
+ & Semantic Only       & 0.195 & 0.068 & -- \\
+ & GS-Hybrid+LR        & \textbf{0.197} & \textbf{0.121} & $+$79\% \\
+\midrule
+\multirow{2}{*}{Oracle}
+ & Semantic Only       & 0.266 & 0.042 & -- \\
+ & GS-Hybrid+LR\,(main) & \textbf{0.271} & \textbf{0.096} & $+$129\% \\
+\bottomrule
+\end{tabular}
+\end{table}

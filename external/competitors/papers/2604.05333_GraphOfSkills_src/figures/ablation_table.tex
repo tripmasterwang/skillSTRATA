@@ -1,0 +1,16 @@
+\begin{table}[t]
+\caption{Component ablation on full SkillsBench with GPT-5.2 Codex and the 1{,}000-skill library. \textbf{R}: average reward (\%), \textbf{T}: average total tokens (M), \textbf{S}: agent-only runtime (s).}
+\label{tab:gos-ablation}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4.5pt}
+\begin{tabular}{lccc}
+\toprule
+Method & R $\uparrow$ & T $\downarrow$ & S $\downarrow$ \\
+\midrule
+Full GoS & \textbf{34.4} & 1.38 & 715.6 \\
+w/o graph propagation & 29.3 & 0.89 & 766.2 \\
+w/o lexical + rerank & 26.7 & 1.01 & 747.7 \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -1,0 +1,88 @@
+\begin{figure}[!t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  xlabel={Set-F1},
+  ylabel={Ordered Precision},
+  xlabel style={font=\small},
+  ylabel style={font=\small},
+  tick label style={font=\footnotesize},
+  xmin=0.195, xmax=0.288,
+  ymin=0.055, ymax=0.172,
+  xtick={0.21,0.23,0.25,0.27},
+  ytick={0.07,0.09,0.11,0.13,0.15,0.17},
+  xticklabel style={font=\footnotesize},
+  yticklabel style={font=\footnotesize},
+  width=7.8cm, height=6.4cm,
+  legend style={font=\footnotesize, at={(0.04,0.96)}, anchor=north west,
+    row sep=-1pt, inner sep=3pt},
+  legend cell align=left,
+  grid=both,
+  grid style={gray!20, line width=0.4pt},
+  major grid style={gray!35, line width=0.5pt},
+]
+
+%% Single-stage baselines (filled circles, blue)
+\addplot[only marks, mark=*, mark size=2.8pt,
+         draw=blue!70!black, fill=blue!30, opacity=0.9]
+  coordinates {
+    (0.215, 0.073)   % BM25
+    (0.266, 0.123)   % Semantic Only
+    (0.240, 0.149)   % Beam Search
+    (0.271, 0.130)   % Hybrid Sem-Graph
+  };
+\addlegendentry{Single-stage}
+
+%% Two-stage, non-learned (filled triangles, orange)
+\addplot[only marks, mark=triangle*, mark size=3.2pt,
+         draw=orange!80!black, fill=orange!40, opacity=0.9]
+  coordinates {
+    (0.271, 0.133)   % GS-Hybrid + Sem-Sort
+    (0.271, 0.152)   % GS-Hybrid + Hybrid-Rerank
+  };
+\addlegendentry{Two-stage (non-learned)}
+
+%% Our method (star, red)
+\addplot[only marks, mark=star, mark size=5.5pt,
+         draw=red!80!black, fill=red!70, opacity=1.0]
+  coordinates {
+    (0.271, 0.156)   % GS-Hybrid + Learned Reranker (ours)
+  };
+\addlegendentry{GS-Hybrid+LR \textbf{(ours)}}
+
+%% Point labels
+% BM25
+\node[font=\scriptsize, text=blue!70!black, anchor=north]
+  at (axis cs:0.215,0.073) {BM25};
+% Semantic Only
+\node[font=\scriptsize, text=blue!70!black, anchor=north east]
+  at (axis cs:0.266,0.123) {Sem-Only};
+% Beam Search
+\node[font=\scriptsize, text=blue!70!black, anchor=south]
+  at (axis cs:0.240,0.149) {Beam};
+% Hybrid Sem-Graph
+\node[font=\scriptsize, text=blue!70!black, anchor=south east]
+  at (axis cs:0.271,0.130) {Hybrid};
+% Our method
+\node[font=\scriptsize, text=red!80!black, anchor=south west]
+  at (axis cs:0.271,0.156) {\textbf{Ours}};
+
+%% Pareto-front arrow annotation
+\draw[-{Stealth[length=4pt,width=3pt]}, gray!60, dashed]
+  (axis cs:0.250,0.105) -- (axis cs:0.268,0.152);
+\node[font=\scriptsize, gray!70, align=center]
+  at (axis cs:0.243,0.098) {Pareto\\frontier};
+
+\end{axis}
+\end{tikzpicture}
+\caption{Set-F1 vs.\ Ordered Precision on ToolBench (9,965 instances) for representative methods.
+GS-Hybrid+LR (\textcolor{red!80!black}{$\bigstar$}) is the sole
+Pareto-optimal point, achieving the highest value on \emph{both} axes
+simultaneously.
+Single-stage methods (\textcolor{blue!60!black}{$\bullet$}) trade
+Set-F1 for Ord.Prec or vice versa.
+Two-stage non-learned methods
+(\textcolor{orange!80!black}{$\blacktriangle$}) improve ordering without
+sacrificing Set-F1, but fall short of the learned reranker.}
+\label{fig:pareto}
+\end{figure}

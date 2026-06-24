@@ -1,0 +1,20 @@
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{Parallel consolidation versus sequential editing on SpreadsheetBench (same trace pool, +Error). Parallel outperforms Seq in effectiveness and efficiency. \cref{tab:math_seq_parallel} and \cref{tab:vqa_seq_parallel} show similar trend in math/VQA.}
+\label{tab:seq_parallel}
+\begin{tabular}{@{}l ccc ccc c@{}}
+\toprule
+& \multicolumn{3}{c}{\textit{Skill User: 122B}}
+& \multicolumn{3}{c}{\textit{Skill User: 35B}} & \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}
+\textbf{Condition}
+    & \textbf{Vrf}$\uparrow$ & \textbf{Soft}$\uparrow$ & \textbf{Hard}$\uparrow$
+    & \textbf{Vrf}$\uparrow$ & \textbf{Soft}$\uparrow$ & \textbf{Hard}$\uparrow$
+    & \textbf{Time}$\downarrow$ \\
+\midrule
+Seq-$B{=}4$           & 59.00 & 40.63 & 20.63 & 26.17 & 22.37 &  7.47 & $\sim$15 min \\
+Seq-$B{=}1$           & 61.83 & 44.40 & 25.40 & 26.00 & \textbf{23.83} & \textbf{10.57} & $\sim$60 min \\
+Parallel (ours)        & \textbf{65.83} & \textbf{46.60} & \textbf{27.43} & \textbf{27.00} & 22.20 &  8.20 & \textbf{$\sim$3 min} \\
+\bottomrule
+\end{tabular}

@@ -1,0 +1,1281 @@
+\documentclass{article}
+
+
+% if you need to pass options to natbib, use, e.g.:
+%     \PassOptionsToPackage{numbers, compress}{natbib}
+% before loading neurips_2025
+
+
+% ready for submission
+% \usepackage{neurips_2025}
+
+
+% to compile a preprint version, e.g., for submission to arXiv, add add the
+% [preprint] option:
+    \usepackage[preprint]{neurips_2025}
+
+
+% to compile a camera-ready version, add the [final] option, e.g.:
+%     \usepackage[final]{neurips_2025}
+
+
+% to avoid loading the natbib package, add option nonatbib:
+%    \usepackage[nonatbib]{neurips_2025}
+
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{colortbl}       % colored tables and \Xhline
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage[table,xcdraw,usenames,dvipsnames]{xcolor}
+\usepackage{colortbl}
+\usepackage{multirow}
+\usepackage{array}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=red,
+    citecolor=cyan,
+    filecolor=magenta,      
+    urlcolor=magenta,
+    }
+
+%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{pifont} 
+\usepackage{xspace}
+\newcommand{\ourmethod}{{\fontfamily{lmtt}\selectfont \textbf{G-Memory}}\xspace}
+\usepackage{ulem}
+\usepackage{amsmath}
+\usepackage{cleveref}
+\usepackage{enumerate}
+\usepackage{enumitem}
+\usepackage[most]{tcolorbox}
+\newcommand{\insightbox}[1]{%
+    \begin{tcolorbox}[colframe=black!70, colback=yellow!5, boxrule=1pt, arc=4mm]
+        \includegraphics[width=0.5cm]{figs/amnesia.png}
+        \textbf{\small#1}
+    \end{tcolorbox}
+}
+\usepackage{amssymb}
+
+\newcommand{\llmname}[1]{{\fontfamily{pcr}\selectfont {#1}}\xspace}
+\newcommand{\blue}[1]{$_{\color{BlueGreen}\downarrow #1}$}
+\newcommand{\red}[1]{$_{\color{RedOrange}\uparrow #1}$}
+\definecolor{darksalmon}{rgb}{0.91, 0.59, 0.48}
+
+
+\usepackage{booktabs}
+\usepackage{makecell}
+\usepackage{bbding}
+\newcommand{\hlfirst}[1]{\colorbox[HTML]{CFE2FF}{#1}}  % 深一点（模拟不透明）
+\newcommand{\hlsecond}[1]{\colorbox[HTML]{E8F1FF}{#1}} % 浅一点（模拟半透明）
+
+\usepackage{siunitx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{listings}
+\definecolor{mygrey}{gray}{0.4}
+
+\usepackage{listings}
+\lstset{
+  breaklines=true, % 自动换行
+  basicstyle=\ttfamily\scriptsize, % 设置字体
+  % frame=single, % 代码框线
+  xleftmargin=0pt, % 左边距
+  xrightmargin=0pt % 右边距
+}
+
+\usepackage{fontawesome5}
+
+%%%%%%%%%%%%%%%%%%%%%
+
+
+\title{\ourmethod: Tracing Hierarchical Memory for Multi-Agent Systems}
+
+
+% The \author macro works with any number of authors. There are two commands
+% used to separate the names and addresses of multiple authors: \And and \AND.
+%
+% Using \And between authors leaves it to LaTeX to determine where to break the
+% lines. Using \AND forces a line break at that point. So, if LaTeX puts 3 of 4
+% authors names on the first line, and the last on the second line, try using
+% \AND instead of \And before the third author name.
+
+
+%%%%%%% AUTHORS
+% Guibin Zhang
+% Muxin Fu (Tongji)
+% Guancheng Wan (PhD @ UCLA; Supervisor: Yizhou Sun & Wei Wang)
+% Kun Wang (Postdoc @ NTU; Supervisor: Yang Liu)
+% Shuicheng Yan 
+
+
+%%%%%%%
+\author{%
+  Guibin Zhang$^{* 1}$, Muxin Fu$^{* 2}$, Guancheng Wan$^{3}$, Miao Yu$^{4}$, Kun Wang$^{5\dag}$,  Shuicheng Yan$^{1\dag} $\\
+  $^{1}$NUS, $^{2}$Tongji University, $^{3}$UCLA,  $^{4}$A*STAR, $^{5}$NTU \\ 	 $^*$ Equal Contribution, $^\dag$ Corresponding author \\
+  {\faEnvelope} \texttt{wang.kun@ntu.edu.sg}, \;\texttt{yansc@comp.nus.edu.sg} 
+}
+
+
+
+\begin{document}
+
+
+\maketitle
+
+
+\begin{abstract}
+Large language model (LLM)-powered multi-agent systems (MAS) have demonstrated cognitive and execution capabilities that far exceed those of single LLM agents, yet their capacity for self-evolution remains hampered by underdeveloped memory architectures. Upon close inspection, we are alarmed to discover that prevailing MAS memory mechanisms (1) are overly simplistic, completely disregarding the nuanced inter-agent collaboration trajectories, and (2) lack cross-trial and agent-specific customization, in stark contrast to the expressive memory developed for single agents. To bridge this gap, we introduce \ourmethod, a hierarchical, agentic memory system for MAS inspired by organizational memory theory~\cite{BOOK_1991organizational_memory}, which manages the lengthy MAS interaction via a three-tier graph hierarchy: insight, query, and interaction graphs. Upon receiving a new user query, \ourmethod performs bi-directional memory traversal to retrieve both \textit{high-level, generalizable insights} that enable the system to leverage cross-trial knowledge, and \textit{fine-grained, condensed interaction trajectories} that compactly encode prior collaboration experiences. Upon task execution, the entire hierarchy evolves by assimilating new collaborative trajectories, nurturing the progressive evolution of agent teams. Extensive experiments across five benchmarks, three LLM backbones, and three popular MAS frameworks demonstrate that \textbf{\ourmethod improves success rates in embodied action and accuracy in knowledge QA by up to $20.89\%$ and $10.12\%$,} respectively, without any modifications to the original frameworks.
+ Our codes are available at \url{https://github.com/bingreeky/GMemory}.
+\end{abstract}
+
+
+\section{Introduction}\label{sec:intro}
+As Large Language Models (LLMs) continue to redefine the frontier of artificial intelligence, \textit{LLM-driven agents} have exhibited unprecedented prowess in perception~\cite{driess2023palm-e,wang2024omnidrive,zheng2023steve,wei2024editable}, planning~\cite{zhu2024knowagent,erdogan2025plan-and-act,huang2024understanding}, reasoning~\cite{putta2024agentq,masterman2024landscape}, and action~\cite{li2024embodied,yang2024embodied}, which have catalyzed remarkable progress across diverse downstream domains, including code generation~\citep{autogen,guo2024deepseekcoderlargelanguagemodel}, data analysis~\citep{hong2024data-interpreter}, embodied tasks~\citep{voyager} and autonomous driving~\cite{wang2024omnidrive,chen2024driving,sun2024optimizing}. Building upon the impressive competencies of single agents, LLM-based Multi-Agent Systems (MAS) have been demonstrated to push the boundaries of single model capacity~\citep{generative-agents-simulacra,arXiv2023_MultiAgent-Debate,meta-gpt}. Similar to collective intelligence arising from human social collaboration~\cite{Book1988_SoM,J2003_SoM,NeurIPS2023_Agent-SoM}, MAS orchestrates multiple agents~\cite{multi-persona,arXiv2024_Survey-MultiAgent,arXiv2024_Survey-MultiAgent_2}, whether through cooperation~\cite{piatti2024cooperate,arXiv2023_MultiAgent-Cooperation,zhang2024cut,yue2025masrouter} or competition~\cite{zhao2023competeai,arXiv2023_MultiAgent-Debate_2,wang2024battleagentbench}, to transcend the cognitive and specialized limitations of solitary agents.
+
+\paragraph{Self-Evolving Agents.} What especially characterizes LLM agents is their \textit{self-evolving capacity}, \textit{i.e.}, the ability to continuously adapt and improve through interactions with the environment, as seen in prior works where such adaptability has led to two- to three-fold quantitative improvements~\cite{PHPrompting}. The central driving force behind such self-evolving nature is \textbf{memory mechanism} of agents~\cite{zhong2024memorybank,packer2023memgpt,modarressi2024memllm}, which parallels human abilities to accumulate knowledge, process past experiences, and retrieve relevant information. Previous successful memory mechanism designs, including both inside-trial memory (\textit{i.e.}, context retained within solving one single query) and cross-trial memory (\textit{i.e.}, experience accumulated across multiple tasks)~\cite{RUC2024agent-memory}, have empowered agents to excel in diverse applications such as personalized chat~\cite{zhong2024memorybank,hu2023chatdb,lu2023memochat}, recommendation~\cite{wang2023recmind}, embodied action~\cite{zhao2024expel,voyager}, and social simulation~\cite{generative-agents-simulacra,li2023metaagents,gao2023s3}, enabling them to evolve into experiential learners that effectively leverage past experiences and world knowledge.
+
+\vspace{-0.6em}
+\paragraph{Self-Evolving MAS.} However, such self-evolving capacity remains largely absent in multi-agent systems. Most existing MAS are still constrained by manually defined workflows, such as the Standard Operating Procedures (SOP) in MetaGPT~\cite{meta-gpt} and ChatDev~\cite{software-dev}, or rely on pre-defined communication topologies in MacNet~\cite{qian2024scaling} and AgentPrune~\cite{zhang2024cut}. More recent automated MASs, such as GPTSwarm~\cite{zhuge2024gptswarm}, ADAS~\cite{hu2024adas}, AFlow~\citep{zhang_aflow_2024}, and MaAS~\citep{zhang2025maas} have made it to automatically optimize inter-agent topologies or prompts, which, nevertheless, ultimately yield giant and cumbersome MAS architectures, lacking the agility to self-adjust with accumulated collaboration experience.
+
+\vspace{-0.6em}
+\paragraph{Memory for MAS.} The absence of the aforementioned self-evolving capacity is, in fact, rooted in the lack of memory mechanisms specifically tailored for MAS. One may challenge this claim from two perspectives: \ding{182} \textit{Do existing MASs lack memory mechanisms altogether?} Not entirely. Classical MAS frameworks such as MetaGPT, ChatDev, and Exchange-of-Thought~\cite{yin2023exchange} incorporate memory-related designs. However, these are often limited to inside-trial memory~\cite{yin2023exchange}, while cross-trial memory, if present, remains rudimentary—typically involving the transmission of overly condensed artifacts (\textit{e.g.}, final solutions or execution results)~\cite{meta-gpt,software-dev,qian2024scaling}, and failing to enable meaningful learning from collaborative experience. \ding{183} \textit{Why not directly transfer existing single-agent memory mechanisms to MAS?} Unfortunately, such a transfer is far from straightforward. The inherent nature of MAS, \textit{i.e.}, multi-turn orchestration across multiple agents~\cite{arXiv2024_Survey-MultiAgent,arXiv2024_Survey-MultiAgent_2}, leads to substantially longer task-solving trajectories compared to single-agent settings (up to $10\times$ more tokens, as demonstrated by \Cref{fig:intro} (\textit{Left})). This poses a significant challenge to traditional retrieval-based memory designs~\cite{zhong2024memorybank,packer2023memgpt,voyager}, as naive feeding of the entire long-context trajectory without proper abstraction from a collaborative perspective offers little benefit.
+% We 反驳这点by 指出that，
+Given the aforementioned challenges, a natural question arises: 
+
+% \insightbox{\textit{How can we design a memory mechanism capable of storing, retrieving, and managing the lengthy interaction history of multi-agent systems, such that agent teams can benefit from concise and instructive experience and insights?}}
+
+% \insightbox{\textit{How can we design a memory mechanism capable of storing, retrieving, and managing the lengthy interaction history of multi-agent systems, such that agent teams can benefit from concise and instructive experience and insights?}}
+
+
+\begin{tcolorbox}[
+    enhanced,
+    sidebyside, 
+    colframe=black!70,
+    colback=yellow!5,
+    boxrule=1pt, arc=4mm,
+    lefthand width=0.06\linewidth,
+    sidebyside gap=5mm,
+]
+% --- 左边栏 ---
+\includegraphics[width=\linewidth]{figs/amnesia.png}
+
+\tcblower % 分隔符
+
+% --- 右边栏 ---
+\textit{How can we design a memory mechanism capable of storing, retrieving, and managing the lengthy interaction history of multi-agent systems, such that agent teams can benefit from concise and instructive experience and insights?}
+
+\end{tcolorbox}
+
+
+\begin{figure}[!tpb]
+\setlength{\abovecaptionskip}{6pt}
+\centering
+\includegraphics[width=\textwidth]{figs/intro2.pdf}
+\vspace{-1.3em}
+\caption{(\textbf{\textit{Left}}) We report the token cost of several single-agent and MAS baselines on ALFWorld benchmark; (\textbf{\textit{Right}}) The overview of \ourmethod's three-tier hierarchical memory architecture, encompassing the insight graph, query graph and interaction (utterance) graph.} \label{fig:intro}
+\vspace{-1.2em}
+\end{figure}
+
+\vspace{-0.5em}
+\paragraph{The Present Work: \ourmethod.} In response to the above question, we introduce a \textit{\uwave{G}raph-based Agentic \uwave{Memory} Mechanism for LLM-based Multi-Agent Systems}, dubbed \ourmethod, which manages the complex and lengthy interaction history of MAS through a three-tier hierarchical graph structure: 
+\vspace{-0.5em}
+\begin{itemize}[leftmargin=2em,itemsep=-0.1em]
+\item[\ding{81}] \textbf{Insight Graph}, which abstracts generalizable insights from historical experience;
+\item[\ding{81}] \textbf{Query Graph}, which encodes meta-information of task queries and their connectivity;
+\item[\ding{81}] \textbf{Interaction Graph}, which stores fine-grained textual communication logs among agents.
+\end{itemize}
+\vspace{-0.5em}
+\Cref{fig:intro} (\textit{Right}) visualizes these structures, and their formal definitions are placed in \Cref{sec:prelim}. When a new query arrives, \ourmethod efficiently retrieves relevant query records by leveraging the topology of the query graph, and then traverses \textit{upward} (\textit{i.e.}, query$\rightarrow$insight graph) to extract associated high-level insights and \textit{downward} (\textit{i.e.}, query$\rightarrow$interaction graph) to identify core interaction subgraphs that are most pertinent to the task at hand, thereby mitigating information overload. Based on the retrieved memory, \ourmethod offers actionable guidance to the MAS, \textit{e.g.}, division of labor, task decomposition, and lessons from past failures. Upon the completion of a task, all three levels of the memory hierarchy are updated in an agentic manner, with newly distilled insights, enriched query records, detailed MAS trajectories, and their level of detailed associations. Through this refinement, \ourmethod functions as a plug-and-play module that can be seamlessly embedded into mainstream MAS frameworks, empowering evolving inter-agent collaboration and collective intelligence.
+
+
+
+Our contributions are summarized as follows:
+\vspace{-0.5em}
+\begin{itemize}[leftmargin=2em,itemsep=-0.1em]
+\item[\ding{182}] \textbf{Bottleneck Identification.} We conduct a thorough review of existing multi-agent systems and identify a fundamental bottleneck in their self-evolving capabilities, which is largely attributed to the oversimplified memory architectures. 
+\item[\ding{183}] \textbf{Practical Solution.} We propose \ourmethod, a hierarchical agentic memory architecture for MAS, which models complex and prolonged inter-agent collaboration through a three-tier structure comprising insight, query, and interaction graphs.
+\item[\ding{184}] \textbf{Experimental Evaluation.} Extensive experiments across five benchmarks show that \ourmethod is \textbf{(I) \textit{high-performing}}, improving state-of-the-art MAS by up to $20.89\%$ and $10.12\%$ on embodied action and knowledge QA tasks, respectively; and \textbf{(II) \textit{resource-friendly}}, maintaining comparable or even lower token usage than mainstream memory designs.
+\end{itemize}
+
+
+
+
+
+% \clearpage
+\vspace{-0.6em}
+\section{Related Works}\label{sec:related}
+
+\vspace{-0.6em}
+\paragraph{Single-Agent Memory.} Memory serves as a primary driving force for agents to accumulate experiences and explore the world through interactions with the environment~\cite{FCS2024_Survey-Agent,arXiv2023_Survey-Agent_2,arXiv2023_Survey-Agent_3,li2024survey-mas}. It plays a critical role in both \textit{task-solving} and \textit{social simulation} LLM agents, and this work primarily focuses on the former. Early research on agent memory was confined to simple inside-trial memory, mainly addressing limitations posed by the LLM context window in chatbot applications, including MemoryBank~\cite{zhong2024memorybank}, ChatDB~\cite{hu2023chatdb}, MemoChat~\cite{lu2023memochat}, and MemGPT~\cite{packer2023memgpt}, which typically adopt retrieval-augmented generation (RAG)-style, similarity-based chunk retrieval. Subsequent developments have progressed toward more cognitively inspired memory architectures, including (1) memory scope extended to cross-trial memory like ExpeL~\cite{zhao2024expel} and Synapse~\cite{zheng2023synapse}; (2) application domains broadened to include computer control~\cite{zheng2023synapse}, embodied action~\cite{zhu2023ghost}, scientific discovery~\cite{tang2025chemagent}, coding and reasoning~\cite{reflexion}; and (3) management techniques evolved from coarse-grained textual similarity toward more sophisticated abstraction and summarization of acquired knowledge and experiences~\cite{generative-agents-simulacra}, as seen in A-Mem~\cite{xu2025a-mem}, Mem0~\cite{chhikara2025mem0} and MemInsight~\cite{salama2025meminsight}. More discussions are in \Cref{app:related}.
+
+\vspace{-0.6em}
+\paragraph{Memory in Multi-agent System.} However, the memory mechanisms tailored for MAS remain markedly underexplored. Some representative frameworks, such as LLM-Debate~\cite{arXiv2023_MultiAgent-Debate,arXiv2023_MultiAgent-Debate_2} and Mixture-of-Agent~\cite{wang2024moa}, omit memory components altogether. Others merely adopt simplistic inside-trial memory schemes~\cite{qian2024scaling,yin2023exchange}. Even in frameworks that attempt cross-trial memory~\cite{software-dev}, the memory is merely compressed as the final outcome artifacts, overlooking the nuanced agent interactions. Collectively, there is a pressing need for a principled memory architecture that can capture, organize, and retrieve the inherently intricate task-solving processes unique to MAS~\cite{RUC2024agent-memory}.
+
+
+
+% MacNet~\cite{qian2024scaling} and Exchange-of-Thought
+\vspace{-0.6em}
+\paragraph{LLM-based Multi-Agent Systems.} Our work focuses on \textit{task-solving} MAS, which, unlike their single-agent counterparts, often lack the capacity for continual evolution through interaction with the environment~\cite{zhou2024symbolic,liang2024self}. Early frameworks such as AutoGen~\cite{autogen}, CAMEL~\cite{NeurIPS2023_Agent-SoM}, and AgentVerse~\cite{chen2023agentverse} rely entirely on pre-defined workflows. More recent efforts~\cite{hu2024evomac,zhang2024g-designer,zhang_aflow_2024,hu2024adas,yuan2024evoagent,yue2025masrouter} introduce a degree of adaptivity by generating dynamic MAS in response to environmental feedback. However, such evolution is often \textit{one-shot}: for example, AFlow~\cite{zhang_aflow_2024} employs Monte Carlo Tree Search to construct a complex MAS tailored to a specific task domain, which yet lacks the capacity to evolve with increasing task exposure or transfer across domains~\cite{zhang2025maas,zhang2025evoflow}. From this perspective, constructing MAS with genuine self-evolving capabilities remains an open and challenging research frontier.
+
+\vspace{-0.5em}
+\section{Preliminary}\label{sec:prelim}
+\vspace{-0.5em}
+In this section, we establish the notation and formalize key concepts of multi-agent systems and \ourmethod's hierarchical memory architecture.
+
+\vspace{-0.6em}
+\paragraph{Multi-agent System Formalization.}  Consider a multi-agent framework represented by a directed graph \(\mathcal{G}=(\mathcal{V},\mathcal{E})\), where \(|\mathcal{V}|=N\) is the number of agents and \(\mathcal{E}\subseteq \mathcal{V}\times \mathcal{V}\) defines their communication channels. Each node \(C_i\in \mathcal{V}\) corresponds to an individual agent described by the quadruple:
+\begin{equation}
+C_i = (\mathsf{Base}_i, \mathsf{Role}_i, \mathsf{Mem}_i, \mathsf{Plugin}_i),
+\end{equation}
+where \(\mathsf{Base}_i\) denotes the underlying large language model instance,  \(\mathsf{Role}_i\) specifies the agent’s designated role or persona,  \(\mathsf{Mem}_i\) encapsulates its memory state, including past interactions or external knowledge stores, and  \(\mathsf{Plugin}_i\) is the set of auxiliary tools (\textit{e.g.}, web-search engine).
+
+Upon receiving a user query \(Q\), the system evolves through \(T\) synchronous communication epochs. At each epoch \(t\), we derive a topological ordering \(\pi = [\pi_1, \dots, \pi_N]\) of the nodes such that if there is an edge from \(\pi_j\) to \(\pi_k\), then \(j < k\), which guarantees that every agent processes its inputs only after all its predecessors have acted. For each agent \(C_i\) in \(\pi\), its output at iteration \(t\) is computed as:  
+\[
+r_i^{(t)} = C_i\Bigl(P_{\mathrm{sys}}^{(t)}, Q, \{r_j^{(t)} : C_j\in \mathcal{N}^-(C_i)\}\Bigr),
+\]
+where: \(r_i^{(t)}\) denotes the response generated by \(C_i\) (which may include reasoning steps, intermediate analyses, or final proposals),  \(P_{\mathrm{sys}}^{(t)}\) comprises global instructions (including each agent’s \(\mathcal{R}_i\)),  \(\mathcal{N}^-(C_i)\) is the set of in-neighbors of \(C_i\), whose outputs serve as contextual inputs. 
+After all agents have acted, a global aggregation operator \(\mathcal{A}\) fuses the collection of responses into an interim solution \(a^{(t)}\):  
+\[
+a^{(t)} = \mathcal{A}(r_1^{(t)}, \dots, r_N^{(t)}).
+\]
+Common implementations for \(\mathcal{A}\) include majority voting schemes~\cite{zhuge2024gptswarm}, hierarchical summarization via dedicated aggregator agents~\cite{autogen,zhang2024cut}, or simply adopting the final agent’s output as the answer~\cite{qian2024scaling}. These epochs iterate for \(t=\{1,\dots,T\}\) until either a preset limit is reached or an early-stopping criterion is met~\cite{arXiv2023_Dynamic-LLM-Agent}, producing the final response \(a^{(T)}\) to the query \(Q\).
+
+\vspace{-0.6em}
+
+
+\paragraph{Memory Architecture.}
+Our proposed \ourmethod orchestrates and manages the memory of multi-agent systems via the following three hierarchical graph structures:
+
+[\ding{81}] \textbf{Interaction Graph (Utterance Graph).} For query \(Q\), let \(\mathcal{G}_\mathsf{inter}^{(Q)} = (\mathcal{U}^{(Q)}, \mathcal{E}_\mathsf{u}^{(Q)})\) denote its interaction trajectory, where (i) nodes \(\mathcal{U}^{(Q)} = \{u_i\}\) represent atomic utterances, with each \(u_i \triangleq (\mathcal{A}_i, m_i)\) containing  
+\(\mathcal{A}_i \in \mathcal{V}\) (speaking agent), and \(m_i\) (textual content), (ii) Edges \(\mathcal{E}_\mathsf{u}^{(Q)} \subseteq \mathcal{U}^{(Q)} \times \mathcal{U}^{(Q)}\) follow temporal relationships:  
+\((u_j, u_k) \in \mathcal{E}_\mathsf{u}^{(Q)} \iff u_j\) is transmitted to and inspires \(u_k\).
+
+[\ding{81}] \textbf{Query Graph.} The query graph, storing previously tackled queries and metadata, is as follows:
+\begin{equation}
+\mathcal{G}_\mathsf{query} = (\mathcal{Q}, \mathcal{E}_\mathsf{q}) = \left(\bigl\{Q_i, \Psi_i, \mathcal{G}_\mathsf{inter}^{(Q_i)}\bigl\}_{i=1}^{|\mathcal{Q}|}, \mathcal{E}_\mathsf{q}\right),
+\end{equation}
+% (Q_i, \Psi_i, \mathcal{G}_\mathsf{inter}^{(Q_i)})
+where $\mathcal{Q}=\{q_i\}$ is the node set, node \(q_i \triangleq (Q_i, \Psi_i, \mathcal{G}_\mathsf{inter}^{(Q_i)})\) is composed of the 
+original query \(Q_i\), task status \(\Psi_i \in \{\mathsf{Failed}, \mathsf{Resolved}\}\),  and its associated interaction graph \(\mathcal{G}_\mathsf{inter}^{(Q_i)}\). The edges \(\mathcal{E}_\mathsf{q} \subseteq \mathcal{Q} \times \mathcal{Q}\) encode semantic relationships between queries. The query graph enables retrieval beyond coarse metrics such as embedding similarity, with its meticulous topology.
+
+
+[\ding{81}] \textbf{Insight Graph.} The highest-level insight graph is featured as follows:
+\begin{equation}
+ \mathcal{G}_\mathsf{insight} = (\mathcal{I}, \mathcal{E}_\mathsf{i}) = \Bigl( \langle\underbrace{ \kappa_k, \Omega_k }_{\iota_k}\rangle_{k=1}^{|\mathcal{I}|}, \mathcal{E}_\mathsf{i} \Bigl),
+\end{equation}
+where the node set $\mathcal{I}=\{\iota_k\}$ represents distilled insights, each node $\iota_k$ is composed of the insight content $\kappa_k$ and the set of supporting queries $\Omega_k \subseteq \mathcal{Q}$. The edges \(\mathcal{E}_\mathsf{i} \subseteq \mathcal{I} \times \mathcal{I} \times \mathcal{Q}\) forming hyper-connections where \((\iota_m, \iota_n, q_j)\) indicates insight \(\iota_m\) contextualizes \(\iota_n\) through query \(q_j\).
+
+% \noindent These structures interact via projection operators:
+% \[
+% \Pi_\mathsf{Q2I}: \mathcal{Q} \to 2^{\mathcal{I}} \quad \text{and} \quad \Pi_\mathsf{I2Q}: \mathcal{I} \to 2^{\mathcal{Q}}
+% \]
+% where \(\Pi_\mathsf{Q2I}(q_j)\) retrieves insights derived from \(q_j\), while \(\Pi_\mathsf{I2Q}(\iota_k)\) returns queries associated with insight \(\iota_k\). The hierarchical composition enables efficient retrieval of historical patterns for new queries.
+
+
+\begin{figure}[!tpb]
+\setlength{\abovecaptionskip}{6pt}
+\centering
+\includegraphics[width=\textwidth]{figs/framework-final.pdf}
+\vspace{-1.3em}
+\caption{The overview of our proposed \ourmethod.} \label{fig:framework}
+\vspace{-1.em}
+\end{figure}
+
+\vspace{-0.6em}
+\section{G-Memory}\label{sec:method}
+\vspace{-0.8em}
+This section outlines the management workflow of \ourmethod, as illustrated in \Cref{fig:framework}. Specifically, upon the arrival of a new query $Q$, \ourmethod first conducts coarse-grained retrieval to identify pertinent trajectory records ($\triangleright$ \Cref{sec:coarse-memory}). It then performs bi-directional hierarchical memory traversal: upward to retrieve collective cognitive insights, and downward to distill concrete procedural trajectories ($\triangleright$ \Cref{sec:fine-memory}). After the memory-augmented MAS completes the query execution, the hierarchical memory architecture is jointly updated based on environmental feedback, thereby achieving the institutionalization of group knowledge ($\triangleright$ \Cref{sec:update-memory}).
+
+
+
+
+
+
+
+\vspace{-0.6em}
+\subsection{Coarse-grained Memory Retrieval}\label{sec:coarse-memory}
+\vspace{-0.6em}
+As a plug-in designed for seamless integration into mainstream MAS, \ourmethod is triggered when the MAS $\mathcal{G}$ encounters a new user query $Q$. As emphasized in organizational memory theory~\cite{BOOK_1991organizational_memory}, efficient knowledge retrieval typically begins with broadly relevant schemas prior to more fine-grained access. Following this principle, \ourmethod first performs a coarse-grained similarity-based retrieval over the query graph $\mathcal{G}_\mathsf{query}$ to efficiently obtain a sketched set of queries $\mathcal{Q}^\mathcal{S}$:
+\begin{equation}\label{eq:similarity}
+\mathcal{Q}^\mathcal{S} = \underset{ {q_i \in \mathcal{Q}} \text{ s.t. } |\mathcal{Q}^\mathcal{S}| = k}{\operatorname{arg\,top\text{-}k}} \left( \frac{\mathbf{v}(Q) \cdot \mathbf{v}(q_i)}{|\mathbf{v}(Q)|\, |\mathbf{v}(q_i)|} \right), 
+\end{equation}
+where $\mathbf{v}(\cdot)$ maps queries into fixed-length embeddings using models such as MiniLM~\cite{wang2020microsoft}. While \Cref{eq:similarity} retrieves semantically similar historical queries, the similarity may be only superficial or noisy. Therefore, \ourmethod further enlarges the relevant set via \textbf{hop expansion} on the query graph:
+\begin{equation}
+\label{eq:hop_expansion}
+\Tilde{\mathcal{Q}}^\mathcal{S} = \mathcal{Q}^\mathcal{S} \cup \left\{ Q_k \in \mathcal{Q} \mid \exists Q_j \in \mathcal{Q}^\mathcal{S},\ Q_k \in \mathcal{N}^+(Q_j) \cup \mathcal{N}^-(Q_j) \right\},
+\end{equation}
+where $\Tilde{\mathcal{Q}}^\mathcal{S}$ is augmented with the 1-hop neighbors of $\mathcal{Q}^\mathcal{S}$ on the query graph $\mathcal{G}_\mathsf{query}$. However, it is suboptimal to directly feed these relevant records as input akin to certain single-agent memory systems~\cite{lu2023memochat,packer2023memgpt}. On one hand, the excessive context length may overwhelm the LLM; on the other hand, agents in MAS play distinct roles and should be assigned \textit{specialized} memory tailored to their functions. To address this, the next section introduces a bi-directional processing scheme in \ourmethod that operates over both abstract and fine-grained memory levels.
+
+
+
+
+\subsection{Bi-directional Memory Traversal}\label{sec:fine-memory}
+\vspace{-0.6em}
+Subsequent to identifying the expanded set of relevant query nodes $\Tilde{\mathcal{Q}}^\mathcal{S}$ within $\mathcal{G}_\mathsf{query}$, \ourmethod executes a \textbf{bi-directional memory traversal} to furnish multi-granularity memory support. Specifically, \ourmethod first performs an \textit{upward traversal} ($\mathcal{G}_\mathsf{query} \rightarrow
+ \mathcal{G}_\mathsf{insight}$), retrieving insight nodes that may provide high-level guidance for the current task:
+\begin{equation}
+\label{eq:upward_retrieval}
+\mathcal{I}^\mathcal{S} = \Pi_{\mathcal{Q} \to \mathcal{I}}(\Tilde{\mathcal{Q}}^\mathcal{S}), \;\Pi_{\mathcal{Q} \to \mathcal{I}}(\mathcal{S}_q) \triangleq \left\{ \iota_k \in \mathcal{I} \mid \Omega_k \cap \mathcal{S}_q \neq \emptyset \right\},
+\end{equation}
+where \(\Pi_{\mathcal{Q} \to \mathcal{I}}\) is a query-to-insight projector that identifies all the insight nodes whose supporting query sets intersect with the input query set, and the retrieved insights \(\mathcal{I}^\mathcal{S}\) encapsulate distilled, generalized knowledge potentially relevant for orienting the MAS $\mathcal{G}$'s strategic approach to \(Q\).
+
+
+Beyond generalized insights, the fine-grained textual interaction history of the MAS is equally valuable, as it reveals the underlying reasoning patterns that led to successful or failed collaborations~\cite{hu2024evomac,zhao2025sirius,zhou2025reso}. To utilize these concisely, in the downward traversal ($\mathcal{G}_\mathsf{query}\rightarrow\mathcal{G}_\mathsf{interaction}$), \ourmethod employs an LLM-facilitated graph sparsifier $\mathcal{S}_\text{LLM}(\cdot,\cdot)$ to extract the core subgraph that encapsulates essential inter-agent collaboration:
+\begin{equation}
+\label{eq:downward_retrieval}
+\{\hat{\mathcal{G}}^{Q_i}_{\mathsf{inter}}\}_{i=1}^{|M|} = \Bigl\{ \mathcal{S}_\text{LLM}(\mathcal{G}_\mathsf{inter}^{(Q_j)}, Q) \mid q_j \in\!\!\!\! \underset{ \{q'_k \in \Tilde{\mathcal{Q}}^\mathcal{S}\} \text{ s.t. } |\cdot| = M}{\operatorname{arg top-M}} \!\!\!\!\!\mathcal{R}_\text{LLM}(Q, q'_k) \Bigl\},
+\end{equation}
+where $\mathcal{R}_\text{LLM}(Q, q_j)$ rates the relevancy of historical queries w.r.t. $Q$, and the sparsifier \(\mathcal{S}_\text{LLM}(\mathcal{G}_\mathsf{inter}^{(Q_j)}, Q)\) constructs a sparsified graph \(\hat{\mathcal{G}}_\mathsf{inter}^{(Q_j)} = (\hat{\mathcal{U}}^{(Q_j)}, \hat{\mathcal{E}}_\mathsf{u}^{(Q_j)})\) from the original \(\mathcal{G}_\mathsf{inter}^{(Q_j)}\) by identifying and retaining dialogue elements. Please refer to \Cref{app:prompt} for their implementations.
+
+Upon completing the bi-directional traversal, we obtain both generalizable insights ($\mathcal{I}^\mathcal{S}$) and detailed collaborative trajectories ($\{\hat{\mathcal{G}}^{Q_i}_{\mathsf{inter}}\}_{i=1}^{|M|}$). \ourmethod then proceeds to provide specialized memory support for each agent $\mathcal{C} \in \mathcal{V}$ within the MAS $\mathcal{G}$.
+\begin{equation}
+\label{eq:specialized_allocation}
+\mathsf{Mem}_i \leftarrow \Phi \left(  \mathcal{I}^\mathcal{S}, \{\hat{\mathcal{G}}^{Q_i}_{\mathsf{inter}}\}_{i=1}^{|M|}; \mathsf{Role}_i,Q \right), \; \forall C_i = (\mathsf{Base}_i, \mathsf{Role}_i, \mathsf{Mem}_i, \mathsf{Plugin}_i) \in \mathcal{V},
+\end{equation}
+where the operator \(\Phi(\cdot;\cdot)\) evaluates the utility and relevance of each insight \(\iota_k \in \mathcal{I}^\mathcal{S}\) and sparsified interaction graph \(\hat{\mathcal{G}}^{(Q_j)}_{\mathsf{inter}}\) concerning the agent's specific role \(\mathsf{Role}_i\) and the task \(Q\) (see \Cref{app:prompt}). Based on this evaluation, \(\Phi\) intializes each agent's internal memory state $\mathsf{Mem}_i$ with filtered insights, interaction snippets, summaries thereof, equipping it with pertinent historical context before it participates in the subsequent reasoning epochs of the MAS. It is worth noting that \ourmethod is invoked at the onset of solving query $Q$ in our implementation. However, practitioners may flexibly configure more fine-grained invocation strategies, such as at the beginning of each MAS dialogue round or selectively for specific agents, based on their needs.  
+
+
+
+\vspace{-0.6em}
+\subsection{Hierarchy Memory Update}\label{sec:update-memory}
+\vspace{-0.6em}
+
+After completing memory augmentation for each agent, the system $\mathcal{G}$ is executed as outlined in \Cref{sec:prelim}, yielding a final solution $a^{(T)}$ and receiving environmental feedback, including execution status $\Psi_i \in \{\mathsf{Failed}, \mathsf{Resolved}\}$, token usage, and other performance metrics. 
+Subsequently, \ourmethod updates its hierarchical memory architecture to incorporate this new query. At the \textbf{interaction level}, \ourmethod traces each agent’s utterances to construct the interaction graph $\mathcal{G}_\mathsf{inter}^{(Q)}$, which is then stored. At the \textbf{query level}, a new query node is instantiated and added to the query graph $\mathcal{Q}_\mathsf{query}$:
+\begin{equation}
+\label{eq:query_graph_update}
+\begin{gathered}
+q_\text{new} \leftarrow (Q, \Psi, \mathcal{G}_\mathsf{inter}^{(Q)}),\;
+\mathcal{N}_\text{conn} \leftarrow \mathcal{Q}^\mathcal{R} \cup \Bigl( \bigcup_{\iota_k \in \mathcal{I}^\mathcal{S}} \Omega_k \Bigl), \\
+\mathcal{E}_\text{new} \leftarrow \{ (q_n, q_\text{new}) \mid q_n \in \mathcal{N}_\text{conn} \},\;
+\mathcal{G}_\mathsf{query}^\text{next} \leftarrow (\mathcal{Q} \cup \{q_\text{new}\}, \mathcal{E}_\mathsf{q} \cup \mathcal{E}_\text{new}),
+\end{gathered}
+\end{equation}
+where edges are established between \(q_\text{new}\) and (ii) the set \(\mathcal{Q}^\mathcal{R}\) containing the top-$M$ relevant historical queries identified in \Cref{eq:downward_retrieval}, and (ii) the set of queries \(\bigcup_{\iota_k \in \mathcal{I}_\text{ret}} \Omega_k\) that support the insights \(\mathcal{I}^\mathcal{S}\) utilized for solving \(Q\).  \(\mathcal{G}_\mathsf{query}^\text{next}\) denotes the updated query graph.
+
+
+
+Finally, at the \textbf{insight level}, \ourmethod integrates the learning from the completed query \(Q\) into the insight graph \(\mathcal{G}_\mathsf{insight} = (\mathcal{I}, \mathcal{E}_\mathsf{i})\). First, possible new insights summarizing the experience are generated and structurally linked via a summarization function \(\mathcal{J}(\cdot, \cdot)\) (see prompt in \Cref{app:prompt}) as follows:
+\begin{equation}
+\label{eq:insight_add_simple}
+\begin{gathered}
+\iota_\text{new} = (\mathcal{J}(\mathcal{G}_\mathsf{inter}^{(Q)}, \Psi), \{q_\text{new}\}), \;\mathcal{E}_\text{i, new} \leftarrow \{ (\iota_k, \iota_\text{new}, q_\text{new}) \mid \iota_k \in \mathcal{I}^\mathcal{S} \} \\
+\mathcal{G}_\mathsf{insight}' \leftarrow (\mathcal{I} \cup \{\iota_\text{new}\}, \mathcal{E}_\mathsf{i} \cup \mathcal{E}_\text{i, new})
+\end{gathered}
+\end{equation}
+where edges are added to connect the previously utilized insights which inspires the completion of $Q$ in \Cref{eq:upward_retrieval}. Afterward, the supporting query sets (\(\Omega_k\)) for the utilized insights (\(\mathcal{I}^\mathcal{S}\)) are updated to include \(q_\text{new}\), reflecting their relevance to this successful (or failed) application:
+\begin{equation}
+\label{eq:insight_update_simple}
+\begin{gathered}
+\mathcal{I}^\text{next} \leftarrow (\mathcal{I} \setminus \mathcal{I}_\text{ret}) \cup \{(\kappa_k, \Omega_k \cup \{q_\text{new}\}) \mid \iota_k = (\kappa_k, \Omega_k) \in \mathcal{I}_\text{ret} \} \cup \{\iota_\text{new}\} \\
+\mathcal{G}_\mathsf{insight}^\text{next} \leftarrow (\mathcal{I}^\text{next}, \mathcal{E}_\mathsf{i} \cup \mathcal{E}_\text{i, new}),
+\end{gathered}
+\end{equation}
+where the final node set \(\mathcal{I}^\text{next}\) incorporates the new insight and the updated versions of the utilized insights, and the resulting graph \(\mathcal{G}_\mathsf{insight}^\text{next}\) thus encapsulates the integrated knowledge. This continuous update cycle across all hierarchical levels enables \ourmethod to learn and adaptively refine its collective memory based on ongoing experience.
+
+% \clearpage
+\vspace{-0.5em}
+\section{Experiment}\label{sec:exp}
+\vspace{-0.8em}
+In this section, we conduct extensive experiments to answer: (\textbf{RQ1}) How does \ourmethod perform compared to existing single/multi-agent memory architectures? (\textbf{RQ2}) Does \ourmethod incur excessive resource overhead? (\textbf{RQ3}) How sensitive is \ourmethod to its key components and parameters?
+
+\vspace{-0.3em}
+\subsection{Experiment Setup}\label{sec:exp-setup}
+\vspace{-0.6em}
+\paragraph{Datasets and Benchmarks.} To thoroughly evaluate the effectiveness of \ourmethod, we adopt five widely-adopted benchmarks across three domains: \textbf{(1) Knowledge reasoning}, including HotpotQA~\cite{yang2018hotpotqa} and FEVER~\cite{thorne2018fever}; \textbf{(2) Embodied action}, including ALFWorld~\cite{shridhar2020alfworld} and SciWorld~\cite{wang2022scienceworld}; \textbf{(3) Game}, namely PDDL~\cite{ma2024agentboard}. Details on these benchmarks are in \Cref{app:dataset}.
+
+\vspace{-1em}
+\paragraph{Baselines.} We select four representative single-agent memory baselines, including non-memory, Voyager~\cite {voyager}, MemoryBank~\cite{zhong2024memorybank}, and Generative Agents~\cite{generative-agents-simulacra}, as well as three multi-agent memory implementations from MetaGPT~\cite{meta-gpt}, ChatDev~\cite{software-dev}, and MacNet~\cite{qian2024scaling}, denoted as MetaGPT-M, ChatDev-M, and MacNet-M, respectively. Details are in \Cref{app:baseline}.
+
+\vspace{-1em}
+\paragraph{MAS and LLM Backbones.} We select three representative multi-agent frameworks to integrate with \ourmethod and the baselines, including \textbf{AutoGen}~\cite{autogen}, \textbf{DyLAN}~\cite{arXiv2023_Dynamic-LLM-Agent}, and \textbf{MacNet}~\cite{qian2024scaling}. More details on the MAS setups are placed in \Cref{app:mas-setup}.  For instantiating these MAS frameworks, we adopt two open-source LLMs, \llmname{Qwen-2.5-7b} and \llmname{Qwen-2.5-14b}, as well as one proprietary LLM, \llmname{gpt-4o-mini}. The deployment of \llmname{Qwen} series is via local instantiation
+using Ollama\footnote{\url{http://github.com/ollama/ollama}}, and \llmname{GPT} models are accessed via OpenAI APIs.
+
+
+\vspace{-1em}
+\paragraph{Parameter Configurations.} We implement the embedding function $\mathbf{v}(\cdot)$ in \Cref{eq:similarity} with \textsc{all-MiniLM-L6-v2}~\cite{wang2020minilm}. The number of the most relevant interaction graphs $M$ in \Cref{eq:downward_retrieval} is set among $\{2,3,4,5\}$, and the number of relevant queries $k$ in \Cref{eq:similarity} is set among $\{1,2\}$. The detailed ablation study on hyper-parameters is placed in \Cref{sec:exp-framework}.
+
+
+
+
+
+
+% \begin{table*}[!t]
+% \centering
+% \caption{Performance comparison with single/multi-agent memory architectures on five benchmarks. The underlying LLM backbone is \llmname{Qwen-2.5-7b}.}
+% % \vspace{-0.1em}
+% \label{tab:rq1_7b}
+% \renewcommand\tabcolsep{7pt}
+% \renewcommand\arraystretch{1.1}
+  
+% \resizebox{\linewidth}{!}{
+% \begin{tabular}{l|c|cccccc}
+% \Xhline{1.2pt}
+% \rowcolor{CadetBlue!20} 
+% {\textbf{MAS}} & \textbf{Memory}  & \textbf{ALFWorld} & \textbf{SciWorld} & \textbf{PDDL} & \textbf{HotpotQA} & \textbf{FEVER} & {\textbf{Avg.}} \\
+% \Xhline{1.2pt}
+% % Single agent & - & 82.14 & 85.40 & 93.15 & 87.18 & 70.34 & 81.65\\
+% % \hline
+% % \multirow{8}{*}{\makecell{Single \\ {\small\colorbox{gray!70}{\textcolor{white}{COLM 2024}}}}}  
+% % & No-memory     & 37.31\red{0.00} & 31.49\red{0.00} & 15.86\red{0.00} & 24.26\red{0.00} & 57.17\red{0.00} & 33.22\red{0.00} \\
+% % & Voyager      & 38.19\red{0.88} & 17.11\blue{14.38} & 7.14\blue{8.72} & 20.29\blue{3.97} & 55.68\blue{1.49} & 27.68\blue{5.54} \\
+% % & MemoryBank   & 40.30\red{2.99} & 23.64\blue{7.85} & 14.36\blue{1.50} & 24.33\red{0.07} & 55.66\blue{1.51} & 31.66\blue{1.56} \\
+% % & Generative   & 37.16\blue{0.15} & 33.10\red{1.61} & 11.37\blue{4.49} & 25.48\red{1.22} & 50.50\blue{6.67} & 31.52\blue{1.70} \\
+% % & MetaGPT      & 31.64\blue{5.67} & 24.41\blue{7.08} & 10.10\blue{5.76} & 24.67\red{0.41} & 59.74\red{2.57} & 30.11\blue{3.11} \\
+% % & ChatDev      & 21.64\blue{15.67} & 30.22\blue{1.27} & 12.82\blue{3.04} & 22.22\blue{2.04} & 51.44\blue{5.73} & 27.67\blue{5.55} \\
+% % & MacNet       & None\red{None} & None\red{None} & None\red{None} & None\red{None} & None\red{None} & None\red{None} \\
+% % & \ourmethod~(Ours) & 43.43\red{6.12} & 34.07\red{2.58} & 17.64\red{1.78} & 27.26\red{3.00} & 61.56\red{4.39} & 36.79\red{3.57} \\
+
+
+% % \midrule
+
+% \multirow{8}{*}{\makecell{AutoGen \\ {\small\colorbox{gray!70}{\textcolor{white}{COLM 2024}}}}}  
+% & No-memory     & 52.99\red{0.00} & 32.27\red{0.00} & 16.17\red{0.00} & 33.33\red{0.00} & 58.74\red{0.00} & 38.70\red{0.00} \\
+% & Voyager      & 55.22\red{2.23} & 26.70\blue{5.57} & 12.00\blue{4.17} & 34.29\red{0.96} & 52.44\blue{6.30} & 36.13\blue{2.57} \\
+% & MemoryBank   & 53.37\red{0.38} & 17.33\blue{14.94} & 7.83\blue{8.34} & 32.67\blue{0.66} & 59.45\red{0.71} & 34.13\blue{4.57} \\
+% & Generative   & 62.69\red{9.70} & 28.45\blue{3.82} & 12.88\blue{3.29} & 34.17\red{0.84} & 61.25\red{2.51} & 39.89\red{1.19} \\
+% & MetaGPT      & 55.52\red{2.53} & 23.44\blue{8.83} & 17.04\red{0.87} & 35.36\red{2.03} & 63.33\red{4.59} & 38.94\red{0.24} \\
+% & ChatDev      & 46.27\blue{6.72} & 28.67\blue{3.60} & 13.42\blue{2.75} & 31.11\blue{2.22} & 61.32\red{2.58} & 36.16\blue{2.54} \\
+% & MacNet       & 53.18\red{0.19} & 31.10\blue{1.17} & 16.89\red{0.72} & 34.29\red{0.96} & 58.43\blue{0.31} & 38.78\red{0.08} \\
+% & \ourmethod~(Ours) & 67.91\red{14.92} & 34.89\red{2.62} & 21.01\red{4.84} & 37.34\red{4.01} & 64.34\red{5.60} & 45.10\red{6.40} \\
+% \midrule
+
+% \multirow{8}{*}{\makecell{DyLAN \\ {\small\colorbox{gray!70}{\textcolor{white}{COLM 2024}}}}}  
+% & No-memory     & 41.34\red{0.00} & 29.84\red{0.00} & 13.56\red{0.00} & 24.29\red{0.00} & 56.23\red{0.00} & 33.05\red{0.00} \\
+% & Voyager      & 51.49\red{10.15} & 26.66\blue{3.18} & 7.62\blue{5.94} & 24.23\blue{0.06} & 55.39\blue{0.84} & 33.08\red{0.03} \\
+% & MemoryBank   & 46.46\red{5.12} & 26.99\blue{2.85} & 14.10\red{0.54} & 22.44\blue{1.85} & 59.21\red{2.98} & 36.04\red{2.99} \\
+% & Generative   & 48.52\red{7.18} & 21.55\blue{8.29} & 7.31\blue{6.25} & 21.54\blue{2.75} & 50.19\blue{6.04} & 29.82\blue{3.23} \\
+% & MetaGPT      & 42.54\red{1.20} & 22.93\blue{6.91} & 4.47\blue{9.09} & 19.33\blue{4.96} & 50.22\blue{6.01} & 27.90\blue{5.15} \\
+% & ChatDev      & 39.85\blue{1.49} & 8.25\blue{21.59} & 7.14\blue{6.42} & 17.32\blue{6.97} & 50.67\blue{5.56} & 24.65\blue{8.40} \\
+% & MacNet       & 42.48\red{1.14} & 28.22\blue{1.62} & 14.23\red{0.67} & 23.12\blue{1.17} & 55.34\blue{0.89} & 32.68\blue{0.37} \\
+% & \ourmethod~(Ours) & 52.99\red{11.65} & 31.81\red{1.97} & 20.71\red{7.15} & 25.33\red{1.04} & 63.67\red{7.44} & 38.90\red{5.85} \\
+
+
+% \midrule
+
+% \multirow{8}{*}{\makecell{MacNet \\ {\small\colorbox{gray!70}{\textcolor{white}{ICLR 2025}}}}}  
+% & No-memory     & 44.03\red{0.00} & 30.00\red{0.00} & 13.36\red{0.00} & 22.24\red{0.00} & 55.12\red{0.00} & 32.95\red{0.00} \\
+% & Voyager      & 47.01\red{2.98} & 28.88\blue{1.12} & 9.36\blue{4.00} & 25.67\red{3.43} & 48.78\blue{6.34} & 31.94\blue{1.01} \\
+% & MemoryBank   & 52.24\red{8.21} & 5.86\blue{24.14} & 3.33\blue{10.03} & 23.97\red{1.73} & 54.18\blue{0.94} & 27.92\blue{5.03} \\
+% & Generative   & 48.51\red{4.48} & 13.05\blue{16.95} & 9.04\blue{4.32} & 24.49\red{2.25} & 54.08\blue{1.04} & 29.83\blue{3.12} \\
+% & MetaGPT      & 52.99\red{8.96} & 12.87\blue{17.13} & 4.58\blue{8.78} & 25.51\red{3.27} & 43.88\blue{11.24} & 27.97\blue{4.98} \\
+% & ChatDev      & 44.78\red{0.75} & 11.44\blue{18.56} & 10.19\blue{3.17} & 16.32\blue{5.92} & 51.02\blue{4.10} & 26.75\blue{6.20} \\
+% & MacNet       & 43.55\blue{0.48} & 30.11\red{0.11} & 12.91\blue{0.45} & 21.77\blue{0.47} & 50.71\blue{4.41} & 31.81\blue{1.14} \\
+% & \ourmethod~(Ours) & 54.48\red{10.45} & 32.23\red{2.23} & 17.48\red{4.12} & 27.53\red{5.29} & 57.14\red{2.02} & 37.77\red{4.82} \\
+
+% \Xhline{1.2pt} 
+% \end{tabular}
+% }
+
+% \end{table*}
+
+
+
+\begin{table*}[!t]
+\centering
+\centering
+\caption{Performance comparison with single/multi-agent memory architectures on five benchmarks. The underlying LLM backbone is \llmname{GPT-4o-mini}. We highlight the \hlfirst{best} and \hlsecond{second best} results.}
+\vspace{-0.4em}
+\label{tab:rq1_4omini}
+\renewcommand\tabcolsep{7pt}
+\renewcommand\arraystretch{1.1}
+  
+\resizebox{\linewidth}{!}{
+\begin{tabular}{l|c|cccccc}
+\Xhline{1.2pt}
+\rowcolor{CadetBlue!20} 
+{\textbf{MAS}} & \textbf{Memory}  & \textbf{ALFWorld} & \textbf{SciWorld} & \textbf{PDDL} & \textbf{HotpotQA} & \textbf{FEVER} & {\textbf{Avg.}} \\
+\Xhline{1.2pt}
+% Single agent & - & 82.14 & 85.40 & 93.15 & 87.18 & 70.34 & 81.65\\
+% \hline
+
+\multirow{8}{*}{\makecell{AutoGen \\ {\small\colorbox{gray!70}{\textcolor{white}{COLM 2024}}}}}  
+& No-memory     & 77.61\red{0.00} & 54.49\red{0.00} & 23.53\red{0.00} & 28.57\red{0.00} & 57.13\red{0.00} & 48.27\red{0.00} \\
+& Voyager      & 85.07\red{7.46} & \hlsecond{62.36\red{7.87}} & 24.56\red{1.03} & 32.32\red{3.75} & \hlsecond{63.27\red{6.14}} & \hlsecond{53.52\red{5.25}} \\
+& MemoryBank   & 74.96\blue{2.65} & 53.11\blue{1.38} & 20.41\blue{3.12} & \hlsecond{33.67\red{5.10}} & 61.22\red{4.09} & 48.67\red{0.40} \\
+& Generative   & \hlsecond{86.36\red{8.75}} & 61.19\red{6.70} & \hlsecond{25.53\red{2.00}} & 31.63\red{3.06} & 60.20\red{3.07} & 52.98\red{4.71} \\
+& MetaGPT      & 81.34\red{3.73} & 61.91\red{7.42} & 21.63\blue{1.90} & 32.67\red{4.10} & 62.67\red{5.54} & 52.04\red{3.77} \\
+& ChatDev      & 79.85\red{2.24} & 50.96\blue{3.53} & 16.65\blue{6.88} & 24.49\blue{4.08} & 59.18\red{2.05} & 46.23\blue{2.04} \\
+& MacNet       & 76.55\blue{1.06} & 55.44\red{0.95} & 22.94\blue{0.59} & 28.36\blue{0.21} & 60.87\red{3.74} & 48.83\red{0.56} \\
+& \ourmethod~(Ours) & \hlfirst{88.81\red{11.20}} & \hlfirst{67.40\red{12.91}} & \hlfirst{27.77\red{4.24}} & \hlfirst{35.67\red{7.10}} & \hlfirst{66.24\red{9.11}} & \hlfirst{57.18\red{8.91}} \\
+
+\midrule
+
+\multirow{8}{*}{\makecell{DyLAN \\ {\small\colorbox{gray!70}{\textcolor{white}{COLM 2024}}}}}  
+& No-memory     & 56.72\red{0.00} & 55.38\red{0.00} & 11.62\red{0.00} & 31.69\red{0.00} & 60.20\red{0.00} & 43.12\red{0.00} \\
+& Voyager      & 66.42\red{9.70} & 62.83\red{7.45} & \hlsecond{15.10\red{3.48}} & \hlsecond{32.64\red{0.95}} & 62.24\red{2.04} & \hlsecond{47.85\red{4.73}} \\
+& MemoryBank   & 55.22\blue{1.50} & 54.74\blue{0.64} & 8.08\blue{3.54} & 29.59\blue{2.10} & 59.13\blue{1.07} & 41.35\blue{1.77} \\
+& Generative   & 67.91\red{11.19} & \hlsecond{64.16\red{8.78}} & 13.87\red{2.25} & 29.29\blue{2.40} & \hlsecond{62.30\red{2.10}} & 47.51\red{4.39} \\
+& MetaGPT-M      & \hlsecond{69.40\red{12.68}} & 62.37\red{6.99} & 14.45\red{2.83} & 32.34\red{0.65} & 60.20\red{0.00} & 47.75\red{4.63} \\
+& ChatDev-M      & 46.27\blue{10.45} & 53.35\blue{2.03} & 10.75\blue{0.87} & 22.45\blue{9.24} & 58.33\blue{1.87} & 38.23\blue{4.89} \\
+& MacNet-M       & 53.44\blue{3.28} & 54.32\blue{1.06} & 12.11\red{0.49} & 30.12\blue{1.57} & 61.10\red{0.90} & 42.22\blue{0.90} \\
+& \ourmethod~(Ours) & \hlfirst{70.90\red{14.18}} & \hlfirst{65.64\red{10.26}} & \hlfirst{18.95\red{7.33}} & \hlfirst{34.69\red{3.00}} & \hlfirst{64.22\red{4.02}} & \hlfirst{50.88\red{7.76}} \\
+
+
+\midrule
+
+\multirow{8}{*}{\makecell{MacNet \\ {\small\colorbox{gray!70}{\textcolor{white}{ICLR 2025}}}}}  
+& No-memory     & 51.49\red{0.00} & 57.53\red{0.00} & 12.18\red{0.00} & 28.57\red{0.00} & 60.29\red{0.00} & 42.01\red{0.00} \\
+& Voyager      & 61.94\red{10.45} & 64.53\red{7.00} & 14.06\red{1.88} & 32.65\red{4.08} & 62.54\red{2.25} & \hlsecond{47.14\red{5.13}} \\
+& MemoryBank   & 50.00\blue{1.49} & 60.15\red{2.62} & 8.64\blue{3.54} & \hlsecond{33.67\red{5.10}} & 61.22\red{0.93} & 42.74\red{0.73} \\
+& Generative   & 62.69\red{11.20} & \hlsecond{65.49\red{7.96}} & 7.92\blue{4.26} & 29.59\red{1.02} & \hlsecond{63.27\red{2.98}} & 45.79\red{3.78} \\
+& MetaGPT-M      & \hlsecond{63.70\red{12.21}} & 65.27\red{7.74} & \hlsecond{16.03\red{3.85}} & 31.00\red{2.43} & 59.33\blue{0.96} & 47.07\red{5.06} \\
+& ChatDev-M      & 49.25\blue{2.24} & 56.58\blue{0.95} & 13.51\red{1.33} & 29.00\red{0.43} & 59.18\blue{1.11} & 41.50\blue{0.51} \\
+& MacNet-M       & 53.44\red{1.95} & 56.14\blue{1.39} & 13.59\red{1.41} & 27.89\blue{0.68} & 59.20\blue{1.09} & 42.05\red{0.04} \\
+& \ourmethod~(Ours) & \hlfirst{67.16\red{15.67}} & \hlfirst{68.11\red{10.58}} & \hlfirst{24.33\red{12.15}} & \hlfirst{35.69\red{7.12}} & \hlfirst{64.44\red{4.15}} & \hlfirst{51.95\red{9.94}} \\
+
+
+\Xhline{1.2pt} 
+\end{tabular}
+}
+\vspace{-1.4em}
+\end{table*}
+
+
+
+
+
+\vspace{-0.8em}
+\subsection{Main Results (RQ1)}
+\vspace{-0.5em}
+\Cref{tab:rq1_7b,tab:rq1_14b,tab:rq1_4omini} comprehensively report the performance of different memory architectures across three LLM backbones and three MAS frameworks. We summarize the key observations as follows:
+
+\textbf{Takeaway \ding{202}: \ourmethod consistently improves performance across all task domains and MAS frameworks.} As shown in \Cref{tab:rq1_7b}, when integrated with AutoGen and MacNet (powered by \llmname{Qwen-2.5-7b}), \ourmethod surpasses the best-performing single-/multi-agent memory baselines by an average of $6.8\%$ and $5.5\%$, respectively. With the more capable \llmname{Qwen-2.5-14b}, the improvement is even more pronounced: in \Cref{tab:rq1_14b}, \ourmethod boosts MacNet’s performance on ALFWorld from $58.21\%$ to $79.10\%$, achieving a substantial $20.89\%$ gain.
+
+\textbf{Takeaway \ding{203}: Multi-agent systems demand specialized memory designs.} A thorough examination of existing baselines reveals a surprising insight: most memory mechanisms fail to consistently benefit MAS settings. In \Cref{tab:rq1_7b}, baselines such as Voyager and MemoryBank degrade AutoGen’s performance on PDDL by as much as $4.17\%$ and $1.34\%$, respectively. We attribute this to the inability of these methods to provide agent role-specific memory support, which is essential in the PDDL strategic game tasks, where effective division of labor is critical to success.
+ Even MAS-oriented designs, such as ChatDev-M, result in a $2.32\%$ performance drop when applied to MacNet+SciWorld. We attribute this to ChatDev-M’s narrow memory scope—storing only the execution results of past queries, which provides limited utility in embodied action environments.
+ These findings highlight the necessity of \ourmethod's core characteristics: role-specific memory cues, abstracted high-level insights, and trajectory condensation—all of which are critical for effective memory in MAS.
+
+
+\vspace{-0.6em}
+\subsection{Cost Analysis (RQ2)}
+\vspace{-0.6em}
+
+To evaluate the efficiency of \ourmethod in terms of token consumption, we visualize the performance versus token cost trade-off across various settings, as shown in \Cref{fig:cost,fig:cost-app}. Our findings are:
+
+\vspace{-0.3em}
+\textbf{Takeaway \ding{204}: \ourmethod achieves high-performing collective memory without excessive token consumption.} As depicted in \Cref{fig:cost}, \ourmethod consistently delivers the highest performance improvement ($10.32\%\uparrow$ over no-memory setting on PDDL+AutoGen) while maintaining a modest increase in token consumption (only \num{1.4e+6}). In contrast, MetaGPT-M incurred an additional \num{2.2e+6} tokens for a mere $4.07\%$ gain. This clearly demonstrates the token-efficiency of \ourmethod.
+
+
+
+
+
+\begin{figure}[!tpb]
+\setlength{\abovecaptionskip}{6pt}
+\centering
+\includegraphics[width=\textwidth]{figs/cost.pdf}
+\vspace{-1.3em}
+\caption{Cost analysis of \ourmethod. We showcase the performance versus the overall system token cost when combined with different memory architectures.} \label{fig:cost}
+\vspace{-1.5em}
+\end{figure}
+
+
+
+\vspace{-0.4em}
+\begin{figure*}[htbp]
+    \centering
+    % 第一张图
+    \begin{subfigure}[b]{0.30\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figs/ablation_hop.png}
+        \vspace{-1.5em}
+        \caption{Sensitivity analysis on \#hop.}
+        \label{fig:ablation-hop}
+    \end{subfigure}
+    \hfill
+    % 第二张图
+    \begin{subfigure}[b]{0.40\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figs/ablation_k.png}
+        \vspace{-1.5em}
+        \caption{Sensitivity analysis on parameter $k$. }
+        \label{fig:ablation-k}
+    \end{subfigure}
+    \hfill
+    % 表格
+    \begin{subfigure}[b]{0.27\textwidth}
+        \centering
+        \footnotesize
+        \renewcommand\tabcolsep{1.5pt}
+\renewcommand\arraystretch{1.2}
+        % \caption*{Ablation Results (Performance \%)}
+        \resizebox{\textwidth}{!}{
+   \begin{tabular}{l|cc|cc}
+\Xhline{1.2pt}
+\rowcolor{CadetBlue!20}
+\textbf{MAS} & \textbf{Inter.} & \textbf{Insi.} & \textbf{PDDL} & \textbf{FEVER} \\
+\Xhline{1pt}
+
+\multirow{3}{*}{AutoGen} & \ding{52} & $\circ$ & 54.46 & 63.27 \\
+   & $\circ$  & \ding{52} & 50.00 & 68.77\\
+ & \ding{52} & \ding{52} & 55.24 & 71.43 \\
+ \midrule
+\multirow{3}{*}{DyLAN} & \ding{52} & $\circ$ & 48.75 & 61.39 \\
+   & $\circ$  & \ding{52} & 46.69 & 64.31\\
+ & \ding{52} & \ding{52} & 51.12 & 66.66 \\
+% \midrule
+
+\Xhline{1.2pt}
+\end{tabular}}
+        \makeatletter\def\@captype{table}\makeatother\caption{Ablation study on two variants of \ourmethod.}\label{tab:ablation}%%
+        % \label{tab:ablation-table}
+    \end{subfigure}
+    \caption{(a) Sensitivity analysis of the hop expansion in \Cref{eq:hop_expansion}; (b) Sensitivity analysis of the number of selected queries $k$ in \Cref{eq:similarity}; (c) We study two variants of \ourmethod: merely providing high-level insights (\textit{i.e.}, the insights $\mathcal{I}^\mathcal{S}$ in \Cref{eq:upward_retrieval}) or fine-grained interactions (\textit{i.e.}, the core trajectories in \Cref{eq:downward_retrieval}). All the experiments here are done with \llmname{Qwen-2.5-14b}.}
+    \label{fig:ablation}
+\end{figure*}
+
+
+% \begin{table*}[!h]
+% \centering
+% \caption{Different editions of our method. The underlying LLM backbone is \llmname{Qwen-2.5-14b}.}
+% \label{tab:rq1_7b}
+% \renewcommand\tabcolsep{1pt}
+% \renewcommand\arraystretch{1.2}
+
+% \begin{tabular}{l|cc|cc}
+% \Xhline{1.2pt}
+% \rowcolor{CadetBlue!20}
+% \textbf{MAS} & \textbf{Inter.} & \textbf{Insi.} & \textbf{PDDL} & \textbf{FEVER} \\
+% \Xhline{1pt}
+
+% AutoGen & \ding{52} & $\circ$ & 54.46 & 63.27 \\
+%    & $\circ$  & \ding{52} & 50.00 & 71.43\\
+%  & \ding{52} & \ding{52} & 55.24 & 68.77 \\
+%  \midrule
+%  DyLAN & \ding{52} & $\circ$ & 46.69 & 61.39 \\
+%    & $\circ$  & \ding{52} & 48.75 & 66.66\\
+%  & \ding{52} & \ding{52} & 51.12 & 64.31 \\
+% % \midrule
+
+% \Xhline{1.2pt}
+% \end{tabular}
+% \vspace{-0.5em}
+% \end{table*}
+
+
+\vspace{-0.8em}
+\subsection{Framework Analysis (RQ3)}\label{sec:exp-framework}
+
+
+\vspace{-0.7em}
+\paragraph{Sensitivity Analysis.} Regarding the {hop expansion}, as shown in \Cref{fig:ablation-hop}, 1-hop expansion consistently yields the best or near-best performance across tasks, with peak accuracies of $85.82\%$ (ALFWorld), $55.24\%$ (PDDL) in AutoGen. In contrast, 2-hop and 3-hop settings often degrade performance, \textit{e.g.}, PDDL drops to $49.79\%$ (2-hop). This suggests that excessive hop expansion may introduce irrelevant insights during memory upward traversal, impairing task-specific reasoning. Similarly, \Cref{fig:ablation-k} shows that the optimal $k$ is among $\{1,2\}$. Larger $k$ values (\textit{e.g.}, $k{=}5$) can significantly degrade the system performance, \textit{e.g.}, $7.71\%\downarrow$ on ALFWorld+AutoGen and $2.5\%\downarrow$ on FEVER+DyLAN, indicating that retrieving more queries may introduce task-irrelevant noise. Collectively, we employ 1-hop expansion and $k\in\{1,2\}$ throughout the experiments.
+
+
+
+\vspace{-0.8em}
+\paragraph{Ablation Study.} \Cref{tab:ablation} presents an ablation of \ourmethod by isolating the impact of the high-level insight module ($\mathcal{I}^\mathcal{S}$ in \Cref{eq:upward_retrieval}) and fine-grained interactions ($\{\hat{\mathcal{G}}^{Q_i}_{\mathsf{inter}}\}_{i=1}^{|M|}$ in \Cref{eq:downward_retrieval}). As shown, removing either part leads to a consistent performance drop. When only fine-grained interactions are enabled, the average scores drop by $4.47\%\downarrow$ for AutoGen and $3.82\%\downarrow$ for DyLAN compared to the full method. Conversely, enabling only insights leads to smaller drops of $3.95\%$ and $3.39\%$. This indicates that while both components are contributive, interactions offer a slightly greater impact, likely due to their preserving more fine-grained, dialogue-level contextual grounding. 
+
+
+
+ 
+\begin{figure}[!tpb]
+\setlength{\abovecaptionskip}{6pt}
+\centering
+\includegraphics[width=\textwidth]{figs/case.pdf}
+\vspace{-1.3em}
+\caption{Case study of \ourmethod. } \label{fig:case}
+\vspace{-1.5em}
+\end{figure}
+
+\vspace{-0.6em}
+\subsection{Case Study}
+\vspace{-0.6em}
+\Cref{fig:case} illustrates concrete memory cues provided by \ourmethod across diverse tasks. For example, in the ALFWorld+AutoGen setting, given the task query ``$\mathsf{put\;a\;clean\;cloth\; in\; countertop}$'', \ourmethod successfully retrieves a highly analogous historical query, ``$\mathsf{put\; a\; clean\; egg\; in\; microwave}$''—both requiring the object to be in a $\mathsf{clean}$ state. Alongside this, \ourmethod surfaces a critical trajectory segment where the solver agent attempts to place the egg in the microwave before cleaning, prompting the ground agent to intervene. This collaborative trajectory offers actionable guidance for the current task.
+Moreover, the high-level insights retrieved by \ourmethod prove equally valuable for task execution. In the context of HotpotQA's web search task, \ourmethod retrieves an insight warning against ``mistakenly referring'', which helps prevent agents from incorrectly answering based on similarly named individuals.
+Overall, \ourmethod provides effective multi-level memory support across varied domains, including embodied action, knowledge reasoning, and game environments.
+
+
+\vspace{-0.8em}
+\section{Conclusion \& Limitation}\label{sec:conclusion}
+\vspace{-0.8em}
+
+
+In this paper, we conduct a thorough examination of existing memory architectures designed for multi-agent systems (MAS) and identify that their overly simplified designs fundamentally hinder the systems’ capacity for self-evolution. To bridge this gap, we propose \ourmethod, a hierarchical memory framework that organizes the complex and extended interaction trajectories of MAS into a three-tier graph hierarchy: the \textit{insight}, \textit{query}, and \textit{interaction} graphs. 
+\ourmethod provides each agent with customized and hierarchical memory cues, ranging from abstract, generalizable insights to fine-grained, task-critical collaborative segments, and dynamically evolves its knowledge base across episodes. Extensive experiments demonstrate that \ourmethod can be seamlessly integrated into state-of-the-art MAS frameworks, significantly enhancing their self-evolution capability, \textit{e.g.}, up to $20.89\%\uparrow$ improvement on embodied action tasks.
+%We believe \ourmethod lays the foundation for advanced memory modeling and self-improving collective intelligence in multi-agent systems. 
+\textbf{Limitations:} Although \ourmethod has been evaluated across three domains and five benchmarks, further validation on more diverse tasks (\textit{e.g.}, medical QA) would strengthen its soundness, which we leave for future work.
+
+
+
+% \clearpage
+\bibliography{ref}
+\bibliographystyle{unsrt}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\appendix
+
+
+\section*{Impact Statement}\label{app:impact}
+
+\ourmethod introduces a structured, hierarchical memory architecture for multi-agent systems (MAS), enabling large language model (LLM)-based agents to store, recall, and reason over past experiences with enhanced task generalization and cooperation efficiency. The broader impacts of this work include advancing the development of scalable and adaptive collective intelligence, with potential applications in long-term robotic planning, real-world decision-making systems, and collaborative AI assistants. However, if the underlying language model is compromised or adversarially manipulated, the memory mechanisms could amplify incorrect reasoning. We urge responsible deployment of this architecture with appropriate safeguards, including continual validation, adversarial robustness checks, and alignment with human values.
+
+
+\section{Experimental Details}\label{app:exp-details}
+\subsection{Dataset Descriptions}\label{app:dataset}
+
+In this section, we describe the datasets used in our experiments:
+
+\begin{itemize}
+    \item \textbf{ALFWorld}~\cite{shridhar2020alfworld} (available at \url{https://alfworld.github.io/}, MIT license) is a text-based embodied environment featuring household tasks, where agents navigate and interact with objects via natural language commands.
+    
+    \item \textbf{ScienceWorld}~\cite{wang2022scienceworld} (available at \url{https://github.com/allenai/ScienceWorld}, Apache-2.0 license) is another text-based embodied environment designed for interactive science tasks. Agents must navigate rooms and conduct experiments, testing their ability to perform procedural reasoning and scientific exploration.
+
+    \item \textbf{PDDL} is a game dataset from AgentBoard~\cite{ma2024agentboard} (available at \url{https://github.com/hkust-nlp/AgentBoard}, Custom properties), comprising a variety of strategic games where agents use PDDL expressions to complete complex tasks.
+
+    \item \textbf{HotpotQA}~\cite{yang2018hotpotqa} (available at \url{https://hotpotqa.github.io/}, CC BY-SA 4.0 License) is a multi-hop question answering dataset with strong supervision on supporting facts. It evaluates the agent's ability to retrieve and synthesize information, especially through web search tools, for explainable reasoning.
+
+    \item \textbf{FEVER}~\cite{thorne2018fever} (available at \url{https://fever.ai/dataset/fever.html}, Creative Commons Attribution-ShareAlike License) is a knowledge-intensive dataset focused on fact verification. Agents must validate claims using web search APIs, making it a benchmark for evidence-based reasoning.
+\end{itemize}
+
+\paragraph{Evaluation Metrics.} We use \textit{exact match} accuracy for FEVER and HotpotQA. For ScienceWorld and PDDL, we report the \textit{progress rate}, and for ALFWorld, we use the \textit{success rate} as the evaluation metric.
+
+
+\subsection{Baseline Setup}\label{app:baseline}
+
+In this section, we provide detailed descriptions of each baseline used in our comparison:
+
+\begin{itemize}
+    \item \textbf{Voyager}: The Voyager memory is derived from the Voyager agent~\cite{voyager}, where an embodied agent continuously interacts with the Minecraft environment and creates new artifacts. Memory serves as the core driver of the agent's evolution. As Voyager's memory design is tailored for a single-agent setting, we adapt it to the multi-agent scenario by implementing agent-specific history retrieval based on each agent's visible dialogue context. Other single-agent memory designs are adapted in a similar manner.
+
+    \item \textbf{MemoryBank}: MemoryBank~\cite{zhong2024memorybank} mimics anthropomorphic memory behaviors by selectively preserving and forgetting information. It incorporates a memory updating mechanism inspired by the Ebbinghaus Forgetting Curve, allowing the agent to reinforce or discard memory based on temporal decay and the relative importance of stored information.
+
+    \item \textbf{Generative}: This memory baseline is based on~\cite{generative-agents-simulacra}, which includes both raw observational memory and high-level reflective memory. The latter captures abstract thoughts generated by the agent through reflection, providing a more structured and conceptualized representation of experience.
+
+    \item \textbf{MetaGPT-M}: The memory design originates from MetaGPT~\cite{meta-gpt}, focusing solely on \textit{inside-trial} memory—information stored internally during the resolution of a single task by multiple agents.
+
+    \item \textbf{ChatDev-M}: This memory design is adapted from ChatDev~\cite{software-dev}, which incorporates both \textit{inside-trial} and \textit{cross-trial} memory. The inside-trial memory is passed from the central or initiating agent at the beginning of each round to provide guidance based on prior interactions. The cross-trial memory is relatively simple, storing past solutions to previous queries for future retrieval. However, in our task, it does not effectively manage the information-rich inter-agent collaboration.
+
+    \item \textbf{MacNet-M}: This memory design is adopted from MacNet~\cite{qian2024scaling}, where the \textit{inside-trial} memory consists solely of the final answers generated in the previous round. All non-artifact dialogue contexts, \textit{i.e.}, the interaction trajectories among agents, are entirely discarded.
+
+\end{itemize}
+
+
+\subsection{Multi-agent System Setup}\label{app:mas-setup}
+
+In this section, we detail the setups of our three adopted MAS frameworks, AutoGen, DyLAN and MacNet:
+
+\subsubsection{AutoGen}
+
+AutoGen~\cite{autogen} is a popular multi-agent orchestration framework, to coordinate interactions among specialized agents for problem-solving tasks. Specifically, we utilize their $\mathsf{A3:\;Decision\; Making}$ structure, which is composed of: (1) a \textbf{Solver Agent}, responsible for generating solutions, initialized with the system prompt ``You are a smart agent designed to solve problems.''; (2) a \textbf{Ground Truth Agent}, which critically evaluates the solver's output and identifies potential errors based on a reference standard; and (3) an \textbf{Executor Agent}, tasked with translating validated solutions into executable commands. This modular design enables transparent, verifiable, and actionable multi-agent collaboration.
+
+\subsubsection{DyLAN}
+
+DyLAN~\cite{arXiv2023_Dynamic-LLM-Agent} is a debate-style framework similar to LLM-Debate, but incorporates a more efficient agent-wise early stopping mechanism during multi-turn interactions. DyLAN utilizes an agent selection algorithm based on an unsupervised metric, namely the \textit{Agent Importance Score}, which identifies the most contributive agents through a preliminary trial tailored to the specific task. In our implementation of DyLAN, three agents engage in the debate, while an additional ranker agent evaluates their relative importance.
+
+
+\subsection{MacNet}
+
+MacNet~\cite{qian2024scaling} is a representative work that explores decentralized and scalable multi-agent systems. Its key feature lies in the absence of a central agent; instead, it introduces \textit{edge agents}, which are invoked between agent interactions to provide actionable instructions to the next agent based on the previous agent's outputs. In our implementation, we adopt the random graph topology from MacNet, shown to be robust across diverse scenarios, and employ five agents in addition to the edge agents.
+
+
+
+\section{Additional Experiment Results}\label{app:results}
+
+\subsection{RQ1 Results}\label{app:rq1}
+
+\Cref{tab:rq1_14b,tab:rq1_7b} present additional experimental results using \llmname{Qwen-2.5-7b} and \llmname{Qwen-2.5-14b} as the LLM backbones. \Cref{fig:cdf} illustrates the success rate curves on ALFWorld as the number of trials increases, comparing different MAS frameworks combined with various memory architectures. As shown in \Cref{fig:cdf2,fig:cdf3}, \ourmethod consistently enables MAS frameworks to achieve success with fewer trials and leads to higher final performance ceilings.
+
+
+
+
+\begin{figure}[!h]
+    \centering
+    % 第一行
+    \begin{subfigure}[b]{0.32\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figs/cdf_comparison_qwen14b_autogen_alf_mas_multigraph.png}
+        \caption{The performance trajectory of AutoGen on ALFWorld.}
+        \label{fig:cdf1}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figs/cdf_comparison_qwen14b_dylan_alf_mas_multigraph.png}
+        \caption{The performance trajectory of DyLAN on ALFWorld.}
+        \label{fig:cdf2}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figs/cdf_comparison_qwen14b_macnet_alf_mas_multigraph.png}
+        \caption{The performance trajectory of MacNet on ALFWorld.}
+        \label{fig:cdf3}
+    \end{subfigure}
+
+    \vspace{0.5em} % 行距，可调
+
+\label{fig:cdf}
+\end{figure}
+
+
+
+\begin{table*}[!h]
+\centering
+\caption{Performance comparison with single/multi-agent memory architectures on five benchmarks. The underlying LLM backbone is \llmname{Qwen-2.5-7b}. We highlight the \hlfirst{best} and \hlsecond{second best} results.}
+% \vspace{-0.1em}
+\label{tab:rq1_7b}
+\renewcommand\tabcolsep{7pt}
+\renewcommand\arraystretch{1.1}
+  
+\resizebox{\linewidth}{!}{
+\begin{tabular}{c|c|cccccc}
+\Xhline{1.2pt}
+\rowcolor{CadetBlue!20} 
+{\textbf{MAS}} & \textbf{Memory}  & \textbf{ALFWorld} & \textbf{SciWorld} & \textbf{PDDL} & \textbf{HotpotQA} & \textbf{FEVER} & {\textbf{Avg.}} \\
+\Xhline{1.2pt}
+% Single agent & - & 82.14 & 85.40 & 93.15 & 87.18 & 70.34 & 81.65\\
+% \hline
+\multirow{4}{*}{\makecell{ Vanilla \\ LLM }} 
+& No-memory & 37.31\red{0.00} & 23.49\red{0.00} & 10.86\red{0.00} & \hlsecond{20.26\red{0.00}} & 48.17\red{0.00} & 28.02\red{0.00} \\
+& Voyager & 38.19\red{0.88} & \hlsecond{24.11\red{0.62}} & \hlsecond{12.14\red{1.28}} & 19.12\blue{1.14} & \hlsecond{49.68\red{1.51}} & \hlsecond{28.65\red{0.63}} \\
+& MemoryBank & \hlfirst{40.30\red{2.99}} & 21.64\blue{1.85} & \hlfirst{14.36\red{3.50}} & 18.79\blue{1.47} & 47.66\blue{0.51} & 28.55\red{0.53} \\
+& Generative & \hlsecond{39.16\red{1.85}} & \hlfirst{26.10\red{2.61}} & 11.37\red{0.51} & \hlfirst{23.48\red{3.22}} & \hlfirst{52.50\red{4.33}} & \hlfirst{30.52\red{2.50}} \\
+\midrule
+
+\multirow{8}{*}{\makecell{AutoGen \\ {\small\colorbox{gray!70}{\textcolor{white}{COLM 2024}}}}}  
+& No-memory & 52.99\red{0.00} & 30.27\red{0.00} & 16.17\red{0.00} & 33.33\red{0.00} & 58.74\red{0.00} & 38.30\red{0.00} \\
+& Voyager & 55.22\red{2.23} & 26.70\blue{3.57} & 12.00\blue{4.17} & 34.29\red{0.96} & 52.44\blue{6.30} & 36.13\blue{2.17} \\
+& MemoryBank & 53.37\red{0.38} & 27.33\blue{2.94} & 14.83\blue{1.34} & 32.67\blue{0.66} & 59.45\red{0.71} & 37.53\blue{0.77} \\
+& Generative & \hlsecond{62.69\red{9.70}} & 31.45\red{1.18} & \hlsecond{17.88\red{1.71}} & 34.17\red{0.84} & 61.25\red{2.51} & \hlsecond{41.49\red{3.19}} \\
+& MetaGPT-M & 55.52\red{2.53} & \hlsecond{32.44\red{2.17}} & 17.04\red{0.87} & \hlsecond{35.36\red{2.03}} & \hlsecond{63.33\red{4.59}} & 40.74\red{2.44} \\
+& ChatDev-M & 46.27\blue{6.72} & 28.67\blue{1.60} & 13.42\blue{2.75} & 31.11\blue{2.22} & 61.32\red{2.58} & 36.16\blue{2.14} \\
+& MacNet-M & 53.18\red{0.19} & 31.10\red{0.83} & 16.89\red{0.72} & 34.29\red{0.96} & 58.43\blue{0.31} & 38.78\red{0.48} \\
+& \ourmethod~(Ours) & \hlfirst{67.91\red{14.92}} & \hlfirst{34.89\red{4.62}} & \hlfirst{21.01\red{4.84}} & \hlfirst{37.34\red{4.01}} & \hlfirst{64.34\red{5.60}} & \hlfirst{45.10\red{6.80}} \\
+\midrule
+
+\multirow{8}{*}{\makecell{DyLAN \\ {\small\colorbox{gray!70}{\textcolor{white}{COLM 2024}}}}}  
+& No-memory & 41.34\red{0.00} & 29.84\red{0.00} & 13.56\red{0.00} & 24.29\red{0.00} & 56.23\red{0.00} & 33.05\red{0.00} \\
+& Voyager & \hlsecond{51.49\red{10.15}} & 26.66\blue{3.18} & 10.62\blue{2.94} & 26.23\red{1.94} & 55.39\blue{0.84} & 34.08\red{1.03} \\
+& MemoryBank & 46.46\red{5.12} & 26.99\blue{2.85} & 14.10\red{0.54} & 22.44\blue{1.85} & \hlsecond{59.21\red{2.98}} & 33.84\red{0.79} \\
+& Generative & 48.52\red{7.18} & \hlsecond{31.55\red{1.71}} & \hlsecond{16.31\red{2.75}} & \hlsecond{26.54\red{2.25}} & 50.19\blue{6.04} & \hlsecond{34.62\red{1.57}} \\
+& MetaGPT-M & 42.54\red{1.20} & 30.93\red{1.09} & 14.47\red{0.91} & 19.33\blue{4.96} & 57.22\red{0.99} & 32.90\blue{0.15} \\
+& ChatDev-M & 39.85\blue{1.49} & 28.25\blue{1.59} & 7.14\blue{6.42} & 17.32\blue{6.97} & 50.67\blue{5.56} & 28.65\blue{4.41} \\
+& MacNet-M & 42.48\red{1.14} & 28.22\blue{1.62} & 14.23\red{0.67} & 25.12\red{0.83} & 55.34\blue{0.89} & 33.08\red{0.03} \\
+& \ourmethod~(Ours) & \hlfirst{52.99\red{11.65}} & \hlfirst{33.81\red{3.97}} & \hlfirst{20.71\red{7.15}} & \hlfirst{29.33\red{5.04}} & \hlfirst{63.67\red{7.44}} & \hlfirst{40.10\red{7.05}} \\
+
+
+\midrule
+
+\multirow{8}{*}{\makecell{MacNet \\ {\small\colorbox{gray!70}{\textcolor{white}{ICLR 2025}}}}}  
+& No-memory & 44.03\red{0.00} & 28.76\red{0.00} & 13.36\red{0.00} & 22.24\red{0.00} & 55.12\red{0.00} & 32.70\red{0.00} \\
+& Voyager & 47.01\red{2.98} & 28.88\red{0.12} & 11.36\blue{2.00} & \hlsecond{25.67\red{3.43}} & \hlsecond{58.78\red{3.66}} & 34.34\red{1.64} \\
+& MemoryBank & 52.24\red{8.21} & 27.86\blue{0.90} & 13.33\blue{0.03} & 23.97\red{1.73} & 54.18\blue{0.94} & 34.32\red{1.61} \\
+& Generative & 48.51\red{4.48} & \hlsecond{31.05\red{2.29}} & 14.04\red{0.68} & 24.49\red{2.25} & 56.08\red{0.96} & 34.83\red{2.13} \\
+& MetaGPT-M & \hlsecond{52.99\red{8.96}} & 29.87\red{1.11} & \hlsecond{16.58\red{3.22}} & 25.51\red{3.27} & 53.88\blue{1.24} & \hlsecond{35.77\red{3.06}} \\
+& ChatDev-M & 44.78\red{0.75} & 26.44\blue{2.32} & 10.19\blue{3.17} & 16.32\blue{5.92} & 56.02\red{0.90} & 30.75\blue{1.95} \\
+& MacNet-M & 43.55\blue{0.48} & 30.11\red{1.35} & 12.91\blue{0.45} & 21.77\blue{0.47} & 50.71\blue{4.41} & 31.81\blue{0.89} \\
+& \ourmethod~(Ours) & \hlfirst{54.48\red{10.45}} & \hlfirst{32.23\red{3.47}} & \hlfirst{17.48\red{4.12}} & \hlfirst{27.53\red{5.29}} & \hlfirst{59.14\red{4.02}} & \hlfirst{38.17\red{5.47}} \\
+
+\Xhline{1.2pt} 
+\end{tabular}
+}
+\end{table*}
+
+
+
+
+
+\begin{table*}[!h]
+\centering
+\caption{Performance comparison with single/multi-agent memory architectures on five benchmarks. The underlying LLM backbone is \llmname{Qwen-2.5-14b}. We highlight the \hlfirst{best} and \hlsecond{second best} results.}
+% \vspace{-0.1em}
+\label{tab:rq1_14b}
+\renewcommand\tabcolsep{7pt}
+\renewcommand\arraystretch{1.1}
+  
+\resizebox{\linewidth}{!}{
+\begin{tabular}{l|c|cccccc}
+\Xhline{1.2pt}
+\rowcolor{CadetBlue!20} 
+{\textbf{MAS}} & \textbf{Memory}  & \textbf{ALFWorld} & \textbf{SciWorld} & \textbf{PDDL} & \textbf{HotpotQA} & \textbf{FEVER} & {\textbf{Avg.}} \\
+\Xhline{1.2pt}
+
+\multirow{8}{*}{\makecell{AutoGen \\ {\small\colorbox{gray!70}{\textcolor{white}{COLM 2024}}}}}  
+& No-memory & 74.63\red{0.00} & 46.84\red{0.00} & 44.92\red{0.00} & 24.49\red{0.00} & 63.27\red{0.00} & 50.83\red{0.00} \\
+& Voyager & 76.87\red{2.24} & \hlsecond{59.00\red{12.16}} & 50.21\red{5.29} & 31.33\red{6.84} & 61.22\blue{2.05} & 55.73\red{4.90} \\
+& MemoryBank & 70.15\blue{4.48} & 54.18\red{7.34} & 39.54\blue{5.38} & 32.65\red{8.16} & 64.29\red{1.02} & 52.16\red{1.33} \\
+& Generative & 74.63\red{0.00} & 57.37\red{10.53} & \hlsecond{54.46\red{9.54}} & \hlsecond{33.21\red{8.72}} & 63.27\red{0.00} & 56.59\red{5.76} \\
+& MetaGPT-M & \hlsecond{82.09\red{7.46}} & 58.86\red{12.02} & 48.99\red{4.07} & 31.63\red{7.14} & 62.27\blue{1.00} & \hlsecond{56.77\red{5.94}} \\
+& ChatDev-M & 67.16\blue{7.47} & 40.69\blue{6.15} & 43.11\blue{1.81} & 31.77\red{7.28} & 61.28\blue{1.99} & 48.80\blue{2.03} \\
+& MacNet-M & 73.65\blue{0.98} & 42.14\blue{4.70} & 45.94\red{1.02} & 26.72\red{2.23} & \hlsecond{64.69\red{1.42}} & 50.63\blue{0.20} \\
+& \ourmethod~(Ours) & \hlfirst{85.82\red{11.19}} & \hlfirst{60.62\red{13.78}} & \hlfirst{55.24\red{10.32}} & \hlfirst{34.61\red{10.12}} & \hlfirst{71.43\red{8.16}} & \hlfirst{61.54\red{10.71}} \\
+
+
+
+\midrule
+
+\multirow{8}{*}{\makecell{DyLAN \\ {\small\colorbox{gray!70}{\textcolor{white}{COLM 2024}}}}}  
+& No-memory & 76.12\red{0.00} & 53.24\red{0.00} & 41.83\red{0.00} & 30.61\red{0.00} & 63.34\red{0.00} & 53.03\red{0.00} \\
+& Voyager & 72.39\blue{3.73} & 58.93\red{5.69} & 48.54\red{6.71} & 30.71\red{0.10} & \hlsecond{65.31\red{1.97}} & 55.18\red{2.15} \\
+& MemoryBank & 76.87\red{0.75} & 57.92\red{4.68} & 39.65\blue{2.18} & 29.59\blue{1.02} & 63.25\blue{0.09} & 53.46\red{0.43} \\
+& Generative & 77.91\red{1.79} & \hlsecond{61.52\red{8.28}} & 46.69\red{4.86} & \hlsecond{31.33\red{0.72}} & 61.39\blue{1.95} & 55.77\red{2.74} \\
+& MetaGPT-M & \hlsecond{79.10\red{2.98}} & 61.29\red{8.05} & \hlsecond{49.75\red{7.92}} & 28.61\blue{2.00} & 64.11\red{0.77} & \hlsecond{56.57\red{3.54}} \\
+& ChatDev-M & 74.63\blue{1.49} & 54.03\red{0.79} & 44.44\red{2.61} & 30.67\red{0.06} & 62.25\blue{1.09} & 53.20\red{0.18} \\
+& MacNet-M & 72.77\blue{3.35} & 52.22\blue{1.02} & 42.98\red{1.15} & 29.22\blue{1.39} & 62.69\blue{0.65} & 51.98\blue{1.05} \\
+& \ourmethod~(Ours) & \hlfirst{81.34\red{5.22}} & \hlfirst{64.68\red{11.44}} & \hlfirst{51.12\red{9.29}} & \hlfirst{34.63\red{4.02}} & \hlfirst{66.66\red{3.32}} & \hlfirst{59.69\red{6.66}} \\
+
+
+
+\midrule
+
+\multirow{8}{*}{\makecell{MacNet \\ {\small\colorbox{gray!70}{\textcolor{white}{ICLR 2025}}}}}  
+& No-memory & 58.21\red{0.00} & 52.21\red{0.00} & 41.74\red{0.00} & 28.60\red{0.00} & 64.65\red{0.00} & 49.08\red{0.00} \\
+& Voyager & 63.43\red{5.22} & 60.24\red{8.03} & 43.95\red{2.21} & 29.67\red{1.07} & 62.24\blue{2.41} & 51.91\red{2.82} \\
+& MemoryBank & 62.21\red{4.00} & 55.52\red{3.31} & 38.26\blue{3.48} & 26.53\blue{2.07} & 65.22\red{0.57} & 49.55\red{0.47} \\
+& Generative & \hlsecond{73.13\red{14.92}} & \hlsecond{60.83\red{8.62}} & \hlsecond{44.00\red{2.26}} & \hlsecond{30.53\red{1.93}} & 65.31\red{0.66} & \hlsecond{54.76\red{5.68}} \\
+& MetaGPT-M & 70.43\red{12.22} & 59.70\red{7.49} & 42.34\red{0.60} & 26.26\blue{2.34} & \hlsecond{66.33\red{1.68}} & 53.01\red{3.93} \\
+& ChatDev-M & 68.66\red{10.45} & 45.98\blue{6.23} & 42.19\red{0.45} & 29.49\red{0.89} & 59.18\blue{5.47} & 49.10\red{0.02} \\
+& MacNet-M & 60.45\red{2.24} & 51.14\blue{1.07} & 39.22\blue{2.52} & 28.77\red{0.17} & 62.42\blue{2.23} & 48.40\blue{0.68} \\
+& \ourmethod~(Ours) & \hlfirst{79.10\red{20.89}} & \hlfirst{61.74\red{9.53}} & \hlfirst{45.76\red{4.02}} & \hlfirst{32.33\red{3.73}} & \hlfirst{70.33\red{5.68}} & \hlfirst{57.85\red{8.77}} \\
+
+
+
+\Xhline{1.2pt} 
+\end{tabular}
+}
+\vspace{-.5em}
+\end{table*}
+
+
+
+\subsection{RQ2 Results}\label{app:rq2}
+\Cref{fig:cost-app} provides additional comparisons of token cost across various benchmarks and MAS frameworks when combined with different memory architectures. Overall, \ourmethod incurs only a marginal or no increase in token cost compared to classical baselines such as Generative and MetaGPT-M, while consistently delivering the most significant performance improvements.
+
+
+
+
+\begin{figure}[!tpb]
+\setlength{\abovecaptionskip}{6pt}
+\centering
+\includegraphics[width=\textwidth]{figs/cost-app.pdf}
+\vspace{-.3em}
+\caption{Cost analysis of \ourmethod. We showcase the performance versus the overall system token cost when combined with different memory architectures.} \label{fig:cost-app}
+% \vspace{-1.5em}
+\end{figure}
+
+% \begin{figure}[!t]
+%     \begin{minipage}{0.48\linewidth}
+%         \centering
+%         \includegraphics[width=\linewidth]{figs/gpt4omini_macnet_alf.pdf}
+%         \caption{Insight graph on \llmname{gpt-4o-mini}+MacNet+ALFWorld.}
+%         \label{fig:insight_4o_macnet_alf}
+%     \end{minipage}
+%     \hfill
+%     \begin{minipage}{0.48\linewidth}
+%         \centering
+%         \includegraphics[width=\linewidth]{figs/gpt4omini_dylan_alf.pdf}
+%         \caption{Insight graph on \llmname{gpt-4o-mini}+DyLAN+ALFWorld.}
+%         \label{fig:insight_4o_dylan_alf}
+%     \end{minipage}
+% \end{figure}
+
+
+\subsection{Case Study}\label{app:case}
+
+\subsubsection{Case Study on Insight Graphs}
+
+\Cref{fig:insight-graph} visualizes the high-level insights summarized by \ourmethod on the ALFWorld benchmark across different MAS frameworks and LLM backbones. Given that ALFWorld naturally consists of diverse task categories, we further examine how insight nodes corresponding to different task types are interconnected. Overall, we observe dense intra-category connections among insights derived from similar tasks, while also noting the emergence of meaningful inter-category links, reflecting transferable patterns across task domains.
+
+
+
+\begin{figure}[!h]
+    \centering
+    % 第一行
+    \begin{subfigure}[b]{0.45\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figs/gpt4omini_macnet_alf.pdf}
+        \caption{Insight graph on \llmname{gpt-4o-mini}+MacNet+ALFWorld.}
+        \label{fig:insight_4o_macnet_alf}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.45\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figs/gpt4omini_dylan_alf.pdf}
+        \caption{Insight graph on \llmname{gpt-4o-mini}+DyLAN+ALFWorld.}
+        \label{fig:insight_4o_dylan_alf}
+    \end{subfigure}
+
+    \vspace{0.5em} % 行距，可调
+
+    % 第二行
+    \begin{subfigure}[b]{0.45\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figs/qwen7b_macnet_alf.pdf}
+        \caption{Insight graph on \llmname{Qwen-7b}+MacNet+ALFWorld.}
+        \label{fig:insight_7b_macnet_alf}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.45\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figs/qwen7b_dylan_alf.pdf}
+        \caption{Insight graph on \llmname{Qwen-7b}+DyLAN+ALFWorld.}
+        \label{fig:insight_7b_dylan_alf}
+    \end{subfigure}
+
+    \vspace{0.5em}
+
+    % 第三行
+    \begin{subfigure}[b]{0.45\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figs/qwen14b_autogen_alf.pdf}
+        \caption{Insight graph on \llmname{Qwen-14b}+AutoGen+ALFWorld.}
+        \label{fig:insight_14b_autogen_alf}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.45\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figs/qwen14b_dylan_alf.pdf}
+        \caption{Insight graph on \llmname{Qwen-14b}+DyLAN+ALFWorld.}
+        \label{fig:insight_14b_dylan_alf}
+    \end{subfigure}
+
+    \caption{Visualizations of insight graphs across different LLM backbones, MAS, and benchmarks.}
+    \label{fig:insight-graph}
+\end{figure}
+
+
+\subsubsection{Case Study on Query Graphs}
+
+\Cref{fig:query_alfworld,fig:query_sci,fig:query_pddl} visualize the query graphs constructed by \ourmethod on the ALFWorld, PDDL, and SciWorld benchmarks. Recall that a directed edge between two query nodes indicates that the historical trajectory of one query offers useful guidance for the execution of another. We observe emergent clustering patterns, where groups of semantically similar queries form densely connected subgraphs, while sparser inter-cluster edges capture cross-task inspirations. These patterns demonstrate \ourmethod's ability to effectively organize and relate collaborative experiences through structured memory reasoning.
+
+
+\begin{figure}[!h]
+\setlength{\abovecaptionskip}{6pt}
+\centering
+        \includegraphics[width=0.8\linewidth]{figs/alf_tasks.pdf}
+        \caption{Query graph optimized from ALFWorld dataset.}
+        \label{fig:query_alfworld}
+\vspace{-1.5em}
+\end{figure}
+
+\begin{figure}[!h]
+\setlength{\abovecaptionskip}{6pt}
+\centering
+        \includegraphics[width=0.8\linewidth]{figs/sci_tasks.pdf}
+        \caption{Query graph optimized from SciWorld dataset.}
+        \label{fig:query_sci}
+\vspace{-1.5em}
+\end{figure}
+
+\begin{figure}[!h]
+\setlength{\abovecaptionskip}{6pt}
+\centering
+        \includegraphics[width=0.8\linewidth]{figs/pddl_tasks.pdf}
+        \caption{Query graph optimized from PDDL dataset.}
+        \label{fig:query_pddl}
+\vspace{-1.5em}
+\end{figure}
+
+\section{Prompt Set}\label{app:prompt}
+
+\begin{tcolorbox}[notitle, sharp corners, breakable, colframe=YellowGreen, colback=white, 
+       boxrule=3pt, boxsep=0.5pt, enhanced, 
+       shadow={3pt}{-3pt}{0pt}{opacity=1,mygrey},
+       title={Query Relevance Filtration},]\label{box:tag-generate}
+       \scriptsize
+       {\fontfamily{pcr}\selectfont
+\begin{lstlisting}
+task_relevency_system_prompt = """You are an agent designed to score the relevance between two pieces of text."""
+task_relevency_user_prompt = """You will be given a successful case where you successfully complete the task. Then you will be given an ongoing task. Do not summarize these two cases, but rather evaluate how relevant and helpful the successful case is for the ongoing task, on a scale of 1-10.
+Success Case:
+{trajectory}
+Ongoing task:
+{query_scenario}
+Score: """
+\end{lstlisting}
+}
+\end{tcolorbox}
+
+\begin{tcolorbox}[notitle, sharp corners, breakable, colframe=Periwinkle, colback=white, 
+       boxrule=3pt, boxsep=0.5pt, enhanced, 
+       shadow={3pt}{-3pt}{0pt}{opacity=1,mygrey},
+       title={Graph Sparsifier},]\label{box:tag-generate}
+       \scriptsize
+       
+\begin{lstlisting}
+extract_true_traj_system_prompt = """You are an agent skilled at extracting key points.
+Given a task and a successful execution trajectory, your job is to identify the critical steps needed to complete the task while filtering out less important steps."""
+
+extract_true_traj_user_prompt = """
+Note: 
+- Strictly follow the original trajectory; absolutely no steps that are not in the trajectory should be added.
+- Even in a successful trajectory, there may be some incorrect steps. Pay attention to actions that correspond to "Nothing happens" observations, as these actions are likely incorrect. Filter out these actions for me.
+- You need to ensure that each step is at the finest granularity.
+- You should strictly follow the output format in the example.
+
+## Here is the task:
+### Task
+{task}
+
+### Trajectory
+{trajectory}
+
+### Output
+"""
+\end{lstlisting}
+
+\end{tcolorbox}
+
+
+
+The prompt below is partially adapted from \cite{zhao2024expel}. We would like to express our sincere gratitude for their valuable implementation.
+
+\begin{tcolorbox}[notitle, sharp corners, breakable, colframe=ForestGreen, colback=white, 
+       boxrule=3pt, boxsep=0.5pt, enhanced, 
+       shadow={3pt}{-3pt}{0pt}{opacity=1,mygrey},
+       title={Inisght Summarization Function},]\label{box:tag-generate}
+       \scriptsize
+       {\fontfamily{pcr}\selectfont
+\begin{lstlisting}
+learn_lessons_system_prompt_compare = """
+You are an analysis-driven agent focused on learning from experience. You will be provided with:
+- A failed trajectory and its outcome,
+- A successful trajectory completing a similar task.
+
+Your task is to analyze both trajectories and generate clear, actionable insights. Your insights should highlight what the failed trajectory missed and how the successful one addressed or avoided these pitfalls.
+
+## Requirements:
+- All insights must be derived directly from contrasting the two trajectories.
+- Do not speculate or introduce steps not supported by the successful example.
+- Focus on **concrete behavioral or strategic differences** between the two cases.
+- Keep each insight concise and impactful.
+
+Output Format:
+- Start immediately with a numbered list.
+- No introduction or explanation.
+- Use this exact format:
+1. Insight 1
+2. Insight 2
+3. Insight 3
+...
+"""
+
+learn_lessons_user_prompt_compare = """
+## Successful trajectory
+{true_traj}
+
+## Failed trajectory
+### trajectory
+{false_traj}
+
+Your output:
+"""
+
+learn_lessons_system_prompt_all_succ = """
+You are an analysis-driven agent focused on learning from success. You will be provided with a set of successful trajectories that completed a similar task.
+
+Your goal is to analyze these successful examples and extract clear, actionable insights that capture what contributed to their success. These insights will serve as guidance for future agents working on similar tasks.
+
+## Requirements:
+- All insights must be grounded in patterns or strategies observed across the successful trajectories.
+- Do not speculate or introduce steps not reflected in the provided examples.
+- Focus on common behaviors, strategies, or decisions that consistently led to positive outcomes.
+- Keep each insight concise, specific, and impactful.
+
+Output Format:
+- Start immediately with a numbered list.
+- No introduction or explanation.
+- Use this exact format:
+1. Insight 1
+2. Insight 2
+3. Insight 3
+...
+"""
+
+
+learn_lessons_user_prompt_all_succ = """
+## Successful trajectorys
+{true_trajs}
+
+Your output:
+"""
+
+# merge rules prompt
+merge_rules_system_prompt = """You are an agent skilled at summarizing and distilling insights. You are given a list of insights that were previously extracted from similar tasks. These insights may contain redundancy or overlap.
+
+Your job is to **merge and consolidate similar insights**, and output a refined version that is **clear, actionable, and concise**.
+
+NOTE:
+- All merged insights **must be based strictly on the given inputs**. You are **not allowed to make up** or infer any new information.
+- The output should be easy to read and follow.
+
+Output Format:
+- Start your response directly with the numbered list, no preamble or explanations.
+- Each insight should be a short sentence.
+- Use the following format exactly:
+1. Insight 1
+2. Insight 2
+3. Insight 3
+...
+"""
+
+merge_rules_user_prompt = """
+## Here are the current insights that need to be merged:
+{current_rules}
+
+## Please consolidate and rewrite them into **no more than {limited_number} refined insights**.
+
+As the summarizing agent, remove redundancies, combine similar ideas, and ensure clarity.
+
+Your output:
+"""
+\end{lstlisting}
+}
+\end{tcolorbox}
+
+\begin{tcolorbox}[notitle, sharp corners, breakable, colframe=ForestGreen, colback=white, 
+       boxrule=3pt, boxsep=0.5pt, enhanced, 
+       shadow={3pt}{-3pt}{0pt}{opacity=1,mygrey},
+       title={Customizing Memory for Agents},]\label{box:tag-generate}
+       \scriptsize
+       {\fontfamily{pcr}\selectfont
+\begin{lstlisting}
+project_insights_system_prompt: str = """
+You are a thoughtful and context-aware agent. You will be provided with a successfully executed trajectory, a specific agent **role**, and a set of **general insights** applicable across all roles.
+Your task is to **adapt these general insights** into **personalized insights** that are specifically tailored to the given role and its trajectory. These personalized insights should help the agent improve future performance by aligning with their unique background, responsibilities, and perspective.
+Make sure your output reflects an understanding of the role's context and promotes actionable, role-relevant advice.
+
+NOTE - Your output must strictly follow the format below:
+1. Insight 1
+2. Insight 2
+3. Insight 3
+...
+"""
+
+project_insights_user_prompt: str = """
+### Trajectory
+{trajectory}
+
+### Agent's Role:
+{role}
+
+### General Insights:
+{insights}
+
+### Your Output (Personalized Insights for This Role):
+"""
+\end{lstlisting}
+}
+\end{tcolorbox}
+
+
+
+
+\section{Discussion with Related Works}\label{app:related}
+
+In this section, we further discuss the relationship between \ourmethod and several recent agent memory frameworks. For \textbf{A-Mem}~\cite{xu2025a-mem}, while both A-Mem and \ourmethod aim to enhance the memory capabilities of LLM agents, they differ in two key aspects. First, A-Mem is tailored for single-agent scenarios, whereas \ourmethod is designed for processing MAS's lengthy and nuanced interaction trajectory. Second, A-Mem emphasizes atomic memory construction for chatbot-style interactions, while \ourmethod focuses on distilling reusable strategies from collaborative task execution, where fine-grained atomicity is neither required nor beneficial. For \textbf{Mem0}~\cite{chhikara2025mem0}, although it also employs a graph-based structure, it remains within the chatbot paradigm. Its graph is closer to a knowledge graph, where nodes represent factual entities and edges represent relations, fundamentally differing from \ourmethod's agent-centric memory graphs that encode trajectories, decisions, and coordination patterns across agents.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+\end{document}

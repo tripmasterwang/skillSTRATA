@@ -1,0 +1,26 @@
+\begin{table*}[!t]
+\caption{Tool Sequence Recommendation Results on API-Bank Level-3 (50 instances, LOO-CV). In each fold, graph-based transition statistics are estimated from the other 49 API-Bank instances, while GS-Hybrid+LR reuses ToolBench-trained reranker weights zero-shot.}
+\label{tab:apibank}
+\centering
+\small
+\begin{threeparttable}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Method} & \textbf{Set-F1} & \textbf{Ord.Prec} & \textbf{Kendall-$\tau$} & \textbf{Trans.Acc} \\
+\midrule
+BM25                   & 0.590 & 0.100 & $-$0.100 & 0.10 \\
+Semantic Only          & 0.793 & 0.133 & $-$0.433 & 0.15 \\
+Hybrid Sem-Graph       & 0.803 & 0.193 & $-$0.293 & 0.19 \\
+GS-Hybrid + Hyb-Rerank & 0.803 & 0.173 & $-$0.333 & 0.19 \\
+GS-Hybrid + LR (ours)  & \textbf{0.803} & \textbf{0.647} & \textbf{+0.613} & \textbf{0.62} \\
+\midrule
+LLaMA-3.1-8B (3-shot)  & 0.945\tnote{$\ddagger$} & 0.747 & -- & -- \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\footnotesize
+\item[] Bootstrap 95\% CI for Kendall-$\tau$: Semantic Only $[-0.607,-0.247]$, Hybrid Sem-Graph $[-0.480,-0.107]$, GS-Hybrid + HR $[-0.507,-0.147]$, GS-Hybrid + LR $[0.487,0.740]$.
+\item[$\ddagger$] LLaMA uses oracle candidate set (ground-truth tools), inflating Set-F1.
+\end{tablenotes}
+\end{threeparttable}
+\end{table*}

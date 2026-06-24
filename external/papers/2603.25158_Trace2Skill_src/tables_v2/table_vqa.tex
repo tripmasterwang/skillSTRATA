@@ -1,0 +1,41 @@
+\centering
+\small
+\setlength{\tabcolsep}{2.2pt}
+\caption{DocVQA transfer from trajectory-distilled visual-reasoning skills. ANLS is similarity; Acc is ANLS\,$\ge$\,0.5.}
+\label{tab:vqa}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{@{}l cc cc@{}}
+\toprule
+& \multicolumn{2}{c}{\textit{Skill User: 122B}}
+& \multicolumn{2}{c}{\textit{Skill User: 35B}} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+\textbf{Condition}
+    & \textbf{ANLS}$\uparrow$
+    & \textbf{Acc}$\uparrow$
+    & \textbf{ANLS}$\uparrow$
+    & \textbf{Acc}$\uparrow$ \\
+\midrule
+\multicolumn{5}{l}{\textit{Reference (absolute scores)}} \\
+\quad No Skill
+    & 0.6300 & 70.27 & 0.6582 & 73.17 \\
+\midrule
+\multicolumn{5}{l}{\textit{Skill Author: Qwen3.5-122B-A10B}} \\[2pt]
+\multicolumn{5}{l}{\quad\textit{Creation (init: No Skill)}} \\
+\quad\quad +Error
+    & \cellcolor{Green3!46}+0.1949 & \cellcolor{Green3!48}+17.69 & \cellcolor{Green3!47}+0.1974 & \cellcolor{Green3!45}+16.64 \\
+\quad\quad +Success
+    & \cellcolor{Green3!39}+0.1639 & \cellcolor{Green3!40}+14.89 & \cellcolor{Green3!40}+0.1668 & \cellcolor{Green3!38}+14.23 \\
+\quad\quad +Combined
+    & \cellcolor{Green3!60}\textbf{+0.2534} & \cellcolor{Green3!60}\textbf{+22.25} & \cellcolor{Green3!49}+0.2049 & \cellcolor{Green3!46}+17.22 \\[2pt]
+\midrule
+\multicolumn{5}{l}{\textit{Skill Author: Qwen3.5-35B-A3B}} \\[2pt]
+\multicolumn{5}{l}{\quad\textit{Creation (init: No Skill)}} \\
+\quad\quad +Error
+    & \cellcolor{Green3!21}+0.0884 & \cellcolor{Green3!18}+6.79 & \cellcolor{Green3!30}+0.1267 & \cellcolor{Green3!27}+10.15 \\
+\quad\quad +Success
+    & \cellcolor{Green3!37}+0.1572 & \cellcolor{Green3!39}+14.53 & \cellcolor{Green3!50}+0.2132 & \cellcolor{Green3!49}+18.27 \\
+\quad\quad +Combined
+    & \cellcolor{Green3!23}+0.0958 & \cellcolor{Green3!21}+7.73 & \cellcolor{Green3!51}\textbf{+0.2158} & \cellcolor{Green3!51}\textbf{+18.83} \\
+\bottomrule
+\end{tabular}
+}%

@@ -3,16 +3,3 @@ __pycache__/
 .pytest_cache/
 *.egg-info/
 .DS_Store
-
-# generated experiment outputs
-results/*.json
-external/repos/Trace2Skill/runs/
-external/repos/Trace2Skill/data/
-
-# large reference artifacts (clone/download separately)
-external/papers/
-external/competitors/
-
-# editor / scratch
-Untitled
-MEMORY/

@@ -1,0 +1,11 @@
+\section{Related Work}
+\label{sec:related}
+
+\paragraph{Memory mechanisms in agents.}
+External memory helps LLM agents reuse experience beyond the context window. Early methods store raw trajectories as examples~\citep{zhao2024expel, chhikara2025mem0}, while later work compresses experience into summaries or knowledge entries~\citep{fang2025memp, liu2025simplemem, ouyang2025reasoningbank, tang2025agentkb}. Recent studies further apply RL directly to agent knowledge structures: MemRL~\citep{zhang2026memrl} performs runtime RL on episodic memory, MemEvolve~\citep{zhang2025memevolve} meta-evolves memory systems, Mem-$\alpha$~\citep{wang2025mem_alpha} learns memory construction policies, and EvolveR~\citep{wu2025evolver} co-adapts the policy and memory bank. In contrast, \textsc{SkillGraph} represents experience as explicit skill abstractions with typed dependencies and evolves this structure jointly with the policy.
+
+\paragraph{Graph structures for LLMs.}
+Graph structures have been widely adopted in LLM systems: Graph-of-Thought~\citep{besta2024got} models reasoning steps as a directed graph to enable non-linear thought exploration, GraphRAG~\citep{edge2024graphrag} builds entity-relation graphs over corpora for structured retrieval, and \citet{huang2024graphplan} encode task decompositions as planning graphs for agent execution. \textsc{SkillGraph} applies graph structures to agent skill management, jointly evolving the graph topology and the policy through RL, enabling the skill graph to adapt continuously rather than remaining static after construction.
+
+\paragraph{Agent skill evolution.}
+Agentic skills can compact reusable strategies for subtasks. Voyager~\citep{wang2023voyager} accumulates executable code skills, and ExpeL~\citep{zhao2024expel} distills transferable strategic experience from trajectories. Most closely related, SkillRL~\citep{xia2025skillrl} co-evolves a hierarchical skill bank with the agent's policy through recursive RL. \textsc{SkillGraph} builds on this line by elevating the flat skill bank into a structured dependency graph, enabling typed relational modeling and topology evolution throughout training.
