@@ -12,7 +12,7 @@
 ## Part -1：Paper Root 与文件层级约定
 
 ### -1.1 $PAPER_ROOT 定义
-- **本 brief 的 $PAPER_ROOT**：`/home/workspace/lww/project0412/projects/multiagent/multi-agent-memory-research/projects/SkillOS/`（即本项目目录；Part 12 file 列相对它）。
+- **本 brief 的 $PAPER_ROOT**：`/home/workspace/lww/project0412/projects/multiagent/multi-agent-memory-research/projects/skillSTRATA/`（即本项目目录；Part 12 file 列相对它）。
 
 ### -1.2 目录布局约定
 - [x] **Custom**（当前是代码仓库，paper 资产待生成）：
