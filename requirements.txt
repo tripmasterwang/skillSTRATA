@@ -1,0 +1,8 @@
+# SkillOS engine + simulation harness
+networkx>=3.0
+numpy>=1.24
+rank_bm25>=0.2
+PyYAML>=6.0
+# optional: real sentence-transformer embeddings (Embedder(backend="st")) and tests
+sentence-transformers>=2.2   # optional
+pytest>=7.0                  # tests only
