@@ -66,7 +66,20 @@ class CLISkillStrataAgent(CLISkillPreloadedAgent):
         skills_root = os.path.abspath(self.skills_dir)
         self._capability_skill_dir = os.path.join(skills_root, "xlsx-122B")
 
-        self.graph = build_spreadsheet_capability_graph(self._capability_skill_dir)
+        # Graph source (priority):
+        #   SKILLSTRATA_GRAPH_PATH set + file exists -> load the TRAINED/evolving graph (from-0 curate)
+        #   SKILLSTRATA_GRAPH_PATH set + missing/empty -> start from an EMPTY graph (blank seed, round 0)
+        #   unset -> legacy hand-built capability graph from xlsx-122B fragments (deprecated)
+        graph_path = os.environ.get("SKILLSTRATA_GRAPH_PATH", "").strip()
+        if graph_path:
+            from skillos.persist import load_graph  # noqa: E402
+            if os.path.isfile(graph_path):
+                self.graph = load_graph(graph_path)
+            else:
+                from skillos.graph import SkillGraph  # noqa: E402
+                self.graph = SkillGraph()  # blank seed (S0): nothing to route yet
+        else:
+            self.graph = build_spreadsheet_capability_graph(self._capability_skill_dir)
         self.router_mode = os.environ.get("SKILLSTRATA_ROUTER", "graph").strip().lower()
         seeds = int(os.environ.get("SKILLSTRATA_SEEDS", "3"))
         type_boost = float(os.environ.get("SKILLSTRATA_TYPE_BOOST", "1.0"))
