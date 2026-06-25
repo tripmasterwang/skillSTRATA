@@ -29,6 +29,7 @@ def main():
     ap.add_argument("--eval-json", default="")
     ap.add_argument("--test-ids", default="")
     ap.add_argument("--meta", default="")
+    ap.add_argument("--route-dir", default="")
     ap.add_argument("--include-graph-json", type=int, default=1)
     args = ap.parse_args()
 
@@ -108,6 +109,28 @@ def main():
             L.append(f"  - {t}: {c / tot * 100:.1f}% ({c}/{tot})")
         L.append("")
         L.append("> Compare to SkillOpt's number on the SAME 280 split + same backbone.")
+
+        # ---- per-instance answering detail ----
+        routes = {}
+        if args.route_dir and os.path.isdir(args.route_dir):
+            for fn in os.listdir(args.route_dir):
+                rj = _load(os.path.join(args.route_dir, fn))
+                if rj:
+                    routes[str(rj.get("id"))] = rj.get("nodes", [])
+        L += ["", "### Per-instance results", "",
+              "| id | type | result | subtests | routed skills |",
+              "|----|------|:------:|:--------:|---------------|"]
+        for r in sorted(sub, key=lambda r: (bool(r.get("success")), str(r.get("id")))):
+            iid = str(r.get("id"))
+            res = "✅ pass" if r.get("success") else "❌ fail"
+            sub_s = f"{r.get('passed_count', '?')}/{r.get('total_count', '?')}"
+            t = (r.get("instruction_type") or "?").split()[0]
+            rt = ", ".join(f"`{x}`" for x in routes.get(iid, [])) or ("—" if routes else "n/a")
+            L.append(f"| {iid} | {t} | {res} | {sub_s} | {rt} |")
+        L.append("")
+        L.append("> Sorted failures-first. 'subtests' = official test cases passed / total "
+                 "(an instance is correct only if ALL pass). 'routed skills' = what SkillStrata "
+                 "selected for that task.")
     else:
         L.append("_(no test eval — test phase may not have completed)_")
     L.append("")

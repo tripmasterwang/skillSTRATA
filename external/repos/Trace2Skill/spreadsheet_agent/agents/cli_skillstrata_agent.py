@@ -187,6 +187,16 @@ class CLISkillStrataAgent(CLISkillPreloadedAgent):
                                   getattr(context, "instruction_type", "") or "")
         self._last_route = route
         self._routed_content = self._render_route(route)
+        # Per-task route log (so RESULTS.md can show which skills were routed for each instance).
+        rd = os.environ.get("SKILLSTRATA_ROUTE_DIR", "").strip()
+        if rd:
+            try:
+                os.makedirs(rd, exist_ok=True)
+                iid = str(getattr(context, "instance_id", "") or "unknown")
+                with open(os.path.join(rd, f"{iid}.json"), "w", encoding="utf-8") as fh:
+                    _json.dump({"id": iid, "router": self.router_mode, "nodes": route.nodes}, fh)
+            except Exception:
+                pass
         # Invalidate the cached agent so the per-task system prompt is used.
         self._agent = None
         return super().run(context)

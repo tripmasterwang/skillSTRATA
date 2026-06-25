@@ -56,7 +56,7 @@ echo "===== PHASE 2: test on 280 held-out (react-agent retriever) ====="
 TESTDIR="$WORK/test_280"
 mkdir -p "$TESTDIR/logs"
 TEST_ID_CSV="$(paste -sd, "$TEST_IDS")"
-SKILLSTRATA_GRAPH_PATH="$GRAPH" \
+SKILLSTRATA_GRAPH_PATH="$GRAPH" SKILLSTRATA_ROUTE_DIR="$TESTDIR/routes" \
 SKILLSTRATA_ROUTER=agent SKILLSTRATA_TYPE_BOOST=1.0 SKILLSTRATA_AGENT_THINK_BUDGET=1024 \
 python3 run_spreadsheetbench.py \
   --data_path "$DATA" --model "$MODEL" --llm_client openai --agent cli_skillstrata \
@@ -74,6 +74,7 @@ REPORT="$WORK/RESULTS.md"
 python3 "$SCRIPT_DIR/make_report.py" --out "$REPORT" \
   --graph "$GRAPH" --history "$WORK/curate_history.json" \
   --eval-json "$TESTDIR/eval_official_results.json" --test-ids "$TEST_IDS" \
+  --route-dir "$TESTDIR/routes" \
   --meta "model=$MODEL,endpoint=$OPENAI_BASE_URL,rounds=$ROUNDS,workers=$WORKERS,thinking_budget=$THINKING_BUDGET,date=$(date '+%F %T'),test=280held-out,result=$SCORE"
 echo ""
 echo "================= COPY EVERYTHING BELOW (this is $REPORT) ================="
