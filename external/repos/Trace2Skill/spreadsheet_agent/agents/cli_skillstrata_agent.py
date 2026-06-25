@@ -50,6 +50,10 @@ _ensure_skillos_importable()
 from skillos.router import FlatRouter, GraphRouter  # noqa: E402
 from skillos.spreadsheet_capability import build_spreadsheet_capability_graph  # noqa: E402
 
+import json as _json  # noqa: E402
+import re as _re  # noqa: E402
+from react_agent.models import Message, ModelSettings  # noqa: E402
+
 
 class CLISkillStrataAgent(CLISkillPreloadedAgent):
     """CLI agent that injects a per-task routed subgraph instead of a monolithic skill."""
@@ -72,6 +76,13 @@ class CLISkillStrataAgent(CLISkillPreloadedAgent):
         elif self.router_mode == "bm25":
             k = int(os.environ.get("SKILLSTRATA_K", "5"))
             self.router = FlatRouter(self.graph, k=k, mode="bm25")
+        elif self.router_mode == "agent":
+            # GraphRouter, but the SEED step is an LLM (qwen3.6 via self.client) instead of BM25;
+            # dependency closure + governance run on top unchanged. BM25 (with type_boost) is the
+            # fallback if the LLM returns nothing usable.
+            self._agent_think_budget = int(os.environ.get("SKILLSTRATA_AGENT_THINK_BUDGET", "1024"))
+            self.router = GraphRouter(self.graph, top_seeds=seeds, retriever="agent",
+                                      type_boost=type_boost, seed_fn=self._llm_seed_fn)
         else:
             self.router_mode = "graph"
             self.router = GraphRouter(self.graph, top_seeds=seeds, type_boost=type_boost)
@@ -99,6 +110,51 @@ class CLISkillStrataAgent(CLISkillPreloadedAgent):
             parts.append(node.body.strip())
             parts.append("")
         return "\n".join(parts).strip()
+
+    # -- agentic (LLM) seed retriever --------------------------------------------------
+    _SEED_SYS = ("You select which skill modules to preload for an Excel/spreadsheet task. "
+                 "Pick only the modules directly relevant to THIS task; prerequisite modules are "
+                 "added automatically, so prefer a few precise choices over many.")
+
+    def _llm_seed_fn(self, task, task_type, pool, top_seeds):
+        """LLM-as-retriever: ask qwen3.6 which modules to seed. Returns a list of node ids
+        (validated by the router; empty -> router falls back to BM25)."""
+        if self.client is None:
+            return []
+        catalog = "\n".join(f"- {n.id}: {n.name} — {n.description}" for n in pool)
+        pool_ids = {n.id for n in pool}
+        user = (f"Task type: {task_type}\nTask: {task}\n\n"
+                f"Available modules (id: name — description):\n{catalog}\n\n"
+                f"Return ONLY a JSON array of the {top_seeds} most relevant module ids "
+                f'(fewer is fine), e.g. ["formula-construction","lookup-patterns"]. No prose.')
+        msgs = [Message(role="system", content=self._SEED_SYS), Message(role="user", content=user)]
+        settings = ModelSettings(
+            temperature=0.0, max_tokens=max(512, self._agent_think_budget + 512),
+            extra_body={"enable_thinking": True, "thinking_budget": self._agent_think_budget},
+        )
+        try:
+            reply = self.client.chat(msgs, settings) or ""
+        except Exception:
+            return []
+        return self._parse_seed_ids(reply, pool_ids)
+
+    @staticmethod
+    def _parse_seed_ids(reply, pool_ids):
+        # prefer a JSON array; fall back to exact id mentions in order of appearance.
+        for frag in reversed(_re.findall(r"\[[^\[\]]*\]", reply)):
+            try:
+                arr = _json.loads(frag)
+            except Exception:
+                continue
+            ids = [str(x).strip() for x in arr if str(x).strip() in pool_ids]
+            if ids:
+                return ids
+        found = []
+        for pid in pool_ids:
+            m = _re.search(r"(?<![\w-])" + _re.escape(pid) + r"(?![\w-])", reply)
+            if m:
+                found.append((m.start(), pid))
+        return [pid for _, pid in sorted(found)]
 
     def get_system_template(self) -> str:
         skill_content = self._routed_content

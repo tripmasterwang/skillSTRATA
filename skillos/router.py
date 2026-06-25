@@ -58,7 +58,7 @@ class GraphRouter:
 
     def __init__(self, graph: SkillGraph, top_seeds: int = 3, hop: int = 1, retriever: str = "bm25",
                  tta: bool = False, tta_max: int = 3, tta_min_weight: float = 3.0,
-                 type_boost: float = 0.0):
+                 type_boost: float = 0.0, seed_fn=None):
         self.graph = graph
         self.top_seeds = top_seeds
         self.hop = hop
@@ -66,6 +66,11 @@ class GraphRouter:
         self.tta = tta                 # enable test-time skill synthesis (skillos.tta)
         self.tta_max = tta_max
         self.tta_min_weight = tta_min_weight
+        # retriever="agent": replace ONLY the seed step with an injected agentic selector
+        # ``seed_fn(task, task_type, pool, top_seeds) -> list[id]`` (e.g. a ReAct/LLM call). The
+        # dependency closure + governance run unchanged on top, so the graph's contribution stays
+        # isolable; BM25 stays the default and the fallback when the agent returns nothing usable.
+        self.seed_fn = seed_fn
         # type_boost > 0 makes seeding task-type-aware: nodes whose declared task_types appear in
         # the (provided, non-oracle) task_type string get their retriever score boosted, so the
         # right *scope* (e.g. cell- vs sheet-level) is seeded even when surface keywords are sparse.
@@ -78,28 +83,11 @@ class GraphRouter:
         if not pool:
             return Route(nodes=[], excluded=[])
 
-        # 1) seed with the shared base retriever (BM25) — no ground-truth task-type labels,
-        #    so OOD task-types get no oracle advantage.
-        if self.retriever == "embed":
-            q = g.embedder.embed(task)
-            scored = [(n.id, cosine(q, n.embedding) if n.embedding else 0.0) for n in pool]
-        else:
-            corpus = [(n.name + " " + n.description + " " + n.body).lower().split() for n in pool]
-            bm = BM25Okapi(corpus)
-            s = bm.get_scores(task.lower().split())
-            scored = [(pool[i].id, s[i]) for i in range(len(pool))]
-
-        # task-type-aware boost: lift nodes whose declared scope matches the provided task_type.
-        if self.type_boost and task_type:
-            tt = task_type.lower()
-            ref = max((sc for _, sc in scored), default=0.0) or 1.0
-            scored = [
-                (nid, sc + (self.type_boost * ref
-                            if any(t and t != "all" and t in tt for t in g.nodes[nid].task_types)
-                            else 0.0))
-                for nid, sc in scored
-            ]
-        seeds = [nid for nid, _ in sorted(scored, key=lambda x: -x[1])[: self.top_seeds]]
+        # 1) seed: pick the most relevant skills. retriever="agent" delegates this one step to an
+        #    injected selector (falling back to BM25 if it returns nothing usable); otherwise use
+        #    the shared BM25/embed retriever — no ground-truth task-type labels, so OOD task-types
+        #    get no oracle advantage.
+        seeds = self._retrieve_seeds(task, task_type, pool)
 
         # 2) close over DEPENDS_ON to assemble the *minimal executable subgraph*: the seeds plus
         #    every prerequisite they transitively need (proposal §Routing Output). Optionally
@@ -142,6 +130,43 @@ class GraphRouter:
                     route.loaded_tokens += max(1, len(s.body) // 4)
                     route.synthesized.append(s.atom_id)
         return route
+
+    def _retrieve_seeds(self, task: str, task_type: str, pool: list[SkillNode]) -> list[str]:
+        """Pick seed skills. retriever="agent" uses the injected ``seed_fn`` for this step only,
+        with a BM25 fallback so a flaky/empty agent call never tanks a task."""
+        if self.retriever == "agent" and self.seed_fn is not None:
+            try:
+                ids = self.seed_fn(task, task_type, pool, self.top_seeds) or []
+            except Exception:
+                ids = []
+            valid = [i for i in ids if i in self.graph.nodes]
+            if valid:
+                return valid[: self.top_seeds]
+            # fall through to BM25/embed seeds when the agent returns nothing usable
+        return self._scored_seeds(task, task_type, pool)
+
+    def _scored_seeds(self, task: str, task_type: str, pool: list[SkillNode]) -> list[str]:
+        g = self.graph
+        if self.retriever == "embed":
+            q = g.embedder.embed(task)
+            scored = [(n.id, cosine(q, n.embedding) if n.embedding else 0.0) for n in pool]
+        else:
+            corpus = [(n.name + " " + n.description + " " + n.body).lower().split() for n in pool]
+            bm = BM25Okapi(corpus)
+            s = bm.get_scores(task.lower().split())
+            scored = [(pool[i].id, s[i]) for i in range(len(pool))]
+
+        # task-type-aware boost: lift nodes whose declared scope matches the provided task_type.
+        if self.type_boost and task_type:
+            tt = task_type.lower()
+            ref = max((sc for _, sc in scored), default=0.0) or 1.0
+            scored = [
+                (nid, sc + (self.type_boost * ref
+                            if any(t and t != "all" and t in tt for t in g.nodes[nid].task_types)
+                            else 0.0))
+                for nid, sc in scored
+            ]
+        return [nid for nid, _ in sorted(scored, key=lambda x: -x[1])[: self.top_seeds]]
 
     def _resolve_conflicts(self, activated: set[str], seeds: list[str]) -> set[str]:
         """If two conflicting skills are both active, drop the non-seed / lower-success one."""
