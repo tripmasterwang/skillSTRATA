@@ -151,13 +151,16 @@ def validation_gate(graph: SkillGraph, round_inserts: list[str], val_score_fn, *
 
 # --------------------------------------------------------------------------- driver
 def curate(graph: SkillGraph, rounds: int, train_tasks, distill_fn, rollout_fn, val_score_fn, *,
-           embedder: Embedder | None = None, do_split: bool = True) -> list[dict]:
+           embedder: Embedder | None = None, do_split: bool = True, checkpoint_fn=None) -> list[dict]:
     """Full from-zero curate loop over E rounds, starting from whatever ``graph`` is (use an empty
     SkillGraph for true from-scratch). Injected callables:
 
       rollout_fn(graph, train_tasks) -> trajectories   (run the agent on train with the current graph)
       distill_fn(trajectories)       -> list[Fragment] (LLM authors candidate capabilities)
       val_score_fn(graph)            -> float          (route the graph on val, return a scalar score)
+      checkpoint_fn(graph)           -> list[str]      (optional: mint verify-loop checkpoints on the
+                                                        error-prone nodes the trace layer flagged this
+                                                        round; default None = off; see skillos.verify)
 
     Returns a per-round history (the "success ↑ / library grows / synth ↓" evidence).
     """
@@ -174,6 +177,10 @@ def curate(graph: SkillGraph, rounds: int, train_tasks, distill_fn, rollout_fn, 
                                            baseline_score=baseline)
         if accepted:
             baseline = score
+        # governance learns where to guard: after the gate settles this round's DEPLOYED set, mint a
+        # node-local verify-or-rollback checkpoint on each skill the trace layer now flags as
+        # error-prone (low success over enough trials). Idempotent across rounds.
+        minted = checkpoint_fn(graph) if checkpoint_fn is not None else []
         history.append({
             "round": r,
             "inserted": len(res["inserted"]),
@@ -181,5 +188,6 @@ def curate(graph: SkillGraph, rounds: int, train_tasks, distill_fn, rollout_fn, 
             "accepted": accepted,
             "val": round(score, 4),
             "deployed": len([n for n in graph.nodes.values() if n.status == Status.DEPLOYED]),
+            "checkpoints": len(minted),
         })
     return history

@@ -9,8 +9,10 @@
 #   80 train ids, distill trajectories into skill fragments (qwen3.6), INSERT/MERGE/SPLIT them
 #   into the capability graph + governance, and keep a round's edits only if the 40 val score
 #   improves (validation gate). Output: a trained graph JSON.
-# Phase 2 (TEST): freeze the trained graph; route over it with the LLM (react-agent) seed
-#   selector on the 280 held-out test ids; official per-instance score.
+# Phase 2 (TEST): two arms on the SAME 280 held-out ids — (1) no-skill floor (cli_only) and
+#   (2) with-skill = the frozen from-zero graph routed by the react-agent retriever + verify-loop.
+#   Official per-instance score for each. These two are the ONLY experiments (no other baselines,
+#   no ablations).
 # =============================================================================
 set -uo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/config.sh"
@@ -51,23 +53,43 @@ fi
 echo "[train] trained graph: $GRAPH"
 python3 -c "import json;d=json.load(open('$GRAPH'));print('  nodes:',len(d['skills']),'| capability edges:',len(d['capability_edges']),'| governance:',len(d['governance']))"
 
-# ---- Phase 2: TEST on 280 held-out with the REACT-AGENT retriever ------------
-echo "===== PHASE 2: test on 280 held-out (react-agent retriever) ====="
+# ---- Phase 2: TEST on 280 held-out — TWO arms: no-skill (floor) vs with-skill (ours) --------
+# The only two experiments. Both run on the SAME 280 held-out ids and official eval.
+echo "===== PHASE 2: test on 280 held-out (no-skill vs with-skill) ====="
+TEST_ID_CSV="$(paste -sd, "$TEST_IDS")"
+
+# --- arm 1: NO-SKILL (cli_only, nothing injected) — the floor -----------------
+echo "----- arm 1/2: no-skill -----"
+NOSKILL_DIR="$WORK/test_280_noskill"
+mkdir -p "$NOSKILL_DIR/logs"
+python3 run_spreadsheetbench.py \
+  --data_path "$DATA" --model "$MODEL" --llm_client openai --agent cli_only \
+  --instance_ids "$TEST_ID_CSV" --workers "$WORKERS" --max_turns "$MAX_TURNS" \
+  --generation_config "$GENCFG" --missing_only \
+  --output_dir "$NOSKILL_DIR" --log_dir "$NOSKILL_DIR/logs" --results_file "$NOSKILL_DIR/results.json"
+python3 evaluate_with_official.py --data_path "$DATA" --output_dir "$NOSKILL_DIR" > "$NOSKILL_DIR/eval_stdout.txt" 2>&1
+SCORE_NOSKILL="$(python3 "$SCRIPT_DIR/score_on_split.py" "$NOSKILL_DIR/eval_official_results.json" "$TEST_IDS")"
+
+# --- arm 2: WITH-SKILL (from-zero SkillStrata graph + react-agent retriever + verify-loop) ----
+echo "----- arm 2/2: with-skill (from-zero SkillStrata) -----"
 TESTDIR="$WORK/test_280"
 mkdir -p "$TESTDIR/logs"
-TEST_ID_CSV="$(paste -sd, "$TEST_IDS")"
 SKILLSTRATA_GRAPH_PATH="$GRAPH" SKILLSTRATA_ROUTE_DIR="$TESTDIR/routes" \
 SKILLSTRATA_ROUTER=agent SKILLSTRATA_TYPE_BOOST=1.0 SKILLSTRATA_AGENT_THINK_BUDGET=1024 \
+SKILLSTRATA_VERIFY_LOOP="${VERIFY_LOOP:-1}" \
 python3 run_spreadsheetbench.py \
   --data_path "$DATA" --model "$MODEL" --llm_client openai --agent cli_skillstrata \
   --instance_ids "$TEST_ID_CSV" --workers "$WORKERS" --max_turns "$MAX_TURNS" \
   --generation_config "$GENCFG" --missing_only \
   --output_dir "$TESTDIR" --log_dir "$TESTDIR/logs" --results_file "$TESTDIR/results.json"
-
 python3 evaluate_with_official.py --data_path "$DATA" --output_dir "$TESTDIR" > "$TESTDIR/eval_stdout.txt" 2>&1
 SCORE="$(python3 "$SCRIPT_DIR/score_on_split.py" "$TESTDIR/eval_official_results.json" "$TEST_IDS")"
+
 echo ""
-echo "===== RESULT: from-zero SkillStrata + react-agent retriever on 280 held-out = $SCORE ====="
+echo "===== RESULT on 280 held-out ====="
+echo "  no-skill   (floor) = $SCORE_NOSKILL"
+echo "  with-skill (ours)  = $SCORE"
+echo "==================================="
 
 # ---- assemble a single self-contained RESULTS.md (text-transferable) --------
 REPORT="$WORK/RESULTS.md"
@@ -75,7 +97,7 @@ python3 "$SCRIPT_DIR/make_report.py" --out "$REPORT" \
   --graph "$GRAPH" --history "$WORK/curate_history.json" \
   --eval-json "$TESTDIR/eval_official_results.json" --test-ids "$TEST_IDS" \
   --route-dir "$TESTDIR/routes" \
-  --meta "model=$MODEL,endpoint=$OPENAI_BASE_URL,rounds=$ROUNDS,workers=$WORKERS,thinking_budget=$THINKING_BUDGET,date=$(date '+%F %T'),test=280held-out,result=$SCORE"
+  --meta "model=$MODEL,endpoint=$OPENAI_BASE_URL,rounds=$ROUNDS,workers=$WORKERS,thinking_budget=$THINKING_BUDGET,date=$(date '+%F %T'),test=280held-out,noskill=$SCORE_NOSKILL,withskill=$SCORE"
 echo ""
 echo "================= COPY EVERYTHING BELOW (this is $REPORT) ================="
 cat "$REPORT"

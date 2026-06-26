@@ -105,7 +105,7 @@ class SkillGraph:
         }
         gov_edges = {
             EdgeType.SUPPORTED_BY_TRACE, EdgeType.APPLIES_TO_SKILL,
-            EdgeType.BLOCKS_ROUTING, EdgeType.PROMOTES_SKILL,
+            EdgeType.BLOCKS_ROUTING, EdgeType.PROMOTES_SKILL, EdgeType.GUARDS_SKILL,
         }
         if etype in trace_edges:
             return self.trace
@@ -196,6 +196,20 @@ class SkillGraph:
             if d.get("type") == EdgeType.BLOCKS_ROUTING.value:
                 out.add(v)
         return out
+
+    def guarding_checkpoints(self, skill_id: str) -> list[GovernanceNode]:
+        """Checkpoint rules that GUARD this skill — the node-local verify-or-rollback loops the
+        executor must run when it routes through this (error-prone / critical) node."""
+        out = []
+        for u, v, d in self.governance.in_edges(skill_id, data=True):
+            if d.get("type") == EdgeType.GUARDS_SKILL.value and u in self.rules:
+                out.append(self.rules[u])
+        return out
+
+    def guarded_skills(self) -> set[str]:
+        """All skills that currently have at least one checkpoint guarding them."""
+        return {v for u, v, d in self.governance.edges(data=True)
+                if d.get("type") == EdgeType.GUARDS_SKILL.value}
 
     # --------------------------------------------------------------- queries
     #: edges the router may walk to assemble an *executable* neighborhood

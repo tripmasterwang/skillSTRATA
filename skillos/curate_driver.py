@@ -25,6 +25,7 @@ import subprocess
 from .curate import Fragment, curate
 from .graph import SkillGraph
 from .persist import load_graph, save_graph
+from .verify import mint_checkpoints_from_traces
 
 _DISTILL_SYS = (
     "You distill REUSABLE spreadsheet skills from an agent's execution trace. Read the trace "
@@ -46,6 +47,7 @@ def _run_agent(repo, data, ids, graph_path, out_dir, model, gen_config, workers,
     env = dict(os.environ)
     env["SKILLSTRATA_GRAPH_PATH"] = graph_path
     env["SKILLSTRATA_ROUTER"] = router
+    env["SKILLSTRATA_ROUTE_DIR"] = os.path.join(out_dir, "routes")  # per-instance routed nodes
     env.update(env_extra)
     cmd = [
         "python3", "run_spreadsheetbench.py",
@@ -74,6 +76,37 @@ def _eval_accuracy(repo, data, out_dir, ids):
     if not rs:
         return 0.0
     return sum(1 for r in rs if r.get("success")) / len(rs)
+
+
+def _attribute_heat(graph, out_dir, ids):
+    """Tick per-skill heat from one rollout: each instance's ROUTED nodes get a success/failure
+    credit from the official eval. This is the trace-layer signal ``mint_checkpoints_from_traces``
+    reads to discover which nodes are error-prone (so checkpoints are LEARNED, not hand-set).
+    Requires the route dump (SKILLSTRATA_ROUTE_DIR) + eval json to both exist for ``out_dir``."""
+    jf = os.path.join(out_dir, "eval_official_results.json")
+    rdir = os.path.join(out_dir, "routes")
+    if not os.path.isfile(jf) or not os.path.isdir(rdir):
+        return
+    succ = {str(r.get("id")): bool(r.get("success"))
+            for r in json.load(open(jf, encoding="utf-8")).get("results", [])}
+    idset = set(ids)
+    for rf in glob.glob(os.path.join(rdir, "*.json")):
+        try:
+            rj = json.load(open(rf, encoding="utf-8"))
+        except Exception:
+            continue
+        iid = str(rj.get("id", ""))
+        if iid not in idset or iid not in succ:
+            continue
+        for nid in rj.get("nodes", []):
+            n = graph.nodes.get(nid)
+            if n is None:
+                continue
+            if succ[iid]:
+                n.heat.success_count += 1
+            else:
+                n.heat.failure_count += 1
+            n.heat.last_used_step = graph.step
 
 
 def _distill_trace(client, model, log_text, gen_extra):
@@ -139,10 +172,33 @@ def main():
     def rollout_fn(g, _tasks):
         save_graph(g, args.graph_out)        # agent loads the current graph from disk
         rnd = g.step
-        logdir = _run_agent(args.repo, args.data, train_ids, args.graph_out,
-                            os.path.join(args.work_dir, f"train_r{rnd}"), args.model,
-                            args.gen_config, args.workers, args.max_turns, "graph", {})
+        out = os.path.join(args.work_dir, f"train_r{rnd}")
+        logdir = _run_agent(args.repo, args.data, train_ids, args.graph_out, out, args.model,
+                            args.gen_config, args.workers, args.max_turns, "graph",
+                            {"SKILLSTRATA_VERIFY_LOOP": "0"})  # OFF in train: keep failure signal honest
+        _eval_accuracy(args.repo, args.data, out, train_ids)  # writes eval json (routes already dumped)
+        _attribute_heat(g, out, train_ids)                    # teach heat -> error-prone signal
         return sorted(glob.glob(os.path.join(logdir, "*.md")))
+
+    def postcondition_fn(node):
+        """qwen3.6 authors a concrete, workbook-checkable sub-goal for an error-prone skill."""
+        try:
+            r = client.chat.completions.create(
+                model=args.model,
+                messages=[{"role": "system", "content":
+                           "You write ONE concrete, checkable success criterion (a postcondition) "
+                           "for a spreadsheet sub-skill — verifiable by inspecting the resulting "
+                           "workbook. One sentence, no preamble."},
+                          {"role": "user", "content":
+                           f"Skill: {node.name}\nGuidance:\n{node.body[:1500]}\n\n"
+                           "Postcondition the agent's output must satisfy after applying this skill:"}],
+                extra_body=gen_extra, max_tokens=200, temperature=0.0)
+            return (r.choices[0].message.content or "").strip()
+        except Exception:
+            return ""
+
+    def checkpoint_fn(g):
+        return mint_checkpoints_from_traces(g, postcondition_fn=postcondition_fn)
 
     def distill_fn(log_paths):
         frags = []
@@ -158,10 +214,12 @@ def main():
         rnd = g.step
         outdir = os.path.join(args.work_dir, f"val_r{rnd}")
         _run_agent(args.repo, args.data, val_ids, args.graph_out, outdir, args.model,
-                   args.gen_config, args.workers, args.max_turns, "graph", {})
+                   args.gen_config, args.workers, args.max_turns, "graph",
+                   {"SKILLSTRATA_VERIFY_LOOP": "1"})  # ON in val: gate under deployment conditions
         return _eval_accuracy(args.repo, args.data, outdir, val_ids)
 
-    history = curate(graph, args.rounds, train_ids, distill_fn, rollout_fn, val_score_fn)
+    history = curate(graph, args.rounds, train_ids, distill_fn, rollout_fn, val_score_fn,
+                     checkpoint_fn=checkpoint_fn)
     save_graph(graph, args.graph_out)
     json.dump(history, open(os.path.join(args.work_dir, "curate_history.json"), "w"), indent=2)
     print("=== curate history ===")

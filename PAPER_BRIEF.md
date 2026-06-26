@@ -110,6 +110,11 @@
   3. **LEGO assembly（推理）** — **域内**：ROUTE 现成技能的最小可执行子图（= 单层图方法做的，被收编为特例）；**域外**：从三层子部件（trace 证据 + 原子技能）**当场拼出一个/几个适配技能**（test-time synthesis）。
 - **核心叙事词**：①*curate a system, not a skill*；②*assemble skills like LEGO at test time*。
 - B 型集成算法：N/A（A 型）。
+- **🆕 Governance 子机制 — Node-local Verify-Loop（易错节点哨兵）**（已实现 `skillos/verify.py`，14 单测）：
+  - **痛点 / 区别**：标准 "loop engineering" 把 planner→executor→verifier 套在**整任务**外层——verifier 只看最终 task goal，任一子步失败就整任务重跑。我们把 verifier **下沉到关键节点**：每个易错节点挂一个 governance `checkpoint`（`kind="checkpoint"`，`GUARDS_SKILL` 边连到 capability 节点），带子goal（postcondition）+ 重试预算；推理路过该节点时跑 **execute→verify(子goal)→失败则回滚到节点入口→带反馈重试→loop 到过或耗尽预算**，**局部修复**而非整任务连坐。
+  - **为什么是图独有 / 可学**：①"哪些节点易错"不是手标——由 **trace 层失败统计**（`heat.success_rate` 低且 `trials≥k`）在 train 时**自动挖出**并挂哨（与 `validation_gate`/`blocks_routing` 同源的 governance-from-trace 范式）；②重试产生的 `FIXED_BY` 轨迹回喂 distill，蒸成 `kind="fix"` 修复技能，**易错→挂哨→修复→沉淀**闭环自增强。
+  - **三层归属**：判据规则 = governance；后置条件文本挂 capability 节点；重试证据落 trace；while 循环住 router/executor（不污染任何 layer）。
+  - **train/inference 对称卖点**：governance 在 **train 时按轮把关库**（`validation_gate`），在 **inference 时按节点把关执行**（verify-loop）——同一治理思想的两个时态。
 
 ### 2.4 实验数据 highlight 🔴 P0 — **全部 `[SIM]`，待真实 benchmark 替换**
 - 实验规模 `[SIM]`：确定性模拟 harness，**8 seeds × 400-task heterogeneous/OOD 流 × 4 领域合成技能宇宙**；6 baseline + 6 消融。**[真实版需：≥3 benchmark（取 §7.2 的 6 个主流：ALFWorld / SpreadsheetBench / ScienceWorld …）× ≥2 backbone]**

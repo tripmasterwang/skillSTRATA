@@ -12,7 +12,7 @@ import json
 
 from .embedding import Embedder
 from .graph import SkillGraph
-from .schema import Granularity, GovernanceNode, SkillNode, Status
+from .schema import EdgeType, Granularity, GovernanceNode, SkillNode, Status
 
 
 def save_graph(graph: SkillGraph, path: str) -> None:
@@ -23,7 +23,10 @@ def save_graph(graph: SkillGraph, path: str) -> None:
             for u, v, d in graph.capability.edges(data=True)
         ],
         "governance": [
-            {"id": r.id, "kind": r.kind, "statement": r.statement, "targets": list(r.targets)}
+            {"id": r.id, "kind": r.kind, "statement": r.statement, "targets": list(r.targets),
+             # checkpoint verify-loop spec (kept so the frozen graph carries its guards to test)
+             "postcondition": r.postcondition, "max_retries": r.max_retries,
+             "repair_hint": r.repair_hint}
             for r in graph.rules.values()
         ],
         "stats": graph.stats(),
@@ -56,6 +59,18 @@ def load_graph(path: str, embedder: Embedder | None = None) -> SkillGraph:
             g.capability.add_edge(e["src"], e["dst"], type=e["type"], weight=e.get("weight", 1.0))
 
     for r in data.get("governance", []):
-        g.add_rule(GovernanceNode(id=r["id"], kind=r["kind"], statement=r["statement"],
-                                  targets=list(r.get("targets", []))))
+        rule = GovernanceNode(id=r["id"], kind=r["kind"], statement=r["statement"],
+                              targets=list(r.get("targets", [])),
+                              postcondition=r.get("postcondition", ""),
+                              max_retries=r.get("max_retries", 2),
+                              repair_hint=r.get("repair_hint", ""))
+        if rule.kind == "checkpoint":
+            # restore as a GUARDS_SKILL guard (not the default APPLIES_TO_SKILL) so the router's
+            # guarding_checkpoints() lookup finds it and the test phase runs the verify-loop.
+            g.rules[rule.id] = rule
+            g.governance.add_node(rule.id, kind="rule")
+            for sid in rule.targets:
+                g.link(rule.id, sid, EdgeType.GUARDS_SKILL)
+        else:
+            g.add_rule(rule)
     return g

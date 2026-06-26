@@ -31,6 +31,9 @@ class Route:
     excluded: list[str] = field(default_factory=list)
     loaded_tokens: int = 0
     synthesized: list[str] = field(default_factory=list)  # ids composed at test time (TTA)
+    # node_id -> the checkpoint guarding it; the executor runs skillos.verify.node_verifier_loop
+    # at these (error-prone) nodes instead of executing them once and hoping.
+    checkpoints: dict = field(default_factory=dict)
 
     def render(self) -> str:
         """What gets injected into the executor system prompt (Trace2Skill seam)."""
@@ -114,6 +117,10 @@ class GraphRouter:
         ]
         excluded = sorted({n.id for n in pool} - activated)
         route = Route(nodes=nodes, edges=edges, excluded=excluded)
+        # surface the verify-loop checkpoints guarding any activated (error-prone) node, so the
+        # executor can run a node-local verify-or-rollback loop there. First checkpoint wins.
+        route.checkpoints = {nid: cps[0] for nid in nodes
+                             for cps in (g.guarding_checkpoints(nid),) if cps}
         route._bodies = [g.nodes[nid].body for nid in nodes]
         route.loaded_tokens = sum(g.nodes[nid].heat.token_cost or _est_tokens(g.nodes[nid]) for nid in nodes)
 

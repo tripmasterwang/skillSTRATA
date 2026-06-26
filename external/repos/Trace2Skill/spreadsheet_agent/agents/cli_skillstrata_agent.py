@@ -45,6 +45,13 @@ def _ensure_skillos_importable() -> None:
                       f"{here}; set PYTHONPATH to the SkillOS project root.")
 
 
+def _loop_enabled() -> bool:
+    """Node-local verify-loop runs only when SKILLSTRATA_VERIFY_LOOP is truthy. The driver sets it
+    per phase: test/val = 1 (deployed mechanism + faithful gate), train rollout = 0 (so checkpoints
+    are minted from honest, un-repaired failure rates)."""
+    return os.environ.get("SKILLSTRATA_VERIFY_LOOP", "0").strip().lower() in ("1", "true", "yes", "on")
+
+
 _ensure_skillos_importable()
 
 from skillos.router import FlatRouter, GraphRouter  # noqa: E402
@@ -194,9 +201,110 @@ class CLISkillStrataAgent(CLISkillPreloadedAgent):
                 os.makedirs(rd, exist_ok=True)
                 iid = str(getattr(context, "instance_id", "") or "unknown")
                 with open(os.path.join(rd, f"{iid}.json"), "w", encoding="utf-8") as fh:
-                    _json.dump({"id": iid, "router": self.router_mode, "nodes": route.nodes}, fh)
+                    _json.dump({"id": iid, "router": self.router_mode,
+                                "nodes": route.nodes,
+                                "guarded": list(getattr(route, "checkpoints", {}).keys())}, fh)
             except Exception:
                 pass
         # Invalidate the cached agent so the per-task system prompt is used.
         self._agent = None
-        return super().run(context)
+
+        # Node-local verify-loop: if the route activated a LEARNED error-prone (guarded) skill and
+        # the loop is enabled (SKILLSTRATA_VERIFY_LOOP=1 — test/val on, train off so the failure
+        # signal that mints checkpoints stays honest), guard THIS task with that skill's
+        # postcondition, rolling back the output workbook between attempts. Otherwise: one plain pass.
+        cps = list(getattr(route, "checkpoints", {}).values())
+        if not cps or not _loop_enabled():
+            return super().run(context)
+        return self._run_with_verify_loop(context, cps)
+
+    # -- node-local verify-or-rollback loop --------------------------------------------
+    def _run_with_verify_loop(self, context, cps):
+        from skillos.verify import node_verifier_loop
+        cp = self._merge_checkpoints(cps)
+        base_content = self._routed_content
+        out_path = os.path.abspath(context.output_file)
+
+        def execute_fn(i, hint):
+            self._routed_content = base_content + (
+                f"\n\n## REPAIR (attempt {i + 1})\n{hint}" if i > 0 and hint else "")
+            self._agent = None                       # re-bake prompt with repair guidance
+            return super(CLISkillStrataAgent, self).run(context)
+
+        def verify_fn(result):
+            return self._verify_postcondition(context, cp.postcondition, result)
+
+        def snapshot_fn():
+            return open(out_path, "rb").read() if os.path.exists(out_path) else None
+
+        def restore_fn(tok):                          # roll the workbook back to node entry
+            if tok is None:
+                if os.path.exists(out_path):
+                    os.remove(out_path)
+            else:
+                with open(out_path, "wb") as fh:
+                    fh.write(tok)
+
+        outcome = node_verifier_loop(cp, execute_fn, verify_fn,
+                                     snapshot_fn=snapshot_fn, restore_fn=restore_fn)
+        return outcome.result if outcome.result is not None else {
+            "success": False, "answer": "", "turns": 0, "error": "verify-loop produced no result"}
+
+    @staticmethod
+    def _merge_checkpoints(cps):
+        """Fold all guards on a route into one spec (numbered postconditions, max budget)."""
+        from skillos.schema import GovernanceNode
+        cps = [c for c in cps if c is not None]
+        if len(cps) == 1:
+            return cps[0]
+        post = "; ".join(f"({i + 1}) {c.postcondition}" for i, c in enumerate(cps) if c.postcondition)
+        return GovernanceNode(
+            id="merged_checkpoint", kind="checkpoint", statement="merged route guards",
+            targets=[c.targets[0] for c in cps if c.targets],
+            postcondition=post, max_retries=max((c.max_retries for c in cps), default=2),
+            repair_hint=" ".join(c.repair_hint for c in cps if c.repair_hint))
+
+    def _verify_postcondition(self, context, postcondition, result):
+        """LLM judge: does the saved output satisfy the guarded skill's sub-goal? Fail-open on a
+        flaky verifier (don't tank a completed task). Returns (ok, feedback)."""
+        if not result or not result.get("success"):
+            return (False, (result or {}).get("error") or "agent did not produce a valid output")
+        if self.client is None or not postcondition:
+            return (True, "")
+        view = self._dump_output(context)
+        user = (f"Task: {getattr(context, 'instruction', '')}\n"
+                f"Answer position: {getattr(context, 'answer_position', '')}\n"
+                f"Resulting output (answer region):\n{view}\n\n"
+                f"Required postcondition: {postcondition}\n\n"
+                'Does the output satisfy the postcondition? Reply ONLY JSON '
+                '{"ok": true|false, "feedback": "<if false: what is wrong and how to fix it>"}.')
+        msgs = [Message(role="system",
+                        content="You strictly verify whether a spreadsheet task output meets a "
+                                "stated postcondition. Be conservative: if it clearly does not, say so."),
+                Message(role="user", content=user)]
+        settings = ModelSettings(temperature=0.0, max_tokens=400,
+                                 extra_body={"enable_thinking": False})
+        try:
+            reply = self.client.chat(msgs, settings) or ""
+            m = _re.search(r"\{[\s\S]*\}", reply)
+            o = _json.loads(m.group(0)) if m else {}
+            return (bool(o.get("ok", True)), str(o.get("feedback", "")))
+        except Exception:
+            return (True, "")
+
+    @staticmethod
+    def _dump_output(context, max_rows: int = 40, max_cols: int = 20):
+        try:
+            import openpyxl
+            wb = openpyxl.load_workbook(os.path.abspath(context.output_file), data_only=True)
+            lines = []
+            for ws in wb.worksheets[:3]:
+                lines.append(f"# sheet: {ws.title}")
+                for r, row in enumerate(ws.iter_rows(values_only=True)):
+                    if r >= max_rows:
+                        lines.append("...")
+                        break
+                    lines.append("\t".join("" if c is None else str(c) for c in row[:max_cols]))
+            return "\n".join(lines)[:4000]
+        except Exception as e:
+            return f"(could not read output workbook: {e})"

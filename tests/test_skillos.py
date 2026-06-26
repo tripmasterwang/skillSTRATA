@@ -145,3 +145,51 @@ def test_evolver_replaces_reduce():
 
 if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__, "-q"]))
+
+
+# --------------------------------------------------------------------- verify-loop (node-local)
+def test_mint_checkpoint_on_error_prone_node_only():
+    from skillos.verify import mint_checkpoints_from_traces
+    g = SkillGraph()
+    good = SkillNode.make(name="good", body="g", status=Status.DEPLOYED)
+    bad = SkillNode.make(name="bad", body="b", status=Status.DEPLOYED)
+    g.add_skill(good); g.add_skill(bad)
+    good.heat.success_count, good.heat.failure_count = 5, 0      # reliable -> no guard
+    bad.heat.success_count, bad.heat.failure_count = 1, 4        # error-prone -> guard
+    minted = mint_checkpoints_from_traces(g)
+    assert g.guarded_skills() == {bad.id}
+    assert len(minted) == 1 and g.guarding_checkpoints(bad.id)[0].postcondition
+    # idempotent: a second pass adds nothing
+    assert mint_checkpoints_from_traces(g) == []
+
+
+def test_node_verifier_loop_rolls_back_and_repairs():
+    from skillos.verify import node_verifier_loop, record_attempts
+    from skillos.schema import GovernanceNode
+    g = SkillGraph()
+    bad = SkillNode.make(name="bad", body="b", status=Status.DEPLOYED)
+    g.add_skill(bad)
+    cp = GovernanceNode(id="cp", kind="checkpoint", statement="", targets=[bad.id],
+                        postcondition="ok", max_retries=2)
+    state = {"v": "dirty"}; restored = []
+    out = node_verifier_loop(
+        cp,
+        execute_fn=lambda i, hint: i,                       # result = attempt index
+        verify_fn=lambda res: (res >= 2, "not yet"),        # passes on 3rd attempt
+        snapshot_fn=lambda: dict(state),
+        restore_fn=lambda tok: restored.append(tok))
+    assert out.ok and out.n_attempts == 3
+    assert len(restored) == 2                               # rolled back before each of 2 retries
+    record_attempts(g, out)
+    assert bad.heat.success_count == 1 and bad.heat.failure_count == 2
+    assert any(d.get("type") == EdgeType.FIXED_BY.value for _, _, d in g.trace.edges(data=True))
+
+
+def test_verify_loop_gives_up_within_budget():
+    from skillos.verify import node_verifier_loop
+    from skillos.schema import GovernanceNode
+    cp = GovernanceNode(id="cp", kind="checkpoint", targets=["x"], statement="",
+                        postcondition="ok", max_retries=2)
+    out = node_verifier_loop(cp, execute_fn=lambda i, h: i,
+                             verify_fn=lambda res: (False, "always fails"))
+    assert not out.ok and out.n_attempts == 3              # 1 + max_retries, then escalate

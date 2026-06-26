@@ -1,61 +1,71 @@
-# SkillStrata — standalone experiment runner
+# SkillStrata — the experiment runner
 
-Run the SkillStrata routing-comparison suite on any server **without Claude Code**.
-Everything is plain `bash` + `python3`.
+Runs **one experiment** on any server **without Claude Code** — plain `bash` + `python3`.
 
-## What it runs
+## The experiment: `run_curate.sh`
 
-For each variant: SpreadsheetBench (verified-400) → official per-instance eval →
-scored on the SkillOpt **80/40/280** train/val/test splits → table in `runs/COMPARISON.md`.
+From-zero SkillStrata, with exactly **two arms** compared on the same 280 held-out test:
 
-| Variant | agent | what it is |
-|---------|-------|-----------|
-| `no-skill` | `cli_only` | floor, no skill injected |
-| `monolithic-xlsx35B` | `cli_skill_preloaded` | Trace2Skill's single skill, whole-injected (baseline) |
-| `skillstrata-graph` | `cli_skillstrata` `ROUTER=graph` | **ours**: BM25 seed → dependency closure → governance |
-| `skillstrata-agent` | `cli_skillstrata` `ROUTER=agent` | **ours**: LLM (qwen3.6) picks seeds instead of BM25, then same graph |
-| `monolithic-122B-full` | `cli_skillstrata` `ROUTER=full` | inject ALL 12 fragments (rich monolithic ablation) |
-| `flat-bm25` | `cli_skillstrata` `ROUTER=bm25` | flat top-k retrieval, no graph (ablation) |
+- **Phase 1 (TRAIN / curate)** — start from an EMPTY graph; for `ROUNDS` epochs run the agent on
+  the 80 train ids, distill trajectories into skill fragments (qwen3.6), INSERT/MERGE/SPLIT them
+  into the 3-layer capability graph + governance, and keep a round's edits only if the 40 val score
+  improves (validation gate). Error-prone nodes get a node-local verify-loop checkpoint. Output: a
+  trained graph JSON. (Only the with-skill arm needs this.)
+- **Phase 2 (TEST)** — two arms on the SAME 280 held-out ids + official eval:
+  1. **no-skill** (`cli_only`) — nothing injected; the floor.
+  2. **with-skill** (`cli_skillstrata`) — the frozen trained graph routed by the react-agent
+     retriever, node-local verify-loop ON. **Ours.**
+
+**Only these two** — no other baselines, no ablation matrix.
 
 ## Prerequisites
 
-- Python deps: `pip install openpyxl networkx rank_bm25 openai` (pandas optional; agent may use it).
-- The repo + data are already in place under `external/repos/Trace2Skill/` (incl. `data/spreadsheetbench_verified/spreadsheetbench_verified_400`). All code edits (verification protocol, retry loop, `cli_skillstrata` agent, pluggable agent retriever) are already applied in-tree.
-- An OpenAI-compatible endpoint serving the model (e.g. a local vLLM/sglang server for `qwen3.6-35b-a3b`).
+- Python deps: `pip install openpyxl networkx rank_bm25 openai`.
+- Repo + data already in place under `external/repos/Trace2Skill/` (incl.
+  `data/spreadsheetbench_verified/spreadsheetbench_verified_400`). All code edits are applied in-tree.
+- An OpenAI-compatible endpoint serving `qwen3.6-35b-a3b` (e.g. a local vLLM/sglang server).
 
 ## Setup (on the isolated server)
 
-1. Edit `script/config.sh`:
-   - `OPENAI_BASE_URL` → your model endpoint (e.g. `http://localhost:8000/v1`).
-   - API key: either `export OPENAI_API_KEY=...`, or put it in `script/.api_key`, or set `EMPTY` for an auth-less local server.
-   - `MODEL`, `WORKERS`, `THINKING_BUDGET` as needed.
-2. (Recommended) bump context window to **128k** when serving the model — observed max input ≈104k tokens; 64k truncates ~0.5% of the hardest tasks.
+Edit `script/config.sh`:
+- `OPENAI_BASE_URL` → your model endpoint (e.g. `http://localhost:8000/v1`).
+- API key: `export OPENAI_API_KEY=...`, or put it in `script/.api_key`, or `EMPTY` for an auth-less server.
+- `MODEL`, `WORKERS`, `THINKING_BUDGET` as needed.
+
+(Recommended) bump the served context window to **128k** — observed max input ≈104k tokens.
 
 ## Usage
 
 ```bash
-bash script/run_all.sh                                   # all variants
-bash script/run_all.sh skillstrata-agent skillstrata-graph   # only these
-WORKERS=16 END_IDX=20 bash script/run_all.sh             # quick smoke (first 20 tasks)
-RESUME=0 bash script/run_all.sh no-skill                 # force re-run a variant
+bash script/run_curate.sh                 # the one experiment (train -> test 280)
+ROUNDS=4 bash script/run_curate.sh        # override curate epochs (default 4)
+RETRAIN=1 bash script/run_curate.sh       # redo Phase-1 even if a trained graph exists
+VERIFY_LOOP=0 bash script/run_curate.sh   # turn the test-time verify-loop off
 ```
-
-Resume-safe: a variant whose `results.json` exists is skipped; a killed run is
-backfilled with `--missing_only`. Long runs survive being re-launched.
 
 ## Output
 
-- `external/repos/Trace2Skill/runs/<variant>/` — outputs, logs, `eval_official_results.json`.
-- `external/repos/Trace2Skill/runs/COMPARISON.md` — the comparison table (full-400 + 280-test + 40-val + 80-train).
+- `external/repos/Trace2Skill/runs/curate_fromzero/trained_graph.json` — the learned 3-layer graph.
+- `.../curate_fromzero/test_280_noskill/` — no-skill arm outputs, logs, `eval_official_results.json`.
+- `.../curate_fromzero/test_280/` — with-skill arm outputs, logs, `eval_official_results.json`.
+- `.../curate_fromzero/RESULTS.md` — self-contained report (graph + curate history + both scores).
 
-## Score an existing run on any split (no model needed)
+The console prints the head-to-head at the end:
+```
+===== RESULT on 280 held-out =====
+  no-skill   (floor) = ...
+  with-skill (ours)  = ...
+```
+
+## Score an existing run on a split (no model needed)
 
 ```bash
-python3 script/score_on_split.py runs/skillstrata-graph/eval_official_results.json script/data/skillopt_test_ids.txt
+python3 script/score_on_split.py runs/curate_fromzero/test_280/eval_official_results.json script/data/skillopt_test_ids.txt
 ```
 
 ## Notes
 
-- `skillstrata-agent` makes **one extra LLM call per task** (the seed selector) on top of the executor → ~roughly double the calls of `skillstrata-graph`. Falls back to BM25 if the call fails.
-- The SkillOpt-comparable head-to-head is the **280 held-out test** column (same `split_seed=42`, 2:1:7 ids as SkillOpt). Train/val columns are for sanity only.
-- **Not yet implemented here**: the "evolve the 3-layer network from a blank seed" curate pipeline (MAP→graph construction + validation gate). This runner uses the current hand-built capability graph + routing. The from-0 pipeline is the next build.
+- The SkillOpt-comparable head-to-head is the **280 held-out test** (same `split_seed=42`, 2:1:7 ids
+  as SkillOpt). Train/val are used only to build and gate the graph.
+- Verify-loop gating per phase: train rollout OFF (honest failure signal), val ON (faithful gate),
+  test ON (deployed). Set via `SKILLSTRATA_VERIFY_LOOP` / `VERIFY_LOOP`.

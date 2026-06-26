@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # =============================================================================
 # SkillStrata experiment config — EDIT THIS on the isolated server, then run:
-#     bash script/run_all.sh
-# Everything else (run_all.sh) reads from here. No Claude Code needed.
+#     bash script/run_curate.sh
+# run_curate.sh reads from here. No Claude Code needed.
 # =============================================================================
 
 # ---- paths (auto-derived; usually no need to change) -------------------------
@@ -34,21 +34,10 @@ TEMPERATURE="${TEMPERATURE:-0.0}"
 # ---- run scale --------------------------------------------------------------
 WORKERS="${WORKERS:-8}"                 # concurrency. 8 was stable; raise if your server allows.
 MAX_TURNS="${MAX_TURNS:-15}"
-END_IDX="${END_IDX:-400}"               # 400 = full verified set; set smaller for a smoke run.
 
-# ---- which variants to run --------------------------------------------------
-# Format per line: "label|agent|extra_env"
-#   agent ∈ { cli_only, cli_skill_preloaded, cli_skillstrata }
-#   SKILLSTRATA_ROUTER ∈ { graph, agent, full, bm25 }  (only for cli_skillstrata)
-# Comment out any line you don't want. Order = run order.
-VARIANTS=(
-  "no-skill|cli_only|"
-  "monolithic-xlsx35B|cli_skill_preloaded|"
-  "skillstrata-graph|cli_skillstrata|SKILLSTRATA_ROUTER=graph SKILLSTRATA_TYPE_BOOST=1.0"
-  "skillstrata-agent|cli_skillstrata|SKILLSTRATA_ROUTER=agent SKILLSTRATA_TYPE_BOOST=1.0 SKILLSTRATA_AGENT_THINK_BUDGET=1024"
-  "monolithic-122B-full|cli_skillstrata|SKILLSTRATA_ROUTER=full"
-  "flat-bm25|cli_skillstrata|SKILLSTRATA_ROUTER=bm25 SKILLSTRATA_K=5"
-)
+# ---- the single experiment --------------------------------------------------
+# The one experiment is run_curate.sh: from-zero curate on TRAIN -> test on the 280 held-out.
+# ROUNDS = curate epochs (default 4, override inline). No baseline/ablation matrix here.
 
 # ---- held-out scoring (SkillOpt-comparable) ---------------------------------
 # After full-400 eval, also score each run on the SkillOpt 80/40/280 splits.
@@ -57,5 +46,5 @@ VAL_IDS="$SCRIPT_DIR/data/skillopt_val_ids.txt"        # 40
 TRAIN_IDS="$SCRIPT_DIR/data/skillopt_train_ids.txt"    # 80
 
 # ---- behaviour --------------------------------------------------------------
-RESUME="${RESUME:-1}"      # 1 = skip a variant whose results.json exists; 0 = always re-run
-MISSING_ONLY="${MISSING_ONLY:-1}"   # 1 = only run instances without an output (resume a killed run)
+RETRAIN="${RETRAIN:-0}"    # 1 = redo Phase-1 curate even if trained_graph.json exists; 0 = reuse it
+VERIFY_LOOP="${VERIFY_LOOP:-1}"   # 1 = node-local verify-loop ON at test (deployed); 0 = off

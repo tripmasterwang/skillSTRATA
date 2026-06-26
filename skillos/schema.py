@@ -62,6 +62,7 @@ class EdgeType(str, Enum):
     APPLIES_TO_SKILL = "applies_to_skill"      # governance rule -> skill
     BLOCKS_ROUTING = "blocks_routing"          # governance rule -> skill
     PROMOTES_SKILL = "promotes_skill"          # governance rule -> skill
+    GUARDS_SKILL = "guards_skill"              # governance checkpoint -> critical skill (verify-loop)
     EVIDENCE_FOR = "evidence_for"              # trace -> capability (cross-layer)
 
 
@@ -158,9 +159,16 @@ class GovernanceNode:
     """A higher-level rule/decision in the governance graph (proposal §Governance Graph)."""
 
     id: str
-    kind: str          # rule | split_decision | merge_decision | retirement_signal
+    kind: str          # rule | split_decision | merge_decision | retirement_signal | checkpoint
     statement: str
     targets: list[str] = field(default_factory=list)  # skill ids it applies to
+    # checkpoint extension (kind == "checkpoint"): a node-local verify-or-rollback loop guarding a
+    # critical/error-prone skill. Unlike a task-level planner→executor→verifier loop, this fires at
+    # the GUARDS_SKILL-linked node only, so a failure is repaired locally instead of re-running the
+    # whole task. Auto-minted from trace-layer failure stats (skillos.verify.mint_checkpoints).
+    postcondition: str = ""    # the sub-goal the node's output must satisfy (the "/goal")
+    max_retries: int = 2       # local loop budget before escalating
+    repair_hint: str = ""      # guidance injected on each retry attempt
 
 
 # ---------------------------------------------------------------------------
