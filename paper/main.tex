@@ -1,0 +1,122 @@
+%File: main.tex — SkillStrata (AAAI-2026 submission)
+%release 2026.0
+\documentclass[letterpaper]{article} % DO NOT CHANGE THIS
+\usepackage{aaai2026}  % DO NOT CHANGE THIS
+\usepackage{times}  % DO NOT CHANGE THIS
+\usepackage{helvet}  % DO NOT CHANGE THIS
+\usepackage{courier}  % DO NOT CHANGE THIS
+\usepackage[hyphens]{url}  % DO NOT CHANGE THIS
+\usepackage{graphicx} % DO NOT CHANGE THIS
+\urlstyle{rm} % DO NOT CHANGE THIS
+\def\UrlFont{\rm}  % DO NOT CHANGE THIS
+\usepackage{natbib}  % DO NOT CHANGE THIS AND DO NOT ADD ANY OPTIONS TO IT
+\usepackage{caption} % DO NOT CHANGE THIS AND DO NOT ADD ANY OPTIONS TO IT
+\frenchspacing  % DO NOT CHANGE THIS
+\setlength{\pdfpagewidth}{8.5in}  % DO NOT CHANGE THIS
+\setlength{\pdfpageheight}{11in}  % DO NOT CHANGE THIS
+
+% Algorithms. NOTE: the Method draft (sections/01_method.tex, alg:ops) is written in
+% algorithm2e syntax (\KwIn/\KwOut/\ForEach/\tcp*/\lIf/\Return). AAAI ships the template with
+% algorithm+algorithmic; algorithm2e is NOT forbidden by the style file. Swap to algorithm2e:
+\usepackage{algorithm}
+\usepackage[ruled,linesnumbered]{algorithm2e}  % provides \KwIn \KwOut \ForEach \tcp* \lIf \Return
+
+\usepackage{newfloat}
+\usepackage{listings}
+\DeclareCaptionStyle{ruled}{labelfont=normalfont,labelsep=colon,strut=off} % DO NOT CHANGE THIS
+\lstset{%
+	basicstyle={\footnotesize\ttfamily},%
+	numbers=left,numberstyle=\footnotesize,xleftmargin=2em,%
+	aboveskip=0pt,belowskip=0pt,%
+	showstringspaces=false,tabsize=2,breaklines=true}
+\floatstyle{ruled}
+\newfloat{listing}{tb}{lst}{}
+\floatname{listing}{Listing}
+
+\pdfinfo{
+/TemplateVersion (2026.1)
+}
+
+% Math + tables + boxes
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{makecell}
+\usepackage{tcolorbox}
+\usepackage{xcolor}
+\usepackage{pifont} % \ding for \cmark/\xmark and numbered highlights
+\newcommand{\cmark}{\ding{51}}
+\newcommand{\xmark}{\ding{55}}
+\newcommand{\blue}[1]{\textcolor{blue}{#1}}
+
+% obsbox — used by the Intro RQ obs-box (sections/06_intro.tex)
+\newtcolorbox{obsbox}{colback=gray!8,colframe=gray!55,boxrule=0.5pt,arc=2pt,
+  left=4pt,right=4pt,top=3pt,bottom=3pt}
+
+% NOTE on \Cref: drafts use \Cref{...} (cleveref). cleveref normally autoloads hyperref, which AAAI
+% FORBIDS. Before compile, either (a) add \usepackage[nameinlink,capitalise]{cleveref} WITHOUT hyperref
+% (cleveref works without it), or (b) sed-replace \Cref-> "Fig./Tab./Eq./Sec." manually.
+% Left out here to keep the preamble policy-clean; resolve at the ASSET-TODO compile pass below.
+
+\setcounter{secnumdepth}{2} % section + subsection numbers
+
+% ===== Title (Phase 8.5 recommended title) =====
+\title{SkillStrata: Curating a Stratified Skill System and Assembling Skills at Test Time for Self-Evolving Agents}
+
+% Anonymous author block for double-blind submission.
+\author{
+    Anonymous Submission
+}
+\affiliations{
+    Paper under double-blind review --- author and affiliation withheld.
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\input{sections/07_abstract}
+\end{abstract}
+
+% Reading order: Intro -> Background -> Related Work -> Preliminary -> Method -> Experiments -> Conclusion.
+\input{sections/06_intro}
+\input{sections/00_background}
+\input{sections/04_related-work}
+\input{sections/03_preliminary}
+\input{sections/01_method}
+\input{sections/02_experiment}
+\input{sections/05_conclusion}
+
+\bibliographystyle{aaai2026}
+\bibliography{references}
+
+\end{document}
+
+% =====================================================================
+% ===== ASSET TODO (must resolve before pdflatex will succeed) =====
+% This skeleton intentionally DOES NOT compile yet (assets + bib incomplete; W1/W2 waivers).
+%
+% [1] FIGURES — none exist on disk; \Cref{} refs are live but float blocks are NOT emitted:
+%       fig:framework  (sections/01_method.tex, §M0/§M1; figure* block is commented out there)
+%       fig:routing    (sections/01_method.tex §M3 / brief Part 12 F2 — float NOT yet written)
+%       fig:stability  (sections/02_experiment.tex §E4 / brief Part 12 F3 — float NOT yet written)
+%     Generate via paper-figure, then add \begin{figure}...\includegraphics...\caption...\label{} blocks.
+%
+% [2] TABLES — none exist on disk; \Cref{} refs are live but \input/tabular NOT emitted:
+%       tab:main      (sections/02_experiment.tex §E2 — brief Part 7.3 main results)
+%       tab:ablation  (sections/02_experiment.tex §E3 — brief Part 7.6 LOO ablation)
+%       tab:setup     (sections/02_experiment.tex §E1 — brief Part 7.2 sim-world config)
+%       tab:tta       (sections/02_experiment.tex §E6 — brief Part 7.5.bis TTA)
+%     NOTE: tab:differentiation IS already emitted inline (sections/04_related-work.tex).
+%     Generate tables/*.tex via `python3 -m sim.report` -> .tex, then \input or paste tabular.
+%
+% [3] \Cref / cleveref — add cleveref (without hyperref) OR replace \Cref with literal Fig./Tab./Eq./Sec.
+%
+% [4] BIBLIOGRAPHY — references.bib has stub entries for all 13 cite-keys; 8 are % TODO citation-audit
+%     placeholders (skillbrew, evoskill, skillos_ouyang, memos, skillgraph_rl, gos,
+%     skillgraph_toolseq, boccaletti2014multilayer). Verify before submission (run citation-audit).
+%
+% [5] PROVENANCE — every [SIM]/[PENDING-280TEST] number must be replaced with the real 280-test
+%     head-to-head before submission (W2 waiver). The [SIM] tags are intentionally in-text.
+% =====================================================================

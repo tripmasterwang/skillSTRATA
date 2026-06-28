@@ -25,6 +25,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 from react_agent import ApiChatClient, OpenAIClient
 from spreadsheet_agent import CLIOnlyAgent, CLISkillPreloadedAgent, SpreadsheetBenchRunner
 from spreadsheet_agent.agents.cli_skillstrata_agent import CLISkillStrataAgent
+from spreadsheet_agent.agents.harness_skillstrata import (
+    ClaudeCodeSkillStrataAgent,
+    CodexSkillStrataAgent,
+    MiniSweSkillStrataAgent,
+)
 
 
 ALLOWED_SKILL_DIR_NAMES = {"xlsx-35B"}
@@ -32,6 +37,9 @@ AVAILABLE_AGENTS = {
     "cli_only": CLIOnlyAgent,
     "cli_skill_preloaded": CLISkillPreloadedAgent,
     "cli_skillstrata": CLISkillStrataAgent,
+    "cli_skillstrata_codex": CodexSkillStrataAgent,
+    "cli_skillstrata_claude": ClaudeCodeSkillStrataAgent,
+    "cli_skillstrata_minisweagent": MiniSweSkillStrataAgent,
 }
 
 

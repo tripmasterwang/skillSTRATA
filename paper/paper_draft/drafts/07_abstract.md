@@ -1,0 +1,19 @@
+% ─────────────────────────────────────────────────────────────
+% Abstract — SkillStrata. PROSE ONLY (no \cite / \ref / \Cref / \includegraphics).
+% 8 sentences = 7 core + 1 mandatory 句2.5 bridge (FINAL_PLAYBOOK §2).
+% 句1 style B (memory/cognition) + complex-networks analogy; reframe = AgentFlow modular naming.
+% PROVENANCE-HONEST: headline = [REAL] validation gate + [SIM] efficiency; 280-test NOT stated (it is [PENDING]).
+% Echo map: 句1 self-evolving ↔ 句7 self-evolving; 句4 governance/self-check ↔ 句7; 句1 multilayer analogy ↔ 句2.5 ↔ 句5.
+% Target ~210 words (soft band 180–255).
+% ─────────────────────────────────────────────────────────────
+
+\begin{abstract}
+Language agents increasingly \emph{self-evolve} by distilling reusable skills from their own execution traces, akin to a layered store whose higher strata \emph{operate on top} of raw evidence.
+Yet existing paradigms reduce this to ungoverned \emph{accumulation}: monolithic methods merge experience into one bloated document that induces \textbf{negative transfer}, while flat skill banks retrieve a top-$k$ slice that, lacking governance structure, silently \textbf{mis-routes}.
+This tension is not fundamental: a \emph{hierarchical multilayer network} already resolves it by keeping raw evidence at the bottom and letting higher layers \emph{operate on top} to govern what each task uses---structure, not bulk.
+Guided by this principle, we present \textbf{SkillStrata}, a stratified skill \textbf{system} that curates trace-to-skill evolution into a governed three-layer graph and assembles task-fit skills at test time.
+It \emph{organizes} evidence, capabilities, and governance into a \textbf{Skill Strata} graph; \emph{governs} skills through refactor-style \textsc{Split}/\textsc{Merge}/\textsc{Retire} operators behind a \textbf{propose-then-verify} gate; and at test time \emph{assembles} a minimal executable subgraph in-domain while casting a missing skill from trace sub-parts out-of-domain.
+By this design, SkillStrata loads only what a task depends on, turning ungoverned accumulation into a self-correcting skill system.
+On real \textbf{SpreadsheetBench}, its gate autonomously \textbf{rejects} a harmful distilled round that drops validation accuracy by $10$ points and \textbf{accepts} the next that recovers it, with no gradient signal; in controlled simulation it reaches the highest success at the lowest cost---$0.704$ versus \textbf{Trace2Skill}'s $0.574$ at roughly $\textbf{2}\times$ fewer tokens.
+\textbf{Most strikingly}, a distilled skill can \emph{harm} a task it would otherwise solve when its own self-check verifies a tautology rather than task semantics, manufacturing \textbf{false confidence}---revealing why \textbf{self-evolving agents} must govern execution itself, not only their library.
+\end{abstract}

@@ -3,3 +3,7 @@ __pycache__/
 .pytest_cache/
 *.egg-info/
 .DS_Store
+
+# local harness runtime (codex/claude session cache + run logs)
+script/harness/codex_home/
+script/harness/runlogs/

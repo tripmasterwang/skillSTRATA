@@ -41,7 +41,7 @@ def _read_ids(path):
 
 
 def _run_agent(repo, data, ids, graph_path, out_dir, model, gen_config, workers, max_turns,
-               router, env_extra):
+               router, env_extra, agent="cli_skillstrata", python_exe="python3"):
     """Run run_spreadsheetbench on a subset of ids with the current graph; return the log dir."""
     os.makedirs(out_dir, exist_ok=True)
     env = dict(os.environ)
@@ -50,9 +50,9 @@ def _run_agent(repo, data, ids, graph_path, out_dir, model, gen_config, workers,
     env["SKILLSTRATA_ROUTE_DIR"] = os.path.join(out_dir, "routes")  # per-instance routed nodes
     env.update(env_extra)
     cmd = [
-        "python3", "run_spreadsheetbench.py",
+        python_exe, "run_spreadsheetbench.py",
         "--data_path", data, "--model", model, "--llm_client", "openai",
-        "--agent", "cli_skillstrata", "--instance_ids", ",".join(ids),
+        "--agent", agent, "--instance_ids", ",".join(ids),
         "--workers", str(workers), "--max_turns", str(max_turns),
         "--generation_config", gen_config,
         "--output_dir", out_dir, "--log_dir", os.path.join(out_dir, "logs"),
@@ -62,9 +62,9 @@ def _run_agent(repo, data, ids, graph_path, out_dir, model, gen_config, workers,
     return os.path.join(out_dir, "logs")
 
 
-def _eval_accuracy(repo, data, out_dir, ids):
+def _eval_accuracy(repo, data, out_dir, ids, python_exe="python3"):
     """Official eval restricted to ids -> instance accuracy (fully-correct / present)."""
-    subprocess.run(["python3", "evaluate_with_official.py", "--data_path", data,
+    subprocess.run([python_exe, "evaluate_with_official.py", "--data_path", data,
                     "--output_dir", out_dir], cwd=repo, check=False,
                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     jf = os.path.join(out_dir, "eval_official_results.json")
@@ -157,6 +157,15 @@ def main():
     ap.add_argument("--workers", type=int, default=8)
     ap.add_argument("--max-turns", type=int, default=15)
     ap.add_argument("--max-fragments-per-round", type=int, default=12)
+    # ---- ablation knobs (leave-one-out on the evolution mechanism; default = full system) ----
+    ap.add_argument("--no-merge", action="store_true", help="INSERT-only: never consolidate near-dups")
+    ap.add_argument("--no-split", action="store_true", help="disable SPLIT of divergent nodes")
+    ap.add_argument("--no-gate", action="store_true", help="accept every round (disable validation gate)")
+    ap.add_argument("--no-checkpoint", action="store_true", help="never mint verify-loop checkpoints")
+    ap.add_argument("--agent", default="cli_skillstrata",
+                    help="executor agent for train/val rollouts (e.g. cli_skillstrata_codex)")
+    ap.add_argument("--python", default="python3",
+                    help="python interpreter for the run_spreadsheetbench/eval subprocess")
     args = ap.parse_args()
 
     from openai import OpenAI
@@ -175,8 +184,9 @@ def main():
         out = os.path.join(args.work_dir, f"train_r{rnd}")
         logdir = _run_agent(args.repo, args.data, train_ids, args.graph_out, out, args.model,
                             args.gen_config, args.workers, args.max_turns, "graph",
-                            {"SKILLSTRATA_VERIFY_LOOP": "0"})  # OFF in train: keep failure signal honest
-        _eval_accuracy(args.repo, args.data, out, train_ids)  # writes eval json (routes already dumped)
+                            {"SKILLSTRATA_VERIFY_LOOP": "0"},  # OFF in train: keep failure signal honest
+                            agent=args.agent, python_exe=args.python)
+        _eval_accuracy(args.repo, args.data, out, train_ids, python_exe=args.python)  # writes eval json
         _attribute_heat(g, out, train_ids)                    # teach heat -> error-prone signal
         return sorted(glob.glob(os.path.join(logdir, "*.md")))
 
@@ -215,11 +225,14 @@ def main():
         outdir = os.path.join(args.work_dir, f"val_r{rnd}")
         _run_agent(args.repo, args.data, val_ids, args.graph_out, outdir, args.model,
                    args.gen_config, args.workers, args.max_turns, "graph",
-                   {"SKILLSTRATA_VERIFY_LOOP": "1"})  # ON in val: gate under deployment conditions
-        return _eval_accuracy(args.repo, args.data, outdir, val_ids)
+                   {"SKILLSTRATA_VERIFY_LOOP": "1"},  # ON in val: gate under deployment conditions
+                   agent=args.agent, python_exe=args.python)
+        return _eval_accuracy(args.repo, args.data, outdir, val_ids, python_exe=args.python)
 
     history = curate(graph, args.rounds, train_ids, distill_fn, rollout_fn, val_score_fn,
-                     checkpoint_fn=checkpoint_fn)
+                     do_split=not args.no_split, do_merge=not args.no_merge,
+                     do_gate=not args.no_gate,
+                     checkpoint_fn=(None if args.no_checkpoint else checkpoint_fn))
     save_graph(graph, args.graph_out)
     json.dump(history, open(os.path.join(args.work_dir, "curate_history.json"), "w"), indent=2)
     print("=== curate history ===")

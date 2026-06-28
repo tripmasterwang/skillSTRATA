@@ -12,28 +12,31 @@ REPO="$PROJECT_ROOT/external/repos/Trace2Skill"          # run_spreadsheetbench.
 DATA="$REPO/data/spreadsheetbench_verified/spreadsheetbench_verified_400"
 RUNS_DIR="$REPO/runs"                                    # all outputs go here
 
-# ---- LLM endpoint (OpenAI-compatible) — *** SET THESE ON THE NEW SERVER *** --
-# The model is called via an OpenAI-compatible API. Point it at your qwen3.6 server.
-export OPENAI_BASE_URL="${OPENAI_BASE_URL:-http://localhost:8000/v1}"   # e.g. your vLLM/sglang endpoint
-MODEL="${MODEL:-qwen3.6-35b-a3b}"
+# ---- LLM endpoint (OpenAI-compatible) ---------------------------------------
+# qwen3.6-35b-a3b is served via the xf-yun MaaS gateway. NOTE: the gateway's model id is the
+# opaque "xopqwen36v35b" (verified via /v2/models) — NOT "qwen3.6-35b-a3b", which 404s.
+export OPENAI_BASE_URL="${OPENAI_BASE_URL:-https://maas-api.cn-huabei-1.xf-yun.com/v2}"
+MODEL="${MODEL:-xopqwen36v35b}"   # xf-yun gateway model id for qwen3.6-35b-a3b
 
-# API key: prefer the OPENAI_API_KEY env var; otherwise read this file (one line).
-# For a local vLLM/sglang server with no auth, set OPENAI_API_KEY=EMPTY.
-KEY_FILE="${KEY_FILE:-$SCRIPT_DIR/.api_key}"
+# API key: prefer the OPENAI_API_KEY env var; otherwise read this file (one line). Default points at
+# the xunfei key, which lives OUTSIDE this git repo so its value never gets committed.
+KEY_FILE="${KEY_FILE:-/home/workspace/lww/project0412/projects/multiagent/multi-agent-memory-research/_shared/LLM_apis/.xunfei_api_key_wys}"
 if [ -z "${OPENAI_API_KEY:-}" ] && [ -f "$KEY_FILE" ]; then
   OPENAI_API_KEY="$(tr -d '\r\n' < "$KEY_FILE")"
 fi
 export OPENAI_API_KEY="${OPENAI_API_KEY:-EMPTY}"
 
 # ---- generation config (Qwen thinking control) ------------------------------
-# Matches SkillOpt's setting: enable_thinking + thinking_budget; max output unbounded.
-THINKING="${THINKING:-true}"            # true|false
-THINKING_BUDGET="${THINKING_BUDGET:-4096}"
+# thinking effort = medium. NOTE on the xf-yun gateway: reasoning_effort alone does NOT engage
+# thinking (it answers directly, reasoning_content empty); you MUST pass enable_thinking=true
+# TOGETHER with reasoning_effort to actually get medium-depth thinking. Verified 2026-06-26.
+THINKING="${THINKING:-true}"                  # true|false (must be true for reasoning_effort to bite)
+REASONING_EFFORT="${REASONING_EFFORT:-medium}"  # low|medium|high
 TEMPERATURE="${TEMPERATURE:-0.0}"
 
 # ---- run scale --------------------------------------------------------------
 WORKERS="${WORKERS:-8}"                 # concurrency. 8 was stable; raise if your server allows.
-MAX_TURNS="${MAX_TURNS:-15}"
+MAX_TURNS="${MAX_TURNS:-5}"
 
 # ---- the single experiment --------------------------------------------------
 # The one experiment is run_curate.sh: from-zero curate on TRAIN -> test on the 280 held-out.

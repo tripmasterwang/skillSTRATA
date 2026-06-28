@@ -151,7 +151,8 @@ def validation_gate(graph: SkillGraph, round_inserts: list[str], val_score_fn, *
 
 # --------------------------------------------------------------------------- driver
 def curate(graph: SkillGraph, rounds: int, train_tasks, distill_fn, rollout_fn, val_score_fn, *,
-           embedder: Embedder | None = None, do_split: bool = True, checkpoint_fn=None) -> list[dict]:
+           embedder: Embedder | None = None, do_split: bool = True, do_merge: bool = True,
+           do_gate: bool = True, checkpoint_fn=None) -> list[dict]:
     """Full from-zero curate loop over E rounds, starting from whatever ``graph`` is (use an empty
     SkillGraph for true from-scratch). Injected callables:
 
@@ -170,12 +171,22 @@ def curate(graph: SkillGraph, rounds: int, train_tasks, distill_fn, rollout_fn, 
         graph.tick()
         trajectories = rollout_fn(graph, train_tasks)
         fragments = distill_fn(trajectories)
-        res = integrate_fragments(graph, fragments, embedder=embedder)
-        if do_split:
-            split_divergent(graph)
-        accepted, score = validation_gate(graph, res["inserted"], val_score_fn,
-                                           baseline_score=baseline)
-        if accepted:
+        # -- ablation knobs: do_merge (else INSERT-only, never consolidate), do_gate (else accept
+        #    every round unconditionally so we can measure what the validation gate filters out) --
+        res = integrate_fragments(graph, fragments, embedder=embedder,
+                                  sim_threshold=(0.80 if do_merge else 2.0))
+        split_ids = split_divergent(graph) if do_split else []
+        if do_gate:
+            accepted, score = validation_gate(graph, res["inserted"], val_score_fn,
+                                               baseline_score=baseline)
+            if accepted:
+                baseline = score
+        else:
+            for nid in res["inserted"]:                  # no gate: deploy + keep every round
+                if nid in graph.nodes and graph.nodes[nid].status == Status.CANDIDATE:
+                    graph.nodes[nid].status = Status.DEPLOYED
+            score = val_score_fn(graph)
+            accepted = True
             baseline = score
         # governance learns where to guard: after the gate settles this round's DEPLOYED set, mint a
         # node-local verify-or-rollback checkpoint on each skill the trace layer now flags as
@@ -185,9 +196,11 @@ def curate(graph: SkillGraph, rounds: int, train_tasks, distill_fn, rollout_fn, 
             "round": r,
             "inserted": len(res["inserted"]),
             "merged": len(res["merged"]),
+            "split": len(split_ids),
             "accepted": accepted,
             "val": round(score, 4),
             "deployed": len([n for n in graph.nodes.values() if n.status == Status.DEPLOYED]),
+            "retired_total": len([n for n in graph.nodes.values() if n.status == Status.RETIRED]),
             "checkpoints": len(minted),
         })
     return history

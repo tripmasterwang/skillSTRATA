@@ -139,9 +139,11 @@ class GraphRouter:
         return route
 
     def _retrieve_seeds(self, task: str, task_type: str, pool: list[SkillNode]) -> list[str]:
-        """Pick seed skills. retriever="agent" uses the injected ``seed_fn`` for this step only,
-        with a BM25 fallback so a flaky/empty agent call never tanks a task."""
-        if self.retriever == "agent" and self.seed_fn is not None:
+        """Pick seed skills. retriever="llm" (alias "agent") uses the injected ``seed_fn`` — a single
+        LLM call that ranks the pool, NOT a ReAct loop — with a BM25 fallback so a flaky/empty call
+        never tanks a task. The graph value (dependency closure + governance) runs on top regardless,
+        so the seed step is intentionally a plain LLM retriever, not an agent."""
+        if self.retriever in ("llm", "agent") and self.seed_fn is not None:
             try:
                 ids = self.seed_fn(task, task_type, pool, self.top_seeds) or []
             except Exception:

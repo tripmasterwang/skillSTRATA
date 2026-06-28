@@ -1,0 +1,148 @@
+\section{Method}
+\label{sec:method}
+
+% ─────────────────────────────────────────────────────────────
+% §M0 — Overview (claim-title): Curate a Stratified Skill System, Assemble Skills at Test Time
+% Method-first: analogy stated ONCE; no paradigm-conflict re-description; ends with pipeline-figure-anchored flow overview.
+% A separate §Preliminary owns the full formalization, so §M0 stays narrative + a flow overview (no modeling block).
+% ─────────────────────────────────────────────────────────────
+\subsection{Overview: Curate a Stratified Skill System, Assemble Skills at Test Time}
+\label{sec:m0}
+
+Just as a \emph{hierarchical multilayer network} places raw evidence at the bottom and lets higher layers \emph{operate on top} of it~\citep{boccaletti2014multilayer}, \textbf{SkillStrata} \textbf{stratifies} trace-to-skill evolution into three layers and, at test time, \textbf{assembles} a task-fit skill set from their sub-parts rather than loading one ever-larger document.
+This separates three concerns that single-layer skill stores collapse: \emph{where a skill came from} (trace evidence), \emph{what it can do} (capability and dependencies), and \emph{whether it should be used} (governance status).
+% method-flow overview anchored to the framework figure (G4d element 3, required even WITH a §Preliminary)
+The framework (\Cref{fig:framework}) % TODO: add Part 12 row for this label (asset inventory absent; gate waived)
+runs in two phases over the stratified graph $\mathcal{G}=(\mathcal{G}_{\text{trace}},\mathcal{G}_{\text{cap}},\mathcal{G}_{\text{gov}})$ of \Cref{sec:prelim}: offline, a \textbf{curate} loop distills trajectories into patches and applies lifecycle operators to grow and prune the graph; online, a \textbf{router} activates a minimal executable subgraph $\mathcal{S}^\star$ and injects it into the executor's prompt, with the backbone LLM and Trace2Skill ReAct executor \textbf{frozen} throughout.
+
+% ─────────────────────────────────────────────────────────────
+% §M1 — Skill Strata: a Three-Layer Skill Graph (descriptive). Pipeline walk-through + 2 anchor equations.
+% ─────────────────────────────────────────────────────────────
+\subsection{Skill Strata: a Three-Layer Skill Graph}
+\label{sec:m1}
+
+As shown in \Cref{fig:framework}, % TODO: add Part 12 row for this label (asset inventory absent; gate waived)
+skill evolution in SkillStrata \textbf{unfolds hierarchically}, driven by a \textbf{frozen} backbone and a \textbf{stratified}, gradient-free graph.
+For each solved task, the curate loop \textbf{distills} the trajectory into patches (reusing the Trace2Skill map stage) and records them in the bottom \textbf{trace layer} $\mathcal{G}_{\text{trace}}$, which holds execution evidence and sub-capability co-occurrence.
+The middle \textbf{capability layer} $\mathcal{G}_{\text{cap}}$ \textbf{organizes} these patches into modular skill nodes wired by \texttt{depends\_on}, \texttt{composes\_with}, and \texttt{conflicts\_with} edges, each carrying a stable slug identifier and a status:
+\begin{equation}
+v \in \mathcal{G}_{\text{cap}},\quad
+\text{status}(v)\in\{\text{candidate},\text{validated},\text{deployed},\text{retired}\}
+\label{eq:node}
+\end{equation}
+The top \textbf{governance layer} $\mathcal{G}_{\text{gov}}$ then \textbf{operates on top} of the capabilities, carrying split/merge/retire/route rules and \textbf{checkpoint} guards; at routing time it returns the minimal executable subgraph as the dependency closure of the seeds minus whatever it blocks:
+\begin{equation}
+\mathcal{S}^\star \;=\; \underbrace{\text{closure}_{\texttt{depends\_on}}\big(\text{seed}_k(t)\big)}_{\text{dependency-complete skills}} \;\setminus\; \underbrace{\text{blocked}(\mathcal{G}_{\text{gov}})}_{\text{governed-out skills}}
+\label{eq:route}
+\end{equation}
+where $\text{seed}_k(t)$ are the top-$k$ skills retrieved by the \emph{same} BM25 retriever the flat-bank baseline uses (isolating the graph's contribution), $\text{closure}_{\texttt{depends\_on}}$ is the transitive closure over dependency edges, and $\text{blocked}(\mathcal{G}_{\text{gov}})$ is the governance-quarantined set.
+This stratification \textbf{elevates} the library from a flat bag of skills to a \textbf{governed, routable graph} --- all without altering the frozen backbone.
+
+% ─────────────────────────────────────────────────────────────
+% §M2 — Curating the Strata (claim-title). All operators = component-type ④ hard_rule:
+% single \paragraph + exactly 1 scoring/decision eq, NO training loss.
+% ─────────────────────────────────────────────────────────────
+\subsection{Curating the Strata: Lifecycle Operators (\textsc{Split}/\textsc{Merge}/\textsc{Link}/\textsc{Retire}) with a Propose-then-Verify Gate, no RL}
+\label{sec:m2}
+
+The \textbf{curator} acts as a \textbf{librarian} over $\mathcal{G}_{\text{cap}}$ and $\mathcal{G}_{\text{gov}}$, refactoring distilled skills through seven symbolic operators --- \textsc{Insert}, \textsc{Update}, \textsc{Split}, \textsc{Merge}, \textsc{Link}, \textsc{Retire}, and a promotion gate --- with \emph{no gradient updates and no reinforcement learning}.
+
+\paragraph{Refactoring operators.}
+The signature operator is \textsc{Split}: a distilled skill that bundles heterogeneous behaviors is \textbf{refactored} into atomic capabilities, because a monolithic body forces full-load injection and invites negative transfer when only one behavior is relevant.
+We fire \textsc{Split} on a node whose body is large \emph{and} whose recorded task types are heterogeneous, a deterministic predicate read off the trace layer:
+\begin{equation}
+\textsc{Split}(v)\ \text{fires} \iff \underbrace{\mathbb{1}\big[\,|\text{body}(v)| > \tau_b\,\big]}_{\text{oversized body}}\ \wedge\ \underbrace{\mathbb{1}\big[\,\mathcal{H}_{\text{type}}(v) > \tau_h\,\big]}_{\text{heterogeneous task types}}
+\label{eq:split}
+\end{equation}
+where $|\text{body}(v)|$ is the skill's token length, $\mathcal{H}_{\text{type}}(v)$ the entropy of the task types in which $v$ was used (from $\mathcal{G}_{\text{trace}}$), and $\tau_b,\tau_h$ fixed thresholds.
+\textsc{Merge} consolidates near-duplicate nodes, \textsc{Link} wires the dependency/composition/conflict edges that make \Cref{eq:route}'s closure meaningful, and \textsc{Retire} evicts cold skills by a heat score $H(v)=\alpha\,N_{\text{visit}}(v)+\beta\,\text{coverage}(v)+\gamma\,e^{-\Delta(v)/\tau}$ adapted from OS-style memory lifecycles, so visitation, coverage, and recency jointly decide what fades.
+
+\paragraph{Propose-then-verify gate.}
+Because a distilled batch can actively \emph{harm} unseen tasks --- in one held-out run, injecting a freshly distilled round dropped validation accuracy from $42.5\%$ to $32.5\%$ before the gate caught it~[REAL] --- candidate edits are \textbf{proposed} but only \textbf{promoted} to \texttt{deployed} after replay on a held-out set:
+\begin{equation}
+\text{promote}(\Delta\mathcal{G})\iff \underbrace{\big[\,\text{succ}'\!\geq\text{succ}\,\big]}_{\text{no accuracy regression}}\ \wedge\ \underbrace{\big[\,\text{tok}'\!\leq\text{tok}\,\big]}_{\text{no token inflation}}\ \wedge\ \underbrace{\big[\,\text{nt}'\!\leq\text{nt}\,\big]}_{\text{no extra negative transfer}}
+\label{eq:gate}
+\end{equation}
+where $\text{succ}, \text{tok}, \text{nt}$ are held-out success rate, loaded-token cost, and negative-transfer rate before the edit and primed quantities are after it; a batch is accepted only if all three stay non-worse.
+In that run the gate \textbf{rejected} the harmful round (retiring its $12$ skills) and \textbf{accepted} the next, which lifted accuracy to $47.5\%$~[REAL] --- the loop self-corrects with no gradient signal.
+
+% ─────────────────────────────────────────────────────────────
+% §M3 — Test-Time LEGO Assembly (claim-title). ROUTE + TTA + node-local verify-loop.
+% Components type ④ hard_rule: single \paragraph each, exactly 1 decision eq, no loss.
+% ─────────────────────────────────────────────────────────────
+\subsection{Test-Time LEGO Assembly: In-Domain Routing and Out-of-Domain Synthesis}
+\label{sec:m3}
+
+At test time the \textbf{router} \textbf{assembles} a task-fit skill set from the strata like LEGO bricks: in-domain it \textbf{routes} existing skills, out-of-domain it \textbf{casts} a missing one from sub-parts, with a governance verify-loop guarding execution.
+
+\paragraph{In-domain routing.}
+For an in-domain task, routing returns the minimal executable subgraph $\mathcal{S}^\star$ of \Cref{eq:route} --- the dependency closure of the BM25 seeds minus governed-out nodes --- which existing single-layer skill-graph methods approximate and which SkillStrata subsumes as the in-domain half of assembly.
+Activating the closure rather than the top-$k$ text matters because a relevant seed silently depends on prerequisites that flat retrieval omits; the \texttt{depends\_on} edges \textbf{pull in} exactly those prerequisites and no more.
+
+\paragraph{Out-of-domain synthesis (TTA).}
+When the seeds need a sub-capability with \emph{no} deployed skill, the router \textbf{drills down} from the activated capabilities into their trace-layer co-occurrence evidence and \textbf{synthesizes} an ephemeral skill on the spot, used once and discarded:
+\begin{equation}
+\mathcal{S}^\star \;\leftarrow\; \mathcal{S}^\star \,\cup\, \underbrace{\text{synth}\big(\text{cooc}(\mathcal{S}^\star)\setminus\text{deployed}\big)}_{\text{cast missing skills from trace sub-parts}}
+\label{eq:tta}
+\end{equation}
+where $\text{cooc}(\mathcal{S}^\star)$ are sub-capabilities that co-occurred with the active skills in $\mathcal{G}_{\text{trace}}$ and $\text{synth}(\cdot)$ assembles them into a temporary skill body.
+The trigger reads only \emph{historical} trace statistics and the current seeds --- never the task's ground truth, so it is not an oracle --- which lets the otherwise-offline trace layer participate at inference; on held-out capabilities this recovers about $54\%$ of the coverage gap~[SIM].
+
+\paragraph{Node-local verify-loop.}
+Governance also guards \emph{execution}, not only the library: error-prone nodes are mined from the trace layer (low \texttt{success\_rate} with $\text{trials}\!\geq\!k$) and fitted with a checkpoint guard carrying a sub-goal postcondition, so a failure is \textbf{repaired locally} rather than restarting the whole task.
+When the executor reaches a guarded node it loops $\text{execute}\to\text{verify}(g_v)\to\text{rollback}\to\text{retry}$ until the postcondition holds or a budget is spent:
+\begin{equation}
+\text{retry}(v)\iff \underbrace{\neg\,\text{verify}\big(\text{exec}(v),\,g_v\big)}_{\text{sub-goal $g_v$ unmet}}\ \wedge\ \underbrace{\big[\,r_v < B_v\,\big]}_{\text{retry budget left}}
+\label{eq:verify}
+\end{equation}
+where $g_v$ is the node's postcondition, $r_v$ the retries so far, and $B_v$ its budget; verifying a \emph{sub-goal} (not the final answer) is what catches a distilled self-check that would otherwise rubber-stamp a tautology on false confidence~[REAL].
+Governance thus shows a \textbf{train/inference symmetry}: \Cref{eq:gate} gates the library round-by-round at train time, and \Cref{eq:verify} gates execution node-by-node at inference --- the same principle in two tenses.
+
+% ─────────────────────────────────────────────────────────────
+% §M4 — Properties / Complexity & Trace2Skill Integration (descriptive).
+% ─────────────────────────────────────────────────────────────
+\subsection{Properties, Complexity, and Trace2Skill Integration}
+\label{sec:m4}
+
+\paragraph{Properties and Complexity.}
+SkillStrata introduces \textbf{zero} trainable parameters on top of the frozen backbone: the three layers, seven operators, and routing are deterministic symbolic structures, so curation runs without gradients or RL.
+At inference, routing costs a BM25 seed lookup plus a dependency-closure traversal, i.e.\ $O(|\mathcal{S}^\star|)$ in the activated subgraph --- the same order as flat top-$k$ retrieval, but loading a minimal subgraph instead of the full library or a top-$k$ slice.
+Integration is drop-in: SkillStrata replaces only the monolithic merge of the Trace2Skill reduce phase with the curate loop of \Cref{alg:ops}, % TODO: add Part 12 row for this label (asset inventory absent; gate waived)
+leaving the ReAct executor, LLM client, and evaluation untouched.
+
+% ─────────────────────────────────────────────────────────────
+% Algorithm box (alg:ops): curate (absorb) + route inference loop. 5–12 lines, vars match the equations above.
+% ─────────────────────────────────────────────────────────────
+\begin{algorithm}[t]
+\caption{SkillStrata: Curate (offline) and Route (inference)}
+\label{alg:ops}
+\KwIn{Trajectories $\{\tau_i\}$, held-out set $\mathcal{V}$, frozen backbone $\pi$, frozen ReAct executor $E$}
+\KwOut{Curated strata $\mathcal{G}=(\mathcal{G}_{\text{trace}},\mathcal{G}_{\text{cap}},\mathcal{G}_{\text{gov}})$; trajectory $\tau$}
+\tcp{Offline: curate the strata, no gradients}
+\ForEach{$\tau_i$}{
+  distill patches; record evidence in $\mathcal{G}_{\text{trace}}$\;
+  apply \textsc{Insert}/\textsc{Update}/\textsc{Split}/\textsc{Merge}/\textsc{Link} to $\mathcal{G}_{\text{cap}}$\tcp*{Eq.~\ref{eq:split}}
+  \textsc{Retire} cold nodes by heat $H(v)$; mine guards into $\mathcal{G}_{\text{gov}}$\;
+  \lIf{$\neg\,\text{promote}(\Delta\mathcal{G})$ on $\mathcal{V}$}{roll back the batch\tcp*{Eq.~\ref{eq:gate}}}
+}
+\tcp{Inference: assemble and execute for task $t$}
+$\mathcal{S}^\star \leftarrow \text{closure}_{\texttt{depends\_on}}(\text{seed}_k(t))\setminus\text{blocked}(\mathcal{G}_{\text{gov}})$\tcp*{Eq.~\ref{eq:route}}
+\lIf{$\text{cooc}(\mathcal{S}^\star)\setminus\text{deployed}\neq\varnothing$}{$\mathcal{S}^\star \leftarrow \mathcal{S}^\star \cup \text{synth}(\cdot)$\tcp*{Eq.~\ref{eq:tta}}}
+$\tau \leftarrow E$ run with $\mathcal{S}^\star$ injected, node-local verify-loop on guards\tcp*{Eq.~\ref{eq:verify}}
+\Return{$\mathcal{G}$; $\tau$}
+\end{algorithm}
+
+% ─────────────────────────────────────────────────────────────
+% Framework figure caption (fig:framework) — asset PENDING, gate waived.
+% ─────────────────────────────────────────────────────────────
+% \begin{figure*}[t]
+%   \centering
+%   \includegraphics[width=\textwidth]{figures/framework.pdf} % TODO: add Part 12 row; asset PENDING, gate waived
+%   \label{fig:framework}
+\caption{\textbf{Overview of SkillStrata.}
+Left: task trajectories are \textbf{distilled} into patches and recorded as execution evidence in the \textbf{trace layer} $\mathcal{G}_{\text{trace}}$ (gray, frozen evidence).
+Middle: lifecycle operators \textsc{Split}/\textsc{Merge}/\textsc{Link}/\textsc{Retire} \textbf{organize} patches into the \textbf{capability layer} $\mathcal{G}_{\text{cap}}$ of modular skill nodes wired by \texttt{depends\_on}/\texttt{composes\_with}/\texttt{conflicts\_with} edges (colored, curated).
+Top: the \textbf{governance layer} $\mathcal{G}_{\text{gov}}$ holds split/route rules, the propose-then-verify gate, and checkpoint guards that operate over the capabilities.
+Right: at test time the router activates the minimal executable subgraph $\mathcal{S}^\star$ (\Cref{eq:route}), in-domain by \textbf{routing} existing skills and out-of-domain by \textbf{synthesizing} a missing one from trace sub-parts (\Cref{eq:tta}), then injects $\mathcal{S}^\star$ into the frozen ReAct executor.
+Unlike a monolithic SKILL.md loaded in full, SkillStrata \textbf{splits the monolith into a governed graph and routes only a minimal subgraph}.}
+% \end{figure*}

@@ -1,0 +1,131 @@
+% references.bib — SkillStrata. One stub per cite-key grep'd from all section drafts.
+% Entries marked "% TODO citation-audit" are PROVISIONAL: title/author/venue/year not yet
+% verified against the real paper. Run the citation-audit skill before submission.
+% The 4 [已精读]/known entries (trace2skill, skillopt, gmemory, memoryos) carry real-ish fields
+% from the brief; even these need a final DBLP/arXiv check.
+
+% ===== Direction A: Trace-to-Skill / Self-Evolving Skill Libraries =====
+
+@article{trace2skill,
+  title   = {Trace2Skill: Distilling Reusable Skills from Agent Execution Traces},
+  author  = {{Trace2Skill Authors}},
+  journal = {arXiv preprint arXiv:2603.25158},
+  year    = {2026},
+  note    = {Base pipeline (Qwen-Applications/Trace2Skill); monolithic hierarchical merge into a full-load SKILL.md. Fields approximate; verify exact title/authors.}
+}
+
+@article{skillopt,
+  title   = {SkillOpt: Optimization-Gated Skill Curation with a Held-Out Validation Gate},
+  author  = {{SkillOpt Authors}},
+  journal = {arXiv preprint arXiv:2605.23904},
+  year    = {2026},
+  note    = {Primary comparison target (Table 1: SpreadsheetBench, Qwen3.6-35B-A3B, no-skill 38.2 -> 47.5). Verify exact title/authors.}
+}
+
+@article{skillbrew,
+  title   = {SkillBrew: Curation-Style Skill Refinement for Language Agents},
+  author  = {{SkillBrew Authors}},
+  journal = {arXiv preprint arXiv:2605.29440},
+  year    = {2026},
+  note    = {TODO citation-audit -- title/authors inferred from brief; not yet verified.}
+}
+% TODO citation-audit: skillbrew
+
+@article{evoskill,
+  title   = {EvoSkill: Self-Evolving Skill Libraries for LLM Agents},
+  author  = {{EvoSkill Authors}},
+  journal = {arXiv preprint arXiv:2603.02766},
+  year    = {2026},
+  note    = {TODO citation-audit -- title/authors inferred from brief; not yet verified.}
+}
+% TODO citation-audit: evoskill
+
+@article{skillos_ouyang,
+  title   = {Learning Skill Curation for Self-Evolving Agents},
+  author  = {Ouyang and others},
+  journal = {arXiv preprint arXiv:2605.06614},
+  year    = {2026},
+  note    = {TODO citation-audit -- same-name "SkillOS"; MUST read full text + head-to-head before submission. Title/authors provisional.}
+}
+% TODO citation-audit: skillos_ouyang
+
+% ===== Direction B: Graph Memory & OS-Style Lifecycle =====
+
+@article{gmemory,
+  title   = {G-Memory: Hierarchical Graph Memory for Language Agents},
+  author  = {{G-Memory Authors}},
+  journal = {arXiv preprint arXiv:2506.07398},
+  year    = {2025},
+  note    = {Three-layer hierarchical graph memory + k-hop bidirectional traversal. Verify exact title/authors.}
+}
+
+@article{memoryos,
+  title   = {MemoryOS: An Operating-System-Style Lifecycle for Agent Memory},
+  author  = {{MemoryOS Authors}},
+  journal = {arXiv preprint arXiv:2506.06326},
+  year    = {2025},
+  note    = {Heat-based promotion/eviction memory lifecycle (H = alpha*N + beta*L + gamma*R). Verify exact title/authors.}
+}
+
+@article{memos,
+  title   = {MemOS: A Memory Operating System for Memory-Augmented Generation},
+  author  = {{MemOS Authors}},
+  journal = {arXiv preprint arXiv:2505.00000},
+  year    = {2025},
+  note    = {TODO citation-audit -- arXiv id is a PLACEHOLDER; title/authors/id not in brief. Resolve before submission.}
+}
+% TODO citation-audit: memos
+
+% ===== Direction C: Single-Layer Skill Graphs (subsumed competitors) =====
+
+@article{skillgraph_rl,
+  title   = {SkillGraph-RL: Reinforcement-Learned Traversal over a Skill Graph},
+  author  = {{SkillGraph-RL Authors}},
+  journal = {arXiv preprint arXiv:2605.12039},
+  year    = {2026},
+  note    = {TODO citation-audit -- title/authors inferred from brief; single-layer skill graph, RL traversal. Verify.}
+}
+% TODO citation-audit: skillgraph_rl
+
+@article{gos,
+  title   = {Graph-of-Skills: Retrieval and Composition over a Fixed Skill Graph},
+  author  = {{Graph-of-Skills Authors}},
+  journal = {arXiv preprint arXiv:2604.05333},
+  year    = {2026},
+  note    = {TODO citation-audit -- title/authors inferred from brief; routes/sequences existing skill nodes. Verify.}
+}
+% TODO citation-audit: gos
+
+@article{skillgraph_toolseq,
+  title   = {SkillGraph-ToolSeq: Tool-Sequence Routing over a Skill Graph},
+  author  = {{SkillGraph-ToolSeq Authors}},
+  journal = {arXiv preprint arXiv:2604.19793},
+  year    = {2026},
+  note    = {TODO citation-audit -- title/authors inferred from brief; verify.}
+}
+% TODO citation-audit: skillgraph_toolseq
+
+% ===== External-discipline analogy (complex networks) =====
+
+@article{boccaletti2014multilayer,
+  title   = {The Structure and Dynamics of Multilayer Networks},
+  author  = {Boccaletti, S. and others},
+  journal = {Physics Reports},
+  volume  = {544},
+  number  = {1},
+  pages   = {1--122},
+  year    = {2014},
+  note    = {TODO citation-audit -- real paper (Boccaletti et al. 2014); confirm full author list + page range before submission.}
+}
+% TODO citation-audit: boccaletti2014multilayer
+
+% ===== Backbone model =====
+
+@misc{qwen36,
+  title        = {Qwen3.6-35B-A3B},
+  author       = {{Qwen Team}},
+  year         = {2026},
+  howpublished = {xf-yun MaaS (model id xopqwen36v35b)},
+  note         = {TODO citation-audit -- backbone LLM; replace with the official Qwen3.x technical report citation.}
+}
+% TODO citation-audit: qwen36

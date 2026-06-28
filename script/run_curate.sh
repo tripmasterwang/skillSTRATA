@@ -31,10 +31,10 @@ python3 -c "import openpyxl,networkx,rank_bm25,openai" 2>/dev/null \
   || { echo "FATAL: pip install openpyxl networkx rank_bm25 openai"; exit 1; }
 mkdir -p "$WORK"
 
-# generation config (Qwen thinking control)
+# generation config: thinking effort = medium (enable_thinking + reasoning_effort BOTH required)
 GENCFG="$WORK/gen_config.json"
-printf '{"temperature":%s,"extra_body":{"enable_thinking":%s,"thinking_budget":%s}}' \
-  "$TEMPERATURE" "$THINKING" "$THINKING_BUDGET" > "$GENCFG"
+printf '{"temperature":%s,"extra_body":{"enable_thinking":%s,"reasoning_effort":"%s"}}' \
+  "$TEMPERATURE" "$THINKING" "$REASONING_EFFORT" > "$GENCFG"
 
 export PYTHONPATH="$SKILLOS_ROOT:${PYTHONPATH:-}"   # so curate_driver can import skillos
 
@@ -97,7 +97,7 @@ python3 "$SCRIPT_DIR/make_report.py" --out "$REPORT" \
   --graph "$GRAPH" --history "$WORK/curate_history.json" \
   --eval-json "$TESTDIR/eval_official_results.json" --test-ids "$TEST_IDS" \
   --route-dir "$TESTDIR/routes" \
-  --meta "model=$MODEL,endpoint=$OPENAI_BASE_URL,rounds=$ROUNDS,workers=$WORKERS,thinking_budget=$THINKING_BUDGET,date=$(date '+%F %T'),test=280held-out,noskill=$SCORE_NOSKILL,withskill=$SCORE"
+  --meta "model=$MODEL,endpoint=$OPENAI_BASE_URL,rounds=$ROUNDS,workers=$WORKERS,reasoning_effort=$REASONING_EFFORT,date=$(date '+%F %T'),test=280held-out,noskill=$SCORE_NOSKILL,withskill=$SCORE"
 echo ""
 echo "================= COPY EVERYTHING BELOW (this is $REPORT) ================="
 cat "$REPORT"

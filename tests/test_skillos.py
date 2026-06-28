@@ -193,3 +193,60 @@ def test_verify_loop_gives_up_within_budget():
     out = node_verifier_loop(cp, execute_fn=lambda i, h: i,
                              verify_fn=lambda res: (False, "always fails"))
     assert not out.ok and out.n_attempts == 3              # 1 + max_retries, then escalate
+
+
+# --------------------------------------------------------------------- harness block (plug-and-play)
+def test_route_skills_is_per_role():
+    from skillos.harness import route_skills
+    g = SkillGraph()
+    for nm in ["edit refactor", "run tests", "locate code"]:
+        g.add_skill(SkillNode.make(name=nm, body="b:" + nm, status=Status.DEPLOYED))
+    def fake_llm(system, user):
+        if "editor" in user: return '["edit_refactor"]'
+        if "explorer" in user: return '["locate_code"]'
+        return '["run_tests"]'
+    ed = route_skills(g, "fix bug", role="editor", llm_call=fake_llm)
+    ex = route_skills(g, "fix bug", role="explorer", llm_call=fake_llm)
+    assert ed.nodes == ["edit_refactor"] and ex.nodes == ["locate_code"]   # per-role routing differs
+
+
+def test_render_listing_hides_body():
+    from skillos.harness import route_skills, render_skill_text, render_skill_md_files
+    g = SkillGraph()
+    g.add_skill(SkillNode.make(name="edit", description="edit desc", body="SECRET-BODY", status=Status.DEPLOYED))
+    r = route_skills(g, "edit something")
+    assert "SECRET-BODY" in render_skill_text(r)                # full inject has body
+    assert render_skill_md_files(r, g)[0][0] == "edit/SKILL.md"
+
+
+# --------------------------------------------------------------------- navtrace (node-level curate)
+def test_nav_attribution_is_per_visited_node(tmp_path):
+    import json
+    from skillos.navtrace import parse_nav_log, attribute_nav_heat
+    g = SkillGraph()
+    for nm in ["a", "b", "c"]:
+        g.add_skill(SkillNode.make(name=nm, body="x", status=Status.DEPLOYED))
+    log = tmp_path / "nav.jsonl"
+    log.write_text("\n".join(json.dumps(r) for r in [
+        {"action": "locate", "cursor": "a", "task": "t"},
+        {"action": "step_to", "cursor": "b"},
+        {"action": "go_off_graph", "cursor": None, "note": "no skill"}]))
+    nav = parse_nav_log(str(log), "i1")
+    attribute_nav_heat(g, nav, success=False)
+    assert g.nodes["a"].heat.failure_count == 1 and g.nodes["b"].heat.failure_count == 1
+    assert g.nodes["c"].heat.trials == 0          # unvisited node is NOT blamed (precision over route-set)
+
+
+def test_offgraph_distills_into_new_node(tmp_path):
+    import json
+    from skillos.navtrace import curate_from_navlogs
+    from skillos.curate import Fragment
+    g = SkillGraph()
+    g.add_skill(SkillNode.make(name="a", body="x", status=Status.DEPLOYED))
+    log = tmp_path / "nav.jsonl"
+    log.write_text("\n".join(json.dumps(r) for r in [
+        {"action": "locate", "cursor": "a", "task": "t"},
+        {"action": "go_off_graph", "cursor": None, "note": "regen proto"}]))
+    summ = curate_from_navlogs(g, [(str(log), "i1", False)],
+                               distill_fn=lambda note, task: Fragment(name="regen proto", description="d", body="HOWTO"))
+    assert summ["inserted"] == 1 and "regen_proto" in g.nodes   # graph learned a skill from off-graph

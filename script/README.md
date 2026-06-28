@@ -23,14 +23,17 @@ From-zero SkillStrata, with exactly **two arms** compared on the same 280 held-o
 - Python deps: `pip install openpyxl networkx rank_bm25 openai`.
 - Repo + data already in place under `external/repos/Trace2Skill/` (incl.
   `data/spreadsheetbench_verified/spreadsheetbench_verified_400`). All code edits are applied in-tree.
-- An OpenAI-compatible endpoint serving `qwen3.6-35b-a3b` (e.g. a local vLLM/sglang server).
+- The LLM endpoint is preconfigured to the **xf-yun MaaS** gateway serving qwen3.6-35b-a3b.
+  The gateway's model id is the opaque `xopqwen36v35b` (NOT `qwen3.6-35b-a3b`, which 404s) — already
+  set as the `MODEL` default in `config.sh`. The API key is read from the xunfei key file (outside
+  this repo); nothing to set if you run on the same host.
 
 ## Setup (on the isolated server)
 
 Edit `script/config.sh`:
-- `OPENAI_BASE_URL` → your model endpoint (e.g. `http://localhost:8000/v1`).
+- `OPENAI_BASE_URL` → your model endpoint (default `https://maas-api.cn-huabei-1.xf-yun.com/v2`).
 - API key: `export OPENAI_API_KEY=...`, or put it in `script/.api_key`, or `EMPTY` for an auth-less server.
-- `MODEL`, `WORKERS`, `THINKING_BUDGET` as needed.
+- `MODEL`, `WORKERS`, `REASONING_EFFORT` (default `medium`) as needed.
 
 (Recommended) bump the served context window to **128k** — observed max input ≈104k tokens.
 
