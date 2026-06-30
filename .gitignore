@@ -11,6 +11,7 @@ script/harness/runlogs/
 # experiment run outputs (keep locally; do not version)
 runs/
 external/repos/Trace2Skill/runs/
+results/*.json
 experiments/analysis/figs/
 experiments/analysis/*.json
 experiments/analysis/*.html
