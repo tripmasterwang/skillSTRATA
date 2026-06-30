@@ -7,3 +7,10 @@ __pycache__/
 # local harness runtime (codex/claude session cache + run logs)
 script/harness/codex_home/
 script/harness/runlogs/
+
+# experiment run outputs (keep locally; do not version)
+runs/
+external/repos/Trace2Skill/runs/
+experiments/analysis/figs/
+experiments/analysis/*.json
+experiments/analysis/*.html
